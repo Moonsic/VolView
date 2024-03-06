@@ -52,6 +52,7 @@ function configureSentryPlugin() {
 }
 
 export default defineConfig({
+  base: '', // 设置为空字符串，意味着所有资源路径都是相对于根URL的相对路径。解决嵌入到A项目里路径变成了A项目的绝对路径的问题
   build: {
     outDir: distDir,
     rollupOptions: {
