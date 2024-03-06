@@ -20,12 +20,15 @@ export function openFileDialog() {
 }
 
 export async function loadFiles(files: File[]) {
+  console.log('222 files :>> ', files);
   const dataSources = files.map(fileToDataSource);
+  console.log('222 dataSources :>> ', dataSources);
   return useLoadDataStore().loadDataSources(dataSources);
 }
 
 export async function loadUserPromptedFiles() {
   const files = await openFileDialog();
+  console.log('files :>> ', files);
   return loadFiles(files);
 }
 

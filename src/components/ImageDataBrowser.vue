@@ -100,6 +100,8 @@ export default defineComponent({
     watch(
       nonDICOMImages,
       (imageIDs) => {
+        console.log(' watch imageIDs :>> ', imageIDs);
+
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);
           if (!(cacheKey in thumbnails)) {

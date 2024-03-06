@@ -168,6 +168,7 @@ export default defineComponent({
     );
 
     const resetCamera = () => {
+      console.log('resetCamera :>> ');
       const bounds = curImageMetadata.value.worldBounds;
       const center = [
         (bounds[0] + bounds[1]) / 2,

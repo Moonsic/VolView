@@ -116,6 +116,7 @@ export const useDatasetStore = defineStore('dataset', () => {
   function setPrimarySelection(sel: DataSelection | null) {
     primarySelection.value = sel;
 
+    console.log('primarySelection :>> ', primarySelection);
     if (sel === null) {
       return;
     }
