@@ -32,3 +32,4 @@ bundle-analysis.html
 reports
 *.log
 .tmp/
+*.zip
