@@ -42,9 +42,10 @@ export default defineComponent({
     watch(
       nonDICOMImages,
       (imageIDs) => {
-        value.value = {type: 'image', dataID: imageIDs[imageIDs.length - 1]}
-        console.log('50 watch imageIDs :>> ', imageIDs,value.value);
-        itemGroup.selectItem(value.value);
+        // value.value = {type: 'image', dataID: imageIDs[imageIDs.length - 1]}
+        // console.log('50 watch imageIDs :>> ', imageIDs,value.value);
+        // itemGroup.selectItem(value.value);
+        itemGroup.selectItem({type: 'image', dataID: imageIDs[imageIDs.length - 1]});
       },
       { immediate: true, deep: true }
     );

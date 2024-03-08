@@ -10,7 +10,7 @@ import MessageNotifications from '@/src/components/MessageNotifications.vue';
 import Settings from '@/src/components/Settings.vue';
 import ControlsStripTools from '@/src/components/ControlsStripTools.vue';
 import MessageCenter from '@/src/components/MessageCenter.vue';
-import { MessageType, useMessageStore } from '@/src/store/messages';
+// import { MessageType, useMessageStore } from '@/src/store/messages';
 import { ConnectionState, useServerStore } from '@/src/store/server';
 import { useViewStore } from '@/src/store/views';
 import { Layouts, DefaultLayoutName } from '@/src/config';
@@ -66,29 +66,29 @@ function useSaveControls() {
   return { handleSave, isSaving, saveDialog };
 }
 
-function useMessageBubble() {
-  const messageStore = useMessageStore();
-  const count = computed(() => messageStore.importantMessages.length);
-  const badgeColor = computed(() => {
-    if (
-      messageStore.importantMessages.find(
-        (msg) => msg.type === MessageType.Error
-      )
-    ) {
-      return 'error';
-    }
-    if (
-      messageStore.importantMessages.find(
-        (msg) => msg.type === MessageType.Warning
-      )
-    ) {
-      return 'warning';
-    }
-    return 'primary';
-  });
+// function useMessageBubble() {
+//   const messageStore = useMessageStore();
+//   const count = computed(() => messageStore.importantMessages.length);
+//   const badgeColor = computed(() => {
+//     if (
+//       messageStore.importantMessages.find(
+//         (msg) => msg.type === MessageType.Error
+//       )
+//     ) {
+//       return 'error';
+//     }
+//     if (
+//       messageStore.importantMessages.find(
+//         (msg) => msg.type === MessageType.Warning
+//       )
+//     ) {
+//       return 'warning';
+//     }
+//     return 'primary';
+//   });
 
-  return { count, badgeColor };
-}
+//   return { count, badgeColor };
+// }
 
 function useServerConnection() {
   const serverStore = useServerStore();
@@ -115,8 +115,9 @@ const settingsDialog = ref(false);
 const messageDialog = ref(false);
 const { icon: connIcon, url: serverUrl } = useServerConnection();
 const layoutName = useViewLayout();
-const { handleSave, saveDialog, isSaving } = useSaveControls();
-const { count: msgCount, badgeColor: msgBadgeColor } = useMessageBubble();
+const { saveDialog } = useSaveControls();
+// const { handleSave, saveDialog, isSaving } = useSaveControls();
+// const { count: msgCount, badgeColor: msgBadgeColor } = useMessageBubble();
 </script>
 
 <template>
@@ -130,13 +131,13 @@ const { count: msgCount, badgeColor: msgBadgeColor } = useMessageBubble();
       name="Open files"
       @click="loadUserPromptedFiles"
     />
-    <control-button
+    <!-- <control-button
       size="40"
       icon="mdi-content-save-all"
       name="Save session"
       :loading="isSaving"
       @click="handleSave"
-    />
+    /> -->
     <div class="my-1 tool-separator" />
     <v-menu location="right" :close-on-content-click="true">
       <template v-slot:activator="{ props }">
@@ -171,7 +172,7 @@ const { count: msgCount, badgeColor: msgBadgeColor } = useMessageBubble();
       name="Open Server Settings"
       @click="settingsDialog = true"
     />
-    <v-badge
+    <!-- <v-badge
       offset-x="10"
       offset-y="10"
       :content="msgCount"
@@ -191,7 +192,7 @@ const { count: msgCount, badgeColor: msgBadgeColor } = useMessageBubble();
       icon="mdi-cog"
       name="Settings"
       @click="settingsDialog = true"
-    />
+    /> -->
   </div>
   <closeable-dialog v-model="saveDialog" max-width="30%">
     <template v-slot="{ close }">

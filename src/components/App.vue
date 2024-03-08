@@ -27,8 +27,8 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
-                @click="loadUserPromptedFiles"
-              >
+                >
+                <!-- @click="loadUserPromptedFiles" -->
               </welcome-page>
             </div>
           </div>
@@ -297,7 +297,7 @@ export default defineComponent({
     // --- layout --- //
 
     const { layout } = storeToRefs(useViewStore());
-
+console.log('layout',layout)
     // --- //
 
     const display = useDisplay();
