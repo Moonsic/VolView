@@ -53,15 +53,10 @@ export default defineComponent({
     });
 
     const items = computed(() => {
-      console.log('开始 :>> ')
       const viewIDToSpecs = viewSpecs.value;
-      console.log('viewIDToSpecs.value :>> ', viewIDToSpecs);
-      console.log('layout.value :>> ', layout.value);
       return layout.value.items.map((item) => {
         if (typeof item === 'string') {
           const spec = viewIDToSpecs[item];
-        console.log('spec :>> ', spec);
-
           return {
             type: 'view',
             id: item,
@@ -75,8 +70,6 @@ export default defineComponent({
         };
       });
     });
-    console.log('ViewTypeToComponent',ViewTypeToComponent)
-    console.log('flexFlow',flexFlow)
 
     return {
       items,

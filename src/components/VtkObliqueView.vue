@@ -225,7 +225,7 @@ export default defineComponent({
 
     onMounted(() => {
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
-      viewProxy.value.setOrientationAxesVisibility(false);
+      viewProxy.value.setOrientationAxesVisibility(false); // 方向，在左下角，没用
 
       // Initialize camera points during construction
       if (curImageData.value) {
@@ -362,8 +362,8 @@ export default defineComponent({
       baseImageRep,
       (obliqueRep) => {
         if (obliqueRep) {
-          obliqueRep.setOutlineVisibility(true);
-          obliqueRep.setOutlineLineWidth(4.0);
+          obliqueRep.setOutlineVisibility(true); // 是否显示外围的线
+          obliqueRep.setOutlineLineWidth(1.0); // 线宽，原来为4
           if (viewID.value) {
             const outlineColor = vec3.scale(
               [0, 0, 0],

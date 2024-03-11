@@ -271,7 +271,7 @@ export default defineComponent({
     const urlParams = vtkURLExtract.extractURLParameters() as UrlParams;
 
     onMounted(() => {
-      console.log('B onMounted',urlParams,window.localStorage)
+      console.log('B onMounted')
       if (!urlParams.urls) {
         return;
       }

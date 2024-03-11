@@ -131,7 +131,6 @@ export async function importDataSources(dataSources: DataSource[]) {
     fetchFileCache: new Map<string, File>(),
     dicomDataSources: [] as DataSourceWithFile[],
   };
-  console.log('B importDataSources :>> ', dataSources);
   const middleware = [
     // updating the file type should be first in the pipeline
     updateFileMimeType,
