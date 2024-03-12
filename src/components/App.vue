@@ -91,8 +91,29 @@ import { VTKResliceCursor } from '@/src/constants';
 
 // B项目接收
 window.addEventListener('message', (event) => {
-  console.log('message :>> ', event)
+  // console.log('message :>> ', event)
 
+  if (event.data.type === 'file') {
+    const fileUrl = event.data.fileUrl
+    const filePath = event.data.filePath
+    // 使用fileUrl获取Blob并处理
+    // 从Blob URL创建新的Blob对象
+    fetch(fileUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const fileName = filePath; // 文件名
+        const mimeType = '';       // MIME类型
+        // const mimeType = 'application/vnd.unknown.nifti-1'; // MIME类型
+        // 创建一个新的File对象
+        const file = new File([blob], fileName, {type: mimeType});
+        // console.log('B file :>> ', file);
+        // 现在你可以像处理本地文件一样处理这个File对象
+        loadFiles([file])
+      })
+      .catch(error => console.error('Failed to load blob:', error))
+  }
+
+  // 在这个项目里请求接口的例子
   // if (event.data.filePath) {
   //   const filePath = event.data.filePath
   //   const url = `/api/sl/getNiiFileStream?filePath=${filePath}`
@@ -122,53 +143,6 @@ window.addEventListener('message', (event) => {
   // }
 
 
-
-
-
-
-
-
-
-
-
-  if (event.data.type === 'file') {
-    const fileUrl = event.data.fileUrl
-    const filePath = event.data.filePath
-    // 使用fileUrl获取Blob并处理
-    // 从Blob URL创建新的Blob对象
-    fetch(fileUrl)
-      .then(response => response.blob())
-      .then(blob => {
-
-        const fileName = filePath; // 文件名
-        const mimeType = ''; // MIME类型
-        // const mimeType = 'application/vnd.unknown.nifti-1'; // MIME类型
-
-        // 创建一个新的File对象
-        const file = new File([blob], fileName, {type: mimeType});
-        console.log('B file :>> ', file);
-        // 现在你可以像处理本地文件一样处理这个File对象
-        loadFiles([file])
-
-        // // 现在你有了Blob对象，可以进行进一步处理，例如：
-        // const fileReader = new FileReader()
-        // fileReader.onload = (e) => {
-        //   console.log('e :>> ', e)
-        //   // 文件内容已加载到内存中
-        //   const result = e.target.result;
-        //   console.log('result :>> ', result)
-        //   // 根据文件类型进行处理，例如图像、文档、音频等
-        //   loadFiles([result])
-        // }
-        // fileReader.readAsArrayBuffer(blob) // 或者 readAsText/blob()，取决于你需要什么格式的数据
-
-
-
-
-
-      })
-      .catch(error => console.error('Failed to load blob:', error))
-  }
 })
 
 export default defineComponent({
@@ -297,7 +271,7 @@ export default defineComponent({
     // --- layout --- //
 
     const { layout } = storeToRefs(useViewStore());
-console.log('layout',layout)
+
     // --- //
 
     const display = useDisplay();

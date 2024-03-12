@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import { vtkObject } from '@kitware/vtk.js/interfaces';
 import { defineStore } from 'pinia';
@@ -116,7 +117,6 @@ export const useDatasetStore = defineStore('dataset', () => {
   function setPrimarySelection(sel: DataSelection | null) {
     primarySelection.value = sel;
 
-    console.log('primarySelection :>> ', primarySelection);
     if (sel === null) {
       return;
     }

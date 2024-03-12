@@ -100,7 +100,16 @@ export default defineComponent({
     watch(
       nonDICOMImages,
       (imageIDs) => {
-        console.log(' watch imageIDs :>> ', imageIDs);
+        // console.log('watch nonDICOMImages :>> ', imageIDs);
+        // 改变的时候，加载最后一个，也是最新一个
+        dataStore.setPrimarySelection({type: 'image', dataID: imageIDs[imageIDs.length - 1]});
+
+        // GGG 然后把前面的都删掉，只留下一个。
+        imageIDs.forEach((id,index) => {
+          if(index < imageIDs.length - 1) {
+            imageStore.deleteData(id);
+          }
+        });
 
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);

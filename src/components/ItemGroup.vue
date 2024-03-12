@@ -39,8 +39,6 @@ export default defineComponent({
     });
 
     const selectItem = (item: unknown) => {
-      console.log('selectItem :>> ', item)
-
       if (mandatory.value && !item) {
         return;
       }
@@ -62,7 +60,6 @@ export default defineComponent({
       selectItem,
       isSelected,
     });
-
     return () => slots.default?.();
   },
 });

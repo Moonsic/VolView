@@ -131,7 +131,6 @@ const useLoadDataStore = defineStore('loadData', () => {
 
     const [succeeded, errored] = partitionResults(results);
 
-    console.log('B succeeded, errored :>> ', succeeded, errored);
     if (!dataStore.primarySelection && succeeded.length) {
       const selection = convertSuccessResultToDataSelection(succeeded[0]);
       if (selection) {

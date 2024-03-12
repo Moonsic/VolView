@@ -45,23 +45,7 @@ export const useImageStore = defineStore('images', {
     addVTKImageData(name: string, imageData: vtkImageData) {
       console.log('useImageStore addVTKImageData :>> ', name, imageData);
 
-      // GGG 希望永远只有一个文件
-      // const id = useIdStore().nextId();
-      // this.id = id
-      // this.idList =[id];
-
-      // this.dataIndex = {}
-      // this.dataIndex[id] = imageData;
-
-      // this.$proxies.addData(id, imageData);
-
-      // this.dataIndex = {}
-      // this.metadata[id] = { ...defaultImageMetadata(), name };
-      // this.updateData(id, imageData);
-      // return id;
-
-
-      // 原来的，应该是push进数组
+      // 原来的，push进数组
       const id = useIdStore().nextId();
       this.id = id
       this.idList.push(id);
@@ -75,7 +59,6 @@ export const useImageStore = defineStore('images', {
     },
 
     updateData(id: string, imageData: vtkImageData) {
-      console.log('updateData :>> ', id, imageData);
 
       if (id in this.metadata) {
         const metadata: ImageMetadata = {
