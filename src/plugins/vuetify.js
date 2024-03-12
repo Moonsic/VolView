@@ -41,7 +41,7 @@ const vuetify = createVuetify({
   display: {
     mobileBreakpoint: 'lg',
     thresholds: {
-      lg: 1024,
+      lg: 10240, // 原来是1024，目的是让左侧列表永远出不来
     },
   },
 });

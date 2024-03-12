@@ -131,6 +131,7 @@ const { saveDialog } = useSaveControls();
       name="Open files"
       @click="loadUserPromptedFiles"
     />
+
     <!-- <control-button
       size="40"
       icon="mdi-content-save-all"
@@ -138,6 +139,7 @@ const { saveDialog } = useSaveControls();
       :loading="isSaving"
       @click="handleSave"
     /> -->
+
     <div class="my-1 tool-separator" />
     <v-menu location="right" :close-on-content-click="true">
       <template v-slot:activator="{ props }">
@@ -163,6 +165,7 @@ const { saveDialog } = useSaveControls();
         </v-card-text>
       </v-card>
     </v-menu>
+
     <controls-strip-tools v-if="hasData" />
     <v-spacer />
     <control-button

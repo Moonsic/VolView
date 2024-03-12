@@ -3,8 +3,10 @@
     <template v-slot="{ dragHover }">
       <v-app>
 
-        <!-- GGG 注释<app-bar和<v-navigation-drawer -->
-        <app-bar @click:left-menu="leftSideBar = !leftSideBar"></app-bar>
+        <!-- GGG 注释<app-bar -->
+        <!-- <app-bar @click:left-menu="leftSideBar = !leftSideBar"></app-bar> -->
+
+        <!-- <v-navigation-drawer 不能注释，否则切换新图像就失败。 在\src\plugins\vuetify.js 修改lg:1024 => 10240即可 -->
         <v-navigation-drawer
           v-model="leftSideBar"
           app
@@ -62,7 +64,7 @@ import { useDisplay } from 'vuetify';
 import useLoadDataStore from '@/src/store/load-data';
 import { useViewStore } from '@/src/store/views';
 import useRemoteSaveStateStore from '@/src/store/remote-save-state';
-import AppBar from '@/src/components/AppBar.vue';
+// import AppBar from '@/src/components/AppBar.vue';
 import ControlsStrip from '@/src/components/ControlsStrip.vue';
 import {
   loadFiles,
@@ -156,7 +158,7 @@ export default defineComponent({
     PersistentOverlay,
     KeyboardShortcuts,
     WelcomePage,
-    AppBar,
+    // AppBar,
   },
 
   setup() {
