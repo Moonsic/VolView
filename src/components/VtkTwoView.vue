@@ -168,6 +168,7 @@ import RulerTool from './tools/ruler/RulerTool.vue';
 import RectangleTool from './tools/rectangle/RectangleTool.vue';
 import PolygonTool from './tools/polygon/PolygonTool.vue';
 import PaintTool from './tools/paint/PaintTool.vue';
+
 import { useSegmentGroupStore } from '../store/segmentGroups';
 import { usePaintToolStore } from '../store/tools/paint';
 import { usePersistCameraConfig } from '../composables/usePersistCameraConfig';
@@ -245,6 +246,7 @@ export default defineComponent({
       currentLayers,
     } = useCurrentImage();
 
+    // console.log('two',viewID, curImageID)
     const {
       config: sliceConfig,
       slice: currentSlice,

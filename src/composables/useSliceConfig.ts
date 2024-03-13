@@ -12,7 +12,7 @@ export function useSliceConfig(
   const store = useViewSliceStore();
   const configDefaults = defaultSliceConfig();
   const config = computed(() => store.getConfig(unref(viewID), unref(imageID)));
-
+// console.log('config :>> ', config);
   const slice = computed({
     get: () => config.value?.slice ?? configDefaults.slice,
     set: (val) => {
@@ -21,8 +21,10 @@ export function useSliceConfig(
       store.updateConfig(unref(viewID), imageIdVal, { slice: val });
     },
   });
+
   const range = computed((): Vector2 => {
     const { min, max } = config.value ?? {};
+
     if (min == null || max == null)
       return [configDefaults.min, configDefaults.max];
     return [min, max];

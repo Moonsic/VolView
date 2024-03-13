@@ -7,6 +7,30 @@
     @focusin="hover = true"
     @focusout="hover = false"
   >
+
+  <!-- <div class="vtk-gutter">
+      <v-btn dark icon size="medium" variant="text" @click="enableResizeToFit">
+        <v-icon size="medium" class="py-1">mdi-camera-flip-outline</v-icon>
+        <v-tooltip
+          location="right"
+          activator="parent"
+          transition="slide-x-transition"
+        >
+          Reset Camera
+        </v-tooltip>
+      </v-btn>
+
+      <slice-slider
+        v-model="currentSlice"
+        class="slice-slider"
+        :min="sliceRange[0]"
+        :max="sliceRange[1]"
+        :step="1"
+        :handle-height="20"
+      />
+    </div> -->
+
+
     <div class="vtk-container" :class="active ? 'active' : ''">
       <div class="vtk-sub-container">
         <div class="vtk-view" ref="vtkContainerRef" />
@@ -23,6 +47,7 @@
       <view-overlay-grid class="overlay-no-events view-annotations">
         <template v-slot:bottom-left>
           <div class="annotation-cell">
+            <!-- <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div> -->
             <div v-if="windowWidth != null && windowLevel != null">
               W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
             </div>
@@ -77,6 +102,7 @@ import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 import { ResliceCursorWidgetState } from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import { manageVTKSubscription } from '@/src/composables/manageVTKSubscription';
+// import SliceSlider from '@/src/components/SliceSlider.vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { useSliceConfigInitializer } from '@/src/composables/useSliceConfigInitializer';
@@ -127,6 +153,7 @@ export default defineComponent({
     },
   },
   components: {
+    // SliceSlider,
     ViewOverlayGrid,
     WindowLevelTool,
     PanTool,
@@ -152,10 +179,13 @@ export default defineComponent({
       isImageLoading,
     } = useCurrentImage();
 
-    const { slice: currentSlice, config: sliceConfig } = useSliceConfig(
-      viewID,
-      curImageID
-    );
+    // console.log('oblique',viewID, curImageID)
+
+    const {
+      config: sliceConfig,
+      slice: currentSlice,
+      // range: sliceRange
+    } = useSliceConfig(viewID, curImageID);
     const {
       width: windowWidth,
       level: windowLevel,
@@ -249,6 +279,7 @@ export default defineComponent({
       cornerPoints: number[][],
       sliceNormal: number[]
     ): [number, number] {
+      // console.log('cornerPoints :>> ', cornerPoints, sliceNormal);
       if (!cornerPoints || !sliceNormal) return [0, 1];
 
       // Get rotation matrix from normal to +X (since bounds is aligned to XYZ)
@@ -545,6 +576,7 @@ export default defineComponent({
       active: true,
       curImageID,
       currentSlice,
+      // sliceRange,
       windowWidth,
       windowLevel,
       isImageLoading,
@@ -569,7 +601,8 @@ export default defineComponent({
 .vtk-container-wrapper-oblique {
   flex: 1;
   display: grid;
-  grid-template-columns: auto;
+  /* grid-template-columns: auto; */
+  grid-template-columns: 20px auto;
   grid-template-rows: auto;
   z-index: 0; /* avoids partial obscuring of focus outline */
 }
