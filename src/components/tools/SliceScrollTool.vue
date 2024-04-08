@@ -108,6 +108,7 @@ export default defineComponent({
     watch(
       sliceRange,
       (range) => {
+        // console.log('111 sliceRange', range);
         scrollVal.value = range.default;
         updateManipulator();
       },

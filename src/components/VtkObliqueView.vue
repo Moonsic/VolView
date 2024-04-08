@@ -8,7 +8,7 @@
     @focusout="hover = false"
   >
 
-  <!-- <div class="vtk-gutter">
+    <div class="vtk-gutter">
       <v-btn dark icon size="medium" variant="text" @click="enableResizeToFit">
         <v-icon size="medium" class="py-1">mdi-camera-flip-outline</v-icon>
         <v-tooltip
@@ -19,7 +19,7 @@
           Reset Camera
         </v-tooltip>
       </v-btn>
-
+      <!-- 侧边的滚动条 -->
       <slice-slider
         v-model="currentSlice"
         class="slice-slider"
@@ -28,7 +28,7 @@
         :step="1"
         :handle-height="20"
       />
-    </div> -->
+    </div>
 
 
     <div class="vtk-container" :class="active ? 'active' : ''">
@@ -47,7 +47,7 @@
       <view-overlay-grid class="overlay-no-events view-annotations">
         <template v-slot:bottom-left>
           <div class="annotation-cell">
-            <!-- <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div> -->
+            <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div>
             <div v-if="windowWidth != null && windowLevel != null">
               W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
             </div>
@@ -102,7 +102,7 @@ import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 import { ResliceCursorWidgetState } from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import { manageVTKSubscription } from '@/src/composables/manageVTKSubscription';
-// import SliceSlider from '@/src/components/SliceSlider.vue';
+import SliceSlider from '@/src/components/SliceSlider.vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { useSliceConfigInitializer } from '@/src/composables/useSliceConfigInitializer';
@@ -153,7 +153,7 @@ export default defineComponent({
     },
   },
   components: {
-    // SliceSlider,
+    SliceSlider,
     ViewOverlayGrid,
     WindowLevelTool,
     PanTool,
@@ -184,8 +184,20 @@ export default defineComponent({
     const {
       config: sliceConfig,
       slice: currentSlice,
-      // range: sliceRange
+      range: sliceRange
     } = useSliceConfig(viewID, curImageID);
+
+    // currentSlice.value = 100
+
+    // watch(
+    //   currentSlice,
+    //   (value) => {
+    //     console.log('currentSlice :>> ', value);
+    //   },
+    //   { immediate: true }
+    // )
+
+
     const {
       width: windowWidth,
       level: windowLevel,
@@ -311,6 +323,7 @@ export default defineComponent({
 
     const hover = ref(false);
     const onKeyDown = (event: KeyboardEvent) => {
+      console.log("onKeyDown; ",event);
       if (!curImageID.value || !hover.value) return;
 
       const sliceOffset = SLICE_OFFSET_KEYS[event.key] ?? 0;
@@ -576,7 +589,7 @@ export default defineComponent({
       active: true,
       curImageID,
       currentSlice,
-      // sliceRange,
+      sliceRange,
       windowWidth,
       windowLevel,
       isImageLoading,

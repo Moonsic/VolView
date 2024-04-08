@@ -252,6 +252,22 @@ export default defineComponent({
       slice: currentSlice,
       range: sliceRange,
     } = useSliceConfig(viewID, curImageID);
+
+    // currentSlice.value = 100
+
+    // watch(
+    //   currentSlice,
+    //   (value) => {
+    //     console.log('currentSlice :>> ', value);
+    //   },
+    //   { immediate: true }
+    // )
+
+
+
+
+
+
     const {
       config: wlConfig,
       width: windowWidth,

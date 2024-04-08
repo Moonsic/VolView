@@ -43,7 +43,9 @@ export const useImageStore = defineStore('images', {
   }),
   actions: {
     addVTKImageData(name: string, imageData: vtkImageData) {
-      console.log('useImageStore addVTKImageData :>> ', name, imageData);
+      // GGG 添加一个新的图像
+
+      // console.log('useImageStore addVTKImageData :>> ', name, imageData);
 
       // 原来的，push进数组
       const id = useIdStore().nextId();
