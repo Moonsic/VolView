@@ -405,9 +405,11 @@ export default defineComponent({
     watch(
       baseImageRep,
       (obliqueRep) => {
+        console.log('obliqueRep',obliqueRep)
         if (obliqueRep) {
           obliqueRep.setOutlineVisibility(true); // 是否显示外围的线
-          obliqueRep.setOutlineLineWidth(1.0); // 线宽，原来为4
+          obliqueRep.setOutlineLineWidth(2.0); // 线宽，原来为4
+
           if (viewID.value) {
             const outlineColor = vec3.scale(
               [0, 0, 0],
@@ -415,6 +417,7 @@ export default defineComponent({
               1 / 255
             ) as RGBColor;
             obliqueRep.setOutlineColor(outlineColor);
+
           }
         }
       },
@@ -462,16 +465,66 @@ export default defineComponent({
         resetResizeToFitTracking();
       });
 
+    // 已知又有一个数组boundsArray=[-130.0814828891307, 125.91851997189224, -123.50813484017272, 132.49186808045488, -119.1382771413773, 136.86167994327843 ]，
+    // 它代表一个3维的坐标，是一个256256256的正方体，
+    // 其中第1个数表示x轴的最小值，第2个数表示x轴的最大值，
+    // 第3个数表示y轴的最小值，第4个数表示y轴的最大值，
+    // 第5个数表示z轴的最小值，第6个数表示z轴的最大值，
+    // 我现在要写一个函数，输入是一个数组，里面3个数字，数字范围在[0,256]之间，分别表示x/y/z轴 ,
+    // 这个函数要返回一个数组，里面是3个轴的坐标
+    // 想通过给定的边界数组以及用户输入的 [x, y, z] 坐标，在这个 256256256 的正方体范围内，获取相应的标准化坐标
+    function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): vec3 {
+        const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
+        const [x, y, z] = inputArray;
+
+        // 确保输入的坐标在[0, 256]范围内
+        if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
+            throw new Error('Input coordinates should be in the range of [0, 256]');
+        }
+
+        // 标准化坐标到[-130.081, 136.862]等对应区间
+        const normalizedX = (x / 256) * (maxX - minX) + minX;
+        const normalizedY = (y / 256) * (maxY - minY) + minY;
+        const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
+
+        return [normalizedX, normalizedY, normalizedZ];
+    }
+
+
     const resetCamera = () => {
       const bounds = curImageMetadata.value.worldBounds;
       const center = vtkBoundingBox.getCenter(bounds);
+
+      // console.log('bounds',bounds)
+
+      // GGG 就是这个resliceCursor.setCenter(center);方法，设置定位的，
+      // TODO：bounds一个6个元素的数组，以0为中心的，有正有负，所以要换算，
+      // const center = [50,50,50];
+      console.log('center',center)
+      // 都是256
+      // console.log('x',bounds[1]-bounds[0])
+      // console.log('y',bounds[3]-bounds[2])
+      // console.log('z',bounds[5]-bounds[4])
+
+
+      // const target = [10,10,10]
+      // const target = [250,250,250]
+      // const target = [120,120,120]
+      // const target = [120,10,10] // 第3个，黄线，正面
+      // const target = [10,120,10] // 第2个，红线，顶面
+      const target:[number, number, number] = [10,10,120] // 第1个，绿线，侧面
+
+
+      const newCenter = getNormalizedCoordinates(bounds, target)
+      console.log('newCenter',newCenter)
+
 
       // do not track resizeToFit state
       ignoreResizeToFitTracking(() => {
         viewProxy.value.updateCamera(
           cameraDirVec.value,
           cameraUpVec.value,
-          center
+          newCenter // 之前是center
         );
         viewProxy.value.resetCamera(bounds);
         // reset cursor widget
@@ -510,7 +563,7 @@ export default defineComponent({
           planes[ViewTypes.YZ_PLANE].viewUp = curImageMetadata.value
             .lpsOrientation.Superior as Vector3;
 
-          resliceCursor.setCenter(center);
+          resliceCursor.setCenter(newCenter); // 之前是center
         }
         if (curImageMetadata) {
           state.placeWidget(bounds);
