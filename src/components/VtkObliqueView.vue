@@ -531,7 +531,7 @@ export default defineComponent({
       }
 
       // const newCenter = position ? getNormalizedCoordinates(bounds, position) : center
-      console.log('newCenter',newCenter)
+      // console.log('newCenter',newCenter)
 
 
       // do not track resizeToFit state

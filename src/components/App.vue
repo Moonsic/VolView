@@ -99,7 +99,7 @@ export function useResetViewsEvents2() {
 
 // B项目接收
 window.addEventListener('message', (event) => {
-  console.log('message :>> ', event)
+  // console.log('message :>> ', event)
 
   if (event.data.type === 'file') {
     const fileUrl = event.data.fileUrl
@@ -123,7 +123,7 @@ window.addEventListener('message', (event) => {
 
 
   if (event.data.type === 'position') {
-    const position: Vector3 = event.data.position
+    const position: Vector3 = event.data.position.split(',')
     console.log('position', position);
     clickEvent.trigger(position);
   }
@@ -297,7 +297,7 @@ export default defineComponent({
     const urlParams = vtkURLExtract.extractURLParameters() as UrlParams;
 
     onMounted(() => {
-      console.log('B onMounted')
+      // console.log('B onMounted')
       if (!urlParams.urls) {
         return;
       }

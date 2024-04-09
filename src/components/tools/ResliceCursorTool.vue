@@ -63,7 +63,7 @@ export default defineComponent({
     });
 
     watch(widgetManager, (wm, oldWm) => {
-      console.log('wm, oldWm :>> ', wm, oldWm);
+      // console.log('wm, oldWm :>> ', wm, oldWm);
       if (oldWm) {
         oldWm.removeWidget(resliceCursor);
       }
@@ -150,7 +150,7 @@ export default defineComponent({
     watch(
       curImageMetadata,
       (metadata) => {
-        console.log('metadata :>> ', metadata);
+        // console.log('metadata :>> ', metadata);
         state.placeWidget(metadata.worldBounds);
       },
       { immediate: true }
@@ -159,8 +159,7 @@ export default defineComponent({
     watch(
       currentImageData,
       (currImage) => {
-        console.log('currImage :>> ', currImage);
-
+        // console.log('currImage :>> ', currImage);
         if (resliceCursor && currImage) {
           resliceCursor.setImage(currImage);
         }
