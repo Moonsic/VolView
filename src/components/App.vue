@@ -58,7 +58,7 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, provide, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { UrlParams } from '@vueuse/core';
+import { UrlParams, createEventHook } from '@vueuse/core';
 import vtkURLExtract from '@kitware/vtk.js/Common/Core/URLExtract';
 import { useDisplay } from 'vuetify';
 import useLoadDataStore from '@/src/store/load-data';
@@ -91,9 +91,15 @@ import { useWebGLWatchdog } from '@/src/composables/useWebGLWatchdog';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
 import { VTKResliceCursor } from '@/src/constants';
 
+
+const clickEvent = createEventHook<Vector3>();
+export function useResetViewsEvents2() {
+  return { onClick: clickEvent.on };
+}
+
 // B项目接收
 window.addEventListener('message', (event) => {
-  // console.log('message :>> ', event)
+  console.log('message :>> ', event)
 
   if (event.data.type === 'file') {
     const fileUrl = event.data.fileUrl
@@ -113,6 +119,13 @@ window.addEventListener('message', (event) => {
         loadFiles([file])
       })
       .catch(error => console.error('Failed to load blob:', error))
+  }
+
+
+  if (event.data.type === 'position') {
+    const position: Vector3 = event.data.position
+    console.log('position', position);
+    clickEvent.trigger(position);
   }
 
   // 在这个项目里请求接口的例子
@@ -146,6 +159,43 @@ window.addEventListener('message', (event) => {
 
 
 })
+
+
+
+// setTimeout(()=>{
+//   console.log('2222222222222');
+//   const array: number[] = [80,150,200]
+//   const position: Vector3 = [array[0], array[1], array[2]]
+//   clickEvent.trigger();
+// },10000)
+
+// // 生成一个随机数
+// function randomNum(min: number, max: number) {
+//   return Math.floor(Math.random() * (max - min) + min)
+// }
+// // 生成一个位置
+// function randomPosition(){
+//   const position: Vector3 = [
+//     randomNum(50,200),
+//     randomNum(50,200),
+//     randomNum(50,200)
+//   ]
+//   return position
+// }
+// // 生成一个位置
+// function setNewPosition(){
+//   const position: Vector3 = randomPosition()
+//   console.log('position', position);
+//   clickEvent.trigger(position);
+// }
+
+// setInterval(()=>{
+//   setNewPosition()
+// },5000)
+
+
+
+
 
 export default defineComponent({
   name: 'App',

@@ -20,14 +20,14 @@
         </v-tooltip>
       </v-btn>
       <!-- 侧边的滚动条 -->
-      <slice-slider
+      <!-- <slice-slider
         v-model="currentSlice"
         class="slice-slider"
         :min="sliceRange[0]"
         :max="sliceRange[1]"
         :step="1"
         :handle-height="20"
-      />
+      /> -->
     </div>
 
 
@@ -47,7 +47,7 @@
       <view-overlay-grid class="overlay-no-events view-annotations">
         <template v-slot:bottom-left>
           <div class="annotation-cell">
-            <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div>
+            <!-- <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div> -->
             <div v-if="windowWidth != null && windowLevel != null">
               W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
             </div>
@@ -102,7 +102,7 @@ import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 import { ResliceCursorWidgetState } from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import { manageVTKSubscription } from '@/src/composables/manageVTKSubscription';
-import SliceSlider from '@/src/components/SliceSlider.vue';
+// import SliceSlider from '@/src/components/SliceSlider.vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { useSliceConfigInitializer } from '@/src/composables/useSliceConfigInitializer';
@@ -118,7 +118,10 @@ import WindowLevelTool from './tools/windowing/WindowLevelTool.vue';
 import PanTool from './tools/PanTool.vue';
 import ZoomTool from './tools/ZoomTool.vue';
 import ResliceCursorTool from './tools/ResliceCursorTool.vue';
+
 import { useResetViewsEvents } from './tools/ResetViews.vue';
+import { useResetViewsEvents2 } from './App.vue';
+
 import { LPSAxisDir } from '../types/lps';
 import { ViewProxyType } from '../core/proxies';
 import { useViewProxy } from '../composables/useViewProxy';
@@ -153,7 +156,7 @@ export default defineComponent({
     },
   },
   components: {
-    SliceSlider,
+    // SliceSlider,
     ViewOverlayGrid,
     WindowLevelTool,
     PanTool,
@@ -408,7 +411,7 @@ export default defineComponent({
         console.log('obliqueRep',obliqueRep)
         if (obliqueRep) {
           obliqueRep.setOutlineVisibility(true); // 是否显示外围的线
-          obliqueRep.setOutlineLineWidth(2.0); // 线宽，原来为4
+          obliqueRep.setOutlineLineWidth(1.0); // 线宽，原来为4
 
           if (viewID.value) {
             const outlineColor = vec3.scale(
@@ -490,17 +493,17 @@ export default defineComponent({
         return [normalizedX, normalizedY, normalizedZ];
     }
 
+    let defaultPosition: Vector3|Float32Array|null = null
 
-    const resetCamera = () => {
+    const resetCamera = (position?: [number, number, number]) => {
       const bounds = curImageMetadata.value.worldBounds;
       const center = vtkBoundingBox.getCenter(bounds);
 
       // console.log('bounds',bounds)
+      // console.log('center',center)
 
       // GGG 就是这个resliceCursor.setCenter(center);方法，设置定位的，
       // TODO：bounds一个6个元素的数组，以0为中心的，有正有负，所以要换算，
-      // const center = [50,50,50];
-      console.log('center',center)
       // 都是256
       // console.log('x',bounds[1]-bounds[0])
       // console.log('y',bounds[3]-bounds[2])
@@ -512,10 +515,22 @@ export default defineComponent({
       // const target = [120,120,120]
       // const target = [120,10,10] // 第3个，黄线，正面
       // const target = [10,120,10] // 第2个，红线，顶面
-      const target:[number, number, number] = [10,10,120] // 第1个，绿线，侧面
+      // const target:[number, number, number] = [80,140,180] // 第1个，绿线，侧面
 
+      // 如果传来位置，就定位新的位置，并设置成默认位置，再点击reset Views时回到新的位置
+      // 如果没有传来位置，但有默认位置，再定位到新的位置
+      // 如果没有传来位置，也没有默认位置，就定位到中心位置
+      let newCenter: vec3
+      if (position) {
+        newCenter = getNormalizedCoordinates(bounds, position)
+        defaultPosition = newCenter
+      } else if (defaultPosition) {
+        newCenter = defaultPosition
+      } else {
+        newCenter = center
+      }
 
-      const newCenter = getNormalizedCoordinates(bounds, target)
+      // const newCenter = position ? getNormalizedCoordinates(bounds, position) : center
       console.log('newCenter',newCenter)
 
 
@@ -627,6 +642,9 @@ export default defineComponent({
     // Listen to ResetViews event.
     const events = useResetViewsEvents();
     events.onClick(() => resetCamera());
+
+    const events2 = useResetViewsEvents2();
+    events2.onClick((position) => resetCamera(position));
 
     const enableResizeToFit = () => {
       resizeToFit.value = true;
