@@ -58,6 +58,9 @@ import vtkBoundingBox from '@kitware/vtk.js/Common/DataModel/BoundingBox';
 import { ResliceCursorWidgetState } from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants';
 
+// import vtkPoints from '@kitware/vtk.js/Common/Core/Points';
+// import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
+
 import vtkMultiSliceRepresentationProxy, {
   OutlineProperties,
 } from '@/src/vtk/MultiSliceRepresentationProxy';
@@ -145,6 +148,62 @@ export default defineComponent({
       viewProxy.value.setBackground([0, 0, 0, 0]); // 背景色，默认为空
       viewProxy.value.getCamera().setParallelProjection(false); // 3D视图下，设置平行投影,我觉得false好点
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
+
+      // console.log('viewProxy.value :>> ', viewProxy.value);
+      // // const pointCoordinates = [12, 122, 222]; // 替换为实际的 x, y, z 坐标值
+      // const pointCoordinates = [20, 50, 100]; // 替换为实际的 x, y, z 坐标值
+      // const points = vtkPoints.newInstance();
+      // console.log('vtkPoints :>> ', vtkPoints);
+      // console.log('points :>> ', points);
+      // points.setData(pointCoordinates);
+
+
+
+      // // 创建vtkPolyData并添加点
+      // const polyData = vtkPolyData.newInstance();
+      // const points = polyData.getPoints();
+      // console.log('polyData :>> ', polyData);
+      // console.log('points :>> ', points);
+      // points.insertNextPoint(50, 100, 100); // 设置点的位置
+
+      // // 获取或创建PointData，并设置颜色数组
+      // const pd = polyData.getPointData();
+      // if (!pd.hasArray('Colors')) {
+      //   const colors = vtk.vtkUnsignedCharArray.newInstance();
+      //   colors.setName('Colors');
+      //   colors.setNumberOfComponents(3); // RGB颜色有3个分量
+      //   colors.insertNextTuple3(255, 0, 0); // 红色
+      //   pd.addArray(colors);
+      // } else {
+      //   const colors = pd.getArray('Colors');
+      //   colors.insertNextTuple3(255, 0, 0); // 红色
+      // }
+
+      // // // 设置点颜色（这里使用RGB颜色）
+      // // const colors = polyData.getPointData().getScalars();
+      // // console.log('colors:>> ', colors);
+
+      // // colors.setName('Colors');
+      // // colors.setNumberOfComponents(3); // RGB颜色有3个分量
+      // // colors.insertNextTuple3(255, 0, 0); // 红色
+
+      // // 创建vtkPolyDataMapper
+      // const mapper = vtk.vtkPolyDataMapper.newInstance();
+      // mapper.setInputData(polyData);
+      // mapper.setScalarVisibility(true);
+      // mapper.setColorModeToMapScalars();
+      // mapper.setScalarModeToUsePointData();
+
+      // // 创建vtkActor并设置mapper和属性
+      // const actor = vtk.vtkActor.newInstance();
+      // actor.setMapper(mapper);
+      // actor.getProperty().setPointSize(10); // 设置点的大小
+      // actor.getProperty().setColor(1, 0, 0); // 设置点的颜色（这里再次设置为红色，以覆盖可能的默认颜色）
+
+      // // 将actor添加到渲染器（这里假设你已经有一个渲染器对象叫做renderer）
+      // renderer.addActor(actor);
+      // renderer.resetCamera(); // 重置相机以包含新添加的actor
+      // renderer.render(); // 渲染场景
     });
 
     const resliceCursor = inject(VTKResliceCursor);
@@ -156,6 +215,16 @@ export default defineComponent({
       const rep = baseImageRep?.value;
       const state = resliceCursor?.getWidgetState() as ResliceCursorWidgetState;
       const planeOrigin = state?.getCenter();
+
+
+      // console.log('rep',rep)
+      // console.log('resliceCursor',resliceCursor)
+      // console.log('state',state)
+      // console.log('planeOrigin',planeOrigin)
+      // console.log('ViewTypes',ViewTypes)
+      // rep.setPointSize(20)
+
+
       if (resliceCursor && rep && planeOrigin) {
         const planeNormalYZ = resliceCursor.getPlaneNormalFromViewType(
           ViewTypes.YZ_PLANE
@@ -171,6 +240,8 @@ export default defineComponent({
           { origin: planeOrigin, normal: planeNormalXZ },
           { origin: planeOrigin, normal: planeNormalXY },
         ];
+        // console.log('planesForSlices',planesForSlices)
+
         rep.setPlanes(planesForSlices);
       }
     };
