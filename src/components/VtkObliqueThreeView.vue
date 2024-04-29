@@ -149,7 +149,17 @@ export default defineComponent({
       viewProxy.value.getCamera().setParallelProjection(false); // 3D视图下，设置平行投影,我觉得false好点
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
 
+
+
       // console.log('viewProxy.value :>> ', viewProxy.value);
+
+      // const pd = vtkPolyData.newInstance();
+      // const pts = vtkPoints.newInstance({
+      //   dataType: VtkDataTypes.FLOAT,
+      //   numberOfComponents: 3,
+      // });
+      // pts.setNumberOfPoints(centerline.length);
+
       // // const pointCoordinates = [12, 122, 222]; // 替换为实际的 x, y, z 坐标值
       // const pointCoordinates = [20, 50, 100]; // 替换为实际的 x, y, z 坐标值
       // const points = vtkPoints.newInstance();
