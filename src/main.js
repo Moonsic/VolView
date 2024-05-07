@@ -28,7 +28,8 @@ import { StoreRegistry } from './plugins/storeRegistry';
 import { PROXY_MANAGER_WRAPPER_INJECT_KEY } from './composables/useProxyManager';
 
 // GGG 将原来在index.html远程链接的css改成npm install @mdi/font 安装于本地
-import "@mdi/font/css/materialdesignicons.min.css"
+// 还是在inde.html里改成了https://unpkg.com
+// import "@mdi/font/css/materialdesignicons.min.css"
 
 // patches
 patchExitPointerLock();
