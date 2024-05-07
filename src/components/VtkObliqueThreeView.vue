@@ -126,7 +126,7 @@ export default defineComponent({
       ].map((v) => vec3.scale([0, 0, 0], OBLIQUE_OUTLINE_COLORS[v], 1 / 255));
 
       const outlineProperties = outlineColors.map(
-        (color) => ({ color, lineWidth: 4, opacity: 1.0 } as OutlineProperties)
+        (color) => ({ color, lineWidth: 1, opacity: 1.0 } as OutlineProperties) // 线宽，原来为4,opacity 改变无效
       );
       baseImageRep.value?.setSliceOutlineProperties(outlineProperties);
       baseImageRep.value?.setDataOutlineProperties({
@@ -140,10 +140,10 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      viewProxy.value.setOrientationAxesVisibility(true);
+      viewProxy.value.setOrientationAxesVisibility(true); // 方向，在左下角，有用
       viewProxy.value.setOrientationAxesType('cube');
-      viewProxy.value.setBackground([0, 0, 0, 0]);
-      viewProxy.value.getCamera().setParallelProjection(true);
+      viewProxy.value.setBackground([0, 0, 0, 0]); // 背景色，默认为空
+      viewProxy.value.getCamera().setParallelProjection(false); // 3D视图下，设置平行投影,我觉得false好点
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
     });
 

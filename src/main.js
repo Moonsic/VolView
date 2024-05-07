@@ -27,6 +27,9 @@ import { init as initErrorReporting } from './utils/errorReporting';
 import { StoreRegistry } from './plugins/storeRegistry';
 import { PROXY_MANAGER_WRAPPER_INJECT_KEY } from './composables/useProxyManager';
 
+// GGG 将原来在index.html远程链接的css改成npm install @mdi/font 安装于本地
+import "@mdi/font/css/materialdesignicons.min.css"
+
 // patches
 patchExitPointerLock();
 
@@ -57,6 +60,7 @@ pinia.use(
   })
 );
 pinia.use(StoreRegistry);
+
 
 const app = createApp(App);
 

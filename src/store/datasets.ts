@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import { vtkObject } from '@kitware/vtk.js/interfaces';
 import { defineStore } from 'pinia';

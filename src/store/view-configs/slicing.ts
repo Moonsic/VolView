@@ -35,6 +35,7 @@ export const useViewSliceStore = defineStore('viewSlice', () => {
       ...getConfig(viewID, dataID),
       ...patch,
     };
+    // console.log('config2 :>> ', config);
 
     config.slice = clampValue(config.slice, config.min, config.max);
     patchDoubleKeyRecord(configs, viewID, dataID, config);

@@ -7,6 +7,30 @@
     @focusin="hover = true"
     @focusout="hover = false"
   >
+
+    <div class="vtk-gutter">
+      <v-btn dark icon size="medium" variant="text" @click="enableResizeToFit">
+        <v-icon size="medium" class="py-1">mdi-camera-flip-outline</v-icon>
+        <v-tooltip
+          location="right"
+          activator="parent"
+          transition="slide-x-transition"
+        >
+          Reset Camera
+        </v-tooltip>
+      </v-btn>
+      <!-- 侧边的滚动条 -->
+      <!-- <slice-slider
+        v-model="currentSlice"
+        class="slice-slider"
+        :min="sliceRange[0]"
+        :max="sliceRange[1]"
+        :step="1"
+        :handle-height="20"
+      /> -->
+    </div>
+
+
     <div class="vtk-container" :class="active ? 'active' : ''">
       <div class="vtk-sub-container">
         <div class="vtk-view" ref="vtkContainerRef" />
@@ -23,6 +47,7 @@
       <view-overlay-grid class="overlay-no-events view-annotations">
         <template v-slot:bottom-left>
           <div class="annotation-cell">
+            <!-- <div>Slice: {{ currentSlice + 1 }}/{{ sliceRange[1] + 1 }}</div> -->
             <div v-if="windowWidth != null && windowLevel != null">
               W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
             </div>
@@ -77,6 +102,7 @@ import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 import { ResliceCursorWidgetState } from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import { manageVTKSubscription } from '@/src/composables/manageVTKSubscription';
+// import SliceSlider from '@/src/components/SliceSlider.vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { useSliceConfigInitializer } from '@/src/composables/useSliceConfigInitializer';
@@ -92,7 +118,10 @@ import WindowLevelTool from './tools/windowing/WindowLevelTool.vue';
 import PanTool from './tools/PanTool.vue';
 import ZoomTool from './tools/ZoomTool.vue';
 import ResliceCursorTool from './tools/ResliceCursorTool.vue';
+
 import { useResetViewsEvents } from './tools/ResetViews.vue';
+import { useResetViewsEvents2 } from './App.vue';
+
 import { LPSAxisDir } from '../types/lps';
 import { ViewProxyType } from '../core/proxies';
 import { useViewProxy } from '../composables/useViewProxy';
@@ -127,6 +156,7 @@ export default defineComponent({
     },
   },
   components: {
+    // SliceSlider,
     ViewOverlayGrid,
     WindowLevelTool,
     PanTool,
@@ -152,10 +182,25 @@ export default defineComponent({
       isImageLoading,
     } = useCurrentImage();
 
-    const { slice: currentSlice, config: sliceConfig } = useSliceConfig(
-      viewID,
-      curImageID
-    );
+    // console.log('oblique',viewID, curImageID)
+
+    const {
+      config: sliceConfig,
+      slice: currentSlice,
+      range: sliceRange
+    } = useSliceConfig(viewID, curImageID);
+
+    // currentSlice.value = 100
+
+    // watch(
+    //   currentSlice,
+    //   (value) => {
+    //     console.log('currentSlice :>> ', value);
+    //   },
+    //   { immediate: true }
+    // )
+
+
     const {
       width: windowWidth,
       level: windowLevel,
@@ -225,7 +270,7 @@ export default defineComponent({
 
     onMounted(() => {
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
-      viewProxy.value.setOrientationAxesVisibility(false);
+      viewProxy.value.setOrientationAxesVisibility(false); // 方向，在左下角，没用
 
       // Initialize camera points during construction
       if (curImageData.value) {
@@ -249,6 +294,7 @@ export default defineComponent({
       cornerPoints: number[][],
       sliceNormal: number[]
     ): [number, number] {
+      // console.log('cornerPoints :>> ', cornerPoints, sliceNormal);
       if (!cornerPoints || !sliceNormal) return [0, 1];
 
       // Get rotation matrix from normal to +X (since bounds is aligned to XYZ)
@@ -280,6 +326,7 @@ export default defineComponent({
 
     const hover = ref(false);
     const onKeyDown = (event: KeyboardEvent) => {
+      console.log("onKeyDown; ",event);
       if (!curImageID.value || !hover.value) return;
 
       const sliceOffset = SLICE_OFFSET_KEYS[event.key] ?? 0;
@@ -361,9 +408,11 @@ export default defineComponent({
     watch(
       baseImageRep,
       (obliqueRep) => {
+        console.log('obliqueRep',obliqueRep)
         if (obliqueRep) {
-          obliqueRep.setOutlineVisibility(true);
-          obliqueRep.setOutlineLineWidth(4.0);
+          obliqueRep.setOutlineVisibility(true); // 是否显示外围的线
+          obliqueRep.setOutlineLineWidth(1.0); // 线宽，原来为4
+
           if (viewID.value) {
             const outlineColor = vec3.scale(
               [0, 0, 0],
@@ -371,6 +420,7 @@ export default defineComponent({
               1 / 255
             ) as RGBColor;
             obliqueRep.setOutlineColor(outlineColor);
+
           }
         }
       },
@@ -418,16 +468,78 @@ export default defineComponent({
         resetResizeToFitTracking();
       });
 
-    const resetCamera = () => {
+    // 已知又有一个数组boundsArray=[-130.0814828891307, 125.91851997189224, -123.50813484017272, 132.49186808045488, -119.1382771413773, 136.86167994327843 ]，
+    // 它代表一个3维的坐标，是一个256256256的正方体，
+    // 其中第1个数表示x轴的最小值，第2个数表示x轴的最大值，
+    // 第3个数表示y轴的最小值，第4个数表示y轴的最大值，
+    // 第5个数表示z轴的最小值，第6个数表示z轴的最大值，
+    // 我现在要写一个函数，输入是一个数组，里面3个数字，数字范围在[0,256]之间，分别表示x/y/z轴 ,
+    // 这个函数要返回一个数组，里面是3个轴的坐标
+    // 想通过给定的边界数组以及用户输入的 [x, y, z] 坐标，在这个 256256256 的正方体范围内，获取相应的标准化坐标
+    function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): vec3 {
+        const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
+        const [x, y, z] = inputArray;
+
+        // 确保输入的坐标在[0, 256]范围内
+        if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
+            throw new Error('Input coordinates should be in the range of [0, 256]');
+        }
+
+        // 标准化坐标到[-130.081, 136.862]等对应区间
+        const normalizedX = (x / 256) * (maxX - minX) + minX;
+        const normalizedY = (y / 256) * (maxY - minY) + minY;
+        const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
+
+        return [normalizedX, normalizedY, normalizedZ];
+    }
+
+    let defaultPosition: Vector3|Float32Array|null = null
+
+    const resetCamera = (position?: [number, number, number]) => {
       const bounds = curImageMetadata.value.worldBounds;
       const center = vtkBoundingBox.getCenter(bounds);
+
+      // console.log('bounds',bounds)
+      // console.log('center',center)
+
+      // GGG 就是这个resliceCursor.setCenter(center);方法，设置定位的，
+      // TODO：bounds一个6个元素的数组，以0为中心的，有正有负，所以要换算，
+      // 都是256
+      // console.log('x',bounds[1]-bounds[0])
+      // console.log('y',bounds[3]-bounds[2])
+      // console.log('z',bounds[5]-bounds[4])
+
+
+      // const target = [10,10,10]
+      // const target = [250,250,250]
+      // const target = [120,120,120]
+      // const target = [120,10,10] // 第3个，黄线，正面
+      // const target = [10,120,10] // 第2个，红线，顶面
+      // const target:[number, number, number] = [80,140,180] // 第1个，绿线，侧面
+
+      // 如果传来位置，就定位新的位置，并设置成默认位置，再点击reset Views时回到新的位置
+      // 如果没有传来位置，但有默认位置，再定位到新的位置
+      // 如果没有传来位置，也没有默认位置，就定位到中心位置
+      let newCenter: vec3
+      if (position) {
+        newCenter = getNormalizedCoordinates(bounds, position)
+        defaultPosition = newCenter
+      } else if (defaultPosition) {
+        newCenter = defaultPosition
+      } else {
+        newCenter = center
+      }
+
+      // const newCenter = position ? getNormalizedCoordinates(bounds, position) : center
+      // console.log('newCenter',newCenter)
+
 
       // do not track resizeToFit state
       ignoreResizeToFitTracking(() => {
         viewProxy.value.updateCamera(
           cameraDirVec.value,
           cameraUpVec.value,
-          center
+          newCenter // 之前是center
         );
         viewProxy.value.resetCamera(bounds);
         // reset cursor widget
@@ -466,7 +578,7 @@ export default defineComponent({
           planes[ViewTypes.YZ_PLANE].viewUp = curImageMetadata.value
             .lpsOrientation.Superior as Vector3;
 
-          resliceCursor.setCenter(center);
+          resliceCursor.setCenter(newCenter); // 之前是center
         }
         if (curImageMetadata) {
           state.placeWidget(bounds);
@@ -531,6 +643,9 @@ export default defineComponent({
     const events = useResetViewsEvents();
     events.onClick(() => resetCamera());
 
+    const events2 = useResetViewsEvents2();
+    events2.onClick((position) => resetCamera(position));
+
     const enableResizeToFit = () => {
       resizeToFit.value = true;
       resetCamera();
@@ -545,6 +660,7 @@ export default defineComponent({
       active: true,
       curImageID,
       currentSlice,
+      sliceRange,
       windowWidth,
       windowLevel,
       isImageLoading,
@@ -569,7 +685,8 @@ export default defineComponent({
 .vtk-container-wrapper-oblique {
   flex: 1;
   display: grid;
-  grid-template-columns: auto;
+  /* grid-template-columns: auto; */
+  grid-template-columns: 20px auto;
   grid-template-rows: auto;
   z-index: 0; /* avoids partial obscuring of focus outline */
 }

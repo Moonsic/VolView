@@ -60,7 +60,6 @@ export default defineComponent({
       selectItem,
       isSelected,
     });
-
     return () => slots.default?.();
   },
 });
