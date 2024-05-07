@@ -61,6 +61,16 @@ import { ViewTypes } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 // import vtkPoints from '@kitware/vtk.js/Common/Core/Points';
 // import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
 
+// // import '@kitware/vtk.js/Rendering/Profiles/Geometry';
+
+// import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
+// import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+// import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
+// import vtkAxesActor from '@kitware/vtk.js/Rendering/Core/AxesActor';
+// import vtkPointPicker from '@kitware/vtk.js/Rendering/Core/PointPicker';
+// import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+
+
 import vtkMultiSliceRepresentationProxy, {
   OutlineProperties,
 } from '@/src/vtk/MultiSliceRepresentationProxy';
@@ -148,7 +158,67 @@ export default defineComponent({
       viewProxy.value.setBackground([0, 0, 0, 0]); // 背景色，默认为空
       viewProxy.value.getCamera().setParallelProjection(false); // 3D视图下，设置平行投影,我觉得false好点
       viewProxy.value.setContainer(vtkContainerRef.value ?? null);
+      console.log('viewProxy.value :>> ', viewProxy.value);
 
+//       // for (const key in viewProxy.value) {
+//       //   if (Object.prototype.hasOwnProperty.call(viewProxy.value, key)) {
+//       //     const element = viewProxy.value[key];
+//       //     console.log(`${key} :>> ${element()}`);
+//       //   }
+//       // }
+
+// // -----------
+
+//       const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
+//         rootContainer: vtkContainerRef.value,
+//         background: [0.2, 0.3, 0.4], // rgb 蓝色多一点
+//       });
+//       const renderer = fullScreenRenderer.getRenderer();
+//       const renderWindow = fullScreenRenderer.getRenderWindow();
+//       const mapper = vtkMapper.newInstance();
+
+//       const actor = vtkActor.newInstance();
+//       actor.setMapper(mapper);
+
+//       actor.getProperty().setColor(1, 0, 0); // 设置颜色为红色
+//       actor.getProperty().setPointSize(5); // 默认点大小，实际大小由polyData中的Scalars控制
+//       actor.getProperty().setOpacity(0.5);
+
+
+//         // 坐标轴
+//       const axesActor = vtkAxesActor.newInstance();
+//       renderer.addActor(axesActor);
+//       renderer.addActor(actor);
+//       renderer.resetCamera();
+//       renderWindow.render();
+
+
+//       const sphere = vtkSphereSource.newInstance();
+//       // const pickedPoint = [10,20,30]
+//       // const pickedPoint = [1,2,3]
+//       const pickedPoints = [
+//         [0.1,0.2,0.3],
+//         [0.2,0.1,0.5],
+//         [0.3,0.2,0.1],
+//         [0.4,0.4,0.4],
+//       ]
+//       pickedPoints.forEach(item=>{
+//         sphere.setCenter(item);
+//         sphere.setRadius(0.01);
+//         const sphereMapper = vtkMapper.newInstance();
+//         sphereMapper.setInputData(sphere.getOutputData());
+//         const sphereActor = vtkActor.newInstance();
+//         sphereActor.setMapper(sphereMapper);
+//         sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
+//         renderer.addActor(sphereActor);
+//       })
+//       renderWindow.render();
+
+//       // // viewProxy.value.addActor(sphereActor);
+//       // // viewProxy.value.renderLater();
+
+
+// // -----------
 
 
       // console.log('viewProxy.value :>> ', viewProxy.value);
