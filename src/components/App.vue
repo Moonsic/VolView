@@ -2,7 +2,11 @@
   <drag-and-drop enabled @drop-files="loadFiles" id="app-container">
     <template v-slot="{ dragHover }">
       <v-app>
-        <app-bar @click:left-menu="leftSideBar = !leftSideBar"></app-bar>
+
+        <!-- GGG 注释<app-bar -->
+        <!-- <app-bar @click:left-menu="leftSideBar = !leftSideBar"></app-bar> -->
+
+        <!-- <v-navigation-drawer 不能注释，否则切换新图像就失败。 在\src\plugins\vuetify.js 修改lg:1024 => 10240即可 -->
         <v-navigation-drawer
           v-model="leftSideBar"
           app
@@ -13,6 +17,9 @@
         >
           <module-panel @close="leftSideBar = false" />
         </v-navigation-drawer>
+
+
+
         <v-main id="content-main">
           <div class="fill-height d-flex flex-row flex-grow-1">
             <controls-strip :has-data="hasData"></controls-strip>
@@ -22,8 +29,8 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
-                @click="loadUserPromptedFiles"
-              >
+                >
+                <!-- @click="loadUserPromptedFiles" -->
               </welcome-page>
             </div>
           </div>
@@ -49,15 +56,16 @@
 </template>
 
 <script lang="ts">
+import type { Vector3 } from '@kitware/vtk.js/types';
 import { computed, defineComponent, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { UrlParams } from '@vueuse/core';
+import { UrlParams, createEventHook } from '@vueuse/core';
 import vtkURLExtract from '@kitware/vtk.js/Common/Core/URLExtract';
 import { useDisplay } from 'vuetify';
 import useLoadDataStore from '@/src/store/load-data';
 import { useViewStore } from '@/src/store/views';
 import useRemoteSaveStateStore from '@/src/store/remote-save-state';
-import AppBar from '@/src/components/AppBar.vue';
+// import AppBar from '@/src/components/AppBar.vue';
 import ControlsStrip from '@/src/components/ControlsStrip.vue';
 import {
   loadFiles,
@@ -76,6 +84,112 @@ import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
 
+
+const clickEventSetPosition = createEventHook<Vector3>();
+export function useSetPositionEvents() {
+  return { onClick: clickEventSetPosition.on };
+}
+
+// B项目接收
+window.addEventListener('message', (event) => {
+  // console.log('message :>> ', event)
+
+  if (event.data.type === 'file') {
+    const fileUrl = event.data.fileUrl
+    const filePath = event.data.filePath
+    // 使用fileUrl获取Blob并处理
+    // 从Blob URL创建新的Blob对象
+    fetch(fileUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const fileName = filePath; // 文件名
+        const mimeType = '';       // MIME类型
+        // const mimeType = 'application/vnd.unknown.nifti-1'; // MIME类型
+        // 创建一个新的File对象
+        const file = new File([blob], fileName, {type: mimeType});
+        // console.log('B file :>> ', file);
+        // 现在你可以像处理本地文件一样处理这个File对象
+        loadFiles([file])
+      })
+      .catch(error => console.error('Failed to load blob:', error))
+  }
+
+
+  if (event.data.type === 'position') {
+    const position: Vector3 = event.data.position.split(',')
+    console.log('position', position);
+    clickEventSetPosition.trigger(position);
+  }
+
+  // 在这个项目里请求接口的例子
+  // if (event.data.filePath) {
+  //   const filePath = event.data.filePath
+  //   const url = `/api/sl/getNiiFileStream?filePath=${filePath}`
+  //   const xhr = new XMLHttpRequest();
+  //   // POST请求,link,async(是否异步)
+  //   xhr.open("GET", url, true);
+  //   // //设置请求头参数的方式,如果没有可忽略此行代码
+  //   const accessToken = String(localStorage.getItem('access_token'))
+  //   console.log('access_token :>> ',accessToken );
+  //   xhr.setRequestHeader("Authentication", accessToken);
+  //   // //设置响应类型为 blob
+  //   xhr.responseType = "blob";
+  //   // //关键部分
+  //   xhr.onload = function() {
+  //     console.log('B this :>> ', this);
+  //     //   //如果请求执行成功
+  //     if (this.status === 200) {
+  //       const blob = this.response;
+  //       // const blob = new Blob([res], { type: '' })
+  //       const newFile = new File([blob], filePath)
+  //       console.log('B newFile :>> ', newFile);
+  //       loadFiles([newFile])
+  //     }
+  //   };
+  //   // //发送请求
+  //   xhr.send();
+  // }
+
+
+})
+
+
+console.log('App.vue启动')
+// setTimeout(()=>{
+//   console.log('开始设置position');
+//   const position: Vector3 = [80,150,200]
+//   clickEventSetPosition.trigger(position);
+// },10000)
+
+
+// 生成一个随机数
+function randomNum(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min) + min)
+}
+// 生成一个位置
+function randomPosition(){
+  const position: Vector3 = [
+    randomNum(50,200),
+    randomNum(50,200),
+    randomNum(50,200)
+  ]
+  return position
+}
+// 生成一个位置
+function setNewPosition(){
+  const position: Vector3 = randomPosition()
+  console.log('开始设置position', position);
+  clickEventSetPosition.trigger(position);
+}
+
+setInterval(()=>{
+  setNewPosition()
+},5000)
+
+
+
+
+
 export default defineComponent({
   name: 'App',
 
@@ -87,7 +201,7 @@ export default defineComponent({
     PersistentOverlay,
     KeyboardShortcuts,
     WelcomePage,
-    AppBar,
+    // AppBar,
   },
 
   setup() {
@@ -117,6 +231,7 @@ export default defineComponent({
     const urlParams = vtkURLExtract.extractURLParameters() as UrlParams;
 
     onMounted(() => {
+      // console.log('B onMounted')
       if (!urlParams.urls) {
         return;
       }

@@ -71,6 +71,8 @@
 
 <script setup lang="ts">
 import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
+import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
+
 import ResliceCursorTool from '@/src/components/tools/ResliceCursorTool.vue';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
@@ -91,7 +93,7 @@ import { batchForNextTask } from '@/src/utils/batchForNextTask';
 import { getLPSAxisFromDir } from '@/src/utils/lps';
 import vtkMatrixBuilder from '@kitware/vtk.js/Common/Core/MatrixBuilder';
 import vtkBoundingBox from '@kitware/vtk.js/Common/DataModel/BoundingBox';
-import type { RGBColor } from '@kitware/vtk.js/types';
+import type { RGBColor, Vector3 } from '@kitware/vtk.js/types';
 import { watchImmediate } from '@vueuse/core';
 import { vec3 } from 'gl-matrix';
 import { computed, ref, toRefs, watchEffect } from 'vue';
@@ -224,16 +226,66 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
   );
 };
 
+
+// 已知又有一个数组boundsArray=[-130.0814828891307, 125.91851997189224, -123.50813484017272, 132.49186808045488, -119.1382771413773, 136.86167994327843 ]，
+// 它代表一个3维的坐标，是一个256256256的正方体，
+// 其中第1个数表示x轴的最小值，第2个数表示x轴的最大值，
+// 第3个数表示y轴的最小值，第4个数表示y轴的最大值，
+// 第5个数表示z轴的最小值，第6个数表示z轴的最大值，
+// 我现在要写一个函数，输入是一个数组，里面3个数字，数字范围在[0,256]之间，分别表示x/y/z轴 ,
+// 这个函数要返回一个数组，里面是3个轴的坐标
+// 想通过给定的边界数组以及用户输入的 [x, y, z] 坐标，在这个 256256256 的正方体范围内，获取相应的标准化坐标
+// 例：输入：boundsArray：上面的例子 ，inputArray：[80,150,200] 输出：[-50.08148199506104, 26.491866871132515, 80.86168933100998]
+function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
+    const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
+    const [x, y, z] = inputArray;
+    // 确保输入的坐标在[0, 256]范围内
+    if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
+        throw new Error('Input coordinates should be in the range of [0, 256]');
+    }
+    // 标准化坐标到[-130.081, 136.862]等对应区间
+    const normalizedX = (x / 256) * (maxX - minX) + minX;
+    const normalizedY = (y / 256) * (maxY - minY) + minY;
+    const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
+    return [normalizedX, normalizedY, normalizedZ];
+}
+
+let defaultPosition: Vector3
+
 // reset camera logic
-function resetCamera() {
+function resetCamera(position?: Vector3) {
   if (!vtkView.value) return;
 
   const metadata = currentImageMetadata.value;
   resliceStore.resetReslicePlanes(metadata);
 
   const { worldBounds } = metadata;
-  planeOrigin.value = vtkBoundingBox.getCenter(worldBounds);
+  // planeOrigin.value = vtkBoundingBox.getCenter(worldBounds); // 原来的planeOrigin.value直接用的中心点的值
+  // resliceCursorState.placeWidget(worldBounds);
+
+
+
+  // 如果传来位置，就定位新的位置，并设置成默认位置，再点击reset Views时回到新的位置
+  // 如果没有传来位置，但有默认位置，再定位到新的位置
+  // 如果没有传来位置，也没有默认位置，就定位到中心位置
+  const center = vtkBoundingBox.getCenter(worldBounds);
+  let newCenter: Vector3
+  if (position) {
+    newCenter = getNormalizedCoordinates(worldBounds, position)
+    defaultPosition = newCenter
+  } else if (defaultPosition) {
+    newCenter = defaultPosition
+  } else {
+    newCenter = center
+  }
+  // console.log('position',position)
+  // console.log('metadata',metadata)
+  // console.log('planeOrigin.value',planeOrigin.value)
+  // console.log('newCenter',newCenter)
+
+  planeOrigin.value = newCenter // 我发现只要改变planeOrigin.value，就能马上改变位置
   resliceCursorState.placeWidget(worldBounds);
+
 
   vtkView.value.resetCamera();
   updateResliceCamera(false);
@@ -242,6 +294,9 @@ function resetCamera() {
 }
 
 useResetViewsEvents().onClick(resetCamera);
+
+// 设置点坐标的事件
+useSetPositionEvents().onClick((position) => resetCamera(position));
 
 // update the camera
 onVTKEvent(

@@ -4,6 +4,10 @@ import { vtkImageData } from '@kitware/vtk.js/Common/DataModel/ImageData';
 import type { Bounds } from '@kitware/vtk.js/types';
 
 import { useIdStore } from '@/src/store/id';
+// eslint-disable-next-line import/no-cycle
+import { useViewStore } from '@/src/store/views';
+import { Layouts } from '@/src/config';
+
 import { defaultLPSDirections, getLPSDirections } from '../utils/lps';
 import { removeFromArray } from '../utils';
 import { StateFile, DatasetType } from '../io/state-file/schema';
@@ -24,6 +28,7 @@ export const defaultImageMetadata = () => ({
 });
 
 interface State {
+  id: string; // 只保留一个
   idList: string[]; // list of IDs
   dataIndex: Record<string, vtkImageData>; // ID -> VTK object
   metadata: Record<string, ImageMetadata>; // ID -> metadata
@@ -31,14 +36,20 @@ interface State {
 
 export const useImageStore = defineStore('images', {
   state: (): State => ({
+    id: '',
     idList: [],
     dataIndex: Object.create(null),
     metadata: Object.create(null),
   }),
   actions: {
     addVTKImageData(name: string, imageData: vtkImageData) {
-      const id = useIdStore().nextId();
+      // GGG 添加一个新的图像
 
+      // console.log('useImageStore addVTKImageData :>> ', name, imageData);
+
+      // 原来的，push进数组
+      const id = useIdStore().nextId();
+      this.id = id
       this.idList.push(id);
       this.dataIndex[id] = imageData;
 
@@ -48,6 +59,7 @@ export const useImageStore = defineStore('images', {
     },
 
     updateData(id: string, imageData: vtkImageData) {
+
       if (id in this.metadata) {
         const metadata: ImageMetadata = {
           name: this.metadata[id].name,
@@ -65,6 +77,13 @@ export const useImageStore = defineStore('images', {
         this.dataIndex[id] = imageData;
       }
       this.dataIndex[id] = imageData;
+
+      // GGG 在这里让布局改成默认为Oblique View布局
+      const viewStore = useViewStore();
+      setTimeout(() => {
+          viewStore.setLayout(Layouts['Oblique View'])
+      },50)
+
     },
 
     deleteData(id: string) {

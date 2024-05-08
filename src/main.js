@@ -23,6 +23,10 @@ import { patchExitPointerLock } from './utils/hacks';
 import { init as initErrorReporting } from './utils/errorReporting';
 import { StoreRegistry } from './plugins/storeRegistry';
 
+// GGG 将原来在index.html远程链接的css改成npm install @mdi/font -S 安装于本地 "@mdi/font": "^7.4.47",
+// 还是在inde.html里改成了https://unpkg.com
+import "@mdi/font/css/materialdesignicons.min.css"
+
 // patches
 patchExitPointerLock();
 
@@ -48,6 +52,7 @@ pinia.use(
   })
 );
 pinia.use(StoreRegistry);
+
 
 const app = createApp(App);
 

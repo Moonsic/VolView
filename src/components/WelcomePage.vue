@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+// import { ref, computed } from 'vue';
 import CloseableDialog from '@/src/components/CloseableDialog.vue';
 import DataSecurityBox from '@/src/components/DataSecurityBox.vue';
-import useRemoteSaveStateStore from '@/src/store/remote-save-state';
+// import useRemoteSaveStateStore from '@/src/store/remote-save-state';
 
 withDefaults(
   defineProps<{
@@ -13,15 +14,17 @@ withDefaults(
   }
 );
 
-const isRemoteSaveDisabled = computed(
-  () => useRemoteSaveStateStore().saveUrl === ''
-);
+// const isRemoteSaveDisabled = computed(
+//   () => useRemoteSaveStateStore().saveUrl === ''
+// );
+
 const dataSecurityDialog = ref(false);
 </script>
 
 <template>
   <v-container class="page-container bg-grey-darken-3" v-bind="$attrs">
-    <v-col>
+    <!-- GGG -->
+    <!-- <v-col>
       <v-row justify="center">
         <v-card
           flat
@@ -63,7 +66,7 @@ const dataSecurityDialog = ref(false);
           </template>
         </v-card>
       </v-row>
-    </v-col>
+    </v-col> -->
   </v-container>
   <closeable-dialog v-model="dataSecurityDialog">
     <data-security-box />

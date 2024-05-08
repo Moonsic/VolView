@@ -1,8 +1,8 @@
-import MRICardiacThumbnail from '@/src/assets/samples/MRI-Cardiac.jpg';
-import MRIPROSTATExThumbnail from '@/src/assets/samples/MRI-PROSTATEx.jpg';
-import MRAHeadThumbnail from '@/src/assets/samples/MRA-Head_and_Neck.jpg';
-import CTAHeadThumbnail from '@/src/assets/samples/CTA-Head_and_Neck.jpg';
-import USFetusThumbnail from '@/src/assets/samples/3DUS-Fetus.jpg';
+// import MRICardiacThumbnail from '@/src/assets/samples/MRI-Cardiac.jpg';
+// import MRIPROSTATExThumbnail from '@/src/assets/samples/MRI-PROSTATEx.jpg';
+// import MRAHeadThumbnail from '@/src/assets/samples/MRA-Head_and_Neck.jpg';
+// import CTAHeadThumbnail from '@/src/assets/samples/CTA-Head_and_Neck.jpg';
+// import USFetusThumbnail from '@/src/assets/samples/3DUS-Fetus.jpg';
 import { SegmentMask } from '@/src/types/segment';
 import { Layout, LayoutDirection } from './types/layout';
 import { ViewSpec } from './types/views';
@@ -105,11 +105,13 @@ export const InitViewSpecs: Record<string, ViewSpec> = {
  * The default view spec.
  */
 export const DefaultViewSpec = InitViewSpecs[InitViewIDs.Axial];
+// export const DefaultViewSpec = InitViewSpecs[InitViewIDs.ObliqueAxial];
 
 /**
  * The default layout.
  */
 export const DefaultLayoutName = 'Quad View';
+// export const DefaultLayoutName = 'Oblique View';
 
 /**
  * Defines the default layouts.
@@ -142,17 +144,24 @@ export const Layouts: Record<string, Layout> = [
       },
     ],
   },
+  // Coronal  冠状面：任何垂直于人体，将身体分为前后（腹部和背部）两个部分的平面。
+  // Sagittal 矢状面：解剖学中与中线平行的想象平面。
+  // Axial    轴面：一种想象中的平面，它将褶皱中背斜或褶皱中褶皱的两个肢体之间的角度一分为二。
+  // Three    3D效果
+
+  // items 表示位置
+  // 新的位置，3D在右下角
   {
     name: 'Quad View',
     direction: LayoutDirection.H,
     items: [
       {
         direction: LayoutDirection.V,
-        items: [InitViewIDs.Coronal, InitViewIDs.Three],
+        items: [InitViewIDs.Coronal, InitViewIDs.Sagittal],
       },
       {
         direction: LayoutDirection.V,
-        items: [InitViewIDs.Sagittal, InitViewIDs.Axial],
+        items: [InitViewIDs.Axial, InitViewIDs.Three],
       },
     ],
   },
@@ -162,11 +171,11 @@ export const Layouts: Record<string, Layout> = [
     items: [
       {
         direction: LayoutDirection.V,
-        items: [InitViewIDs.ObliqueCoronal, InitViewIDs.ObliqueThree],
+        items: [InitViewIDs.ObliqueCoronal, InitViewIDs.ObliqueSagittal],
       },
       {
         direction: LayoutDirection.V,
-        items: [InitViewIDs.ObliqueSagittal, InitViewIDs.ObliqueAxial],
+        items: [InitViewIDs.ObliqueAxial, InitViewIDs.ObliqueThree],
       },
     ],
   },
@@ -177,7 +186,7 @@ export const Layouts: Record<string, Layout> = [
   },
 ].reduce((layouts, layout) => {
   return { ...layouts, [layout.name]: layout };
-}, {});
+}, {}); // 这3行代码将数组转成对象{}
 
 export const DEFAULT_SEGMENT_MASKS: SegmentMask[] = [
   {
@@ -196,51 +205,51 @@ export const DEFAULT_SEGMENT_MASKS: SegmentMask[] = [
     color: [0, 0, 255, 255],
   },
 ];
-
+// 采样数据先注释掉
 export const SAMPLE_DATA: SampleDataset[] = [
-  {
-    name: 'CTA Head and Neck',
-    filename: 'CTA-Head_and_Neck.zip',
-    description:
-      'CTA head and neck scan of elderly patient with tumor. (80 MB)',
-    url: 'https://data.kitware.com/api/v1/item/6347159711dab81428208e24/download',
-    image: CTAHeadThumbnail,
-  },
-  {
-    name: 'MRA Head and Neck',
-    filename: 'MRA-Head_and_Neck.zip',
-    description:
-      'MRA from Patient Contributed Image Repository. Click application help icon "(?)" for more info. (15 MB)',
-    url: 'https://data.kitware.com/api/v1/item/6352a2b311dab8142820a33b/download',
-    image: MRAHeadThumbnail,
-  },
-  {
-    name: 'MRI Cardiac 3D and Cine',
-    filename: 'MRI-Cardiac-3D_and_Cine.zip',
-    description:
-      'MRI scan with two series: 3D axial non-gated and 2 chamber cine. (4 MB)',
-    url: 'https://data.kitware.com/api/v1/item/6350b28f11dab8142820949d/download',
-    image: MRICardiacThumbnail,
-  },
-  {
-    name: 'MRI PROSTATEx',
-    filename: 'MRI-PROSTATEx-0004.zip',
-    description:
-      'MRI from the SPIE-AAPM-NCI PROSTATEx challenge. Click application help "(?)" icon for more info. (3 MB)',
-    url: 'https://data.kitware.com/api/v1/item/63527c7311dab8142820a338/download',
-    image: MRIPROSTATExThumbnail,
-  },
-  {
-    name: '3D US Fetus',
-    filename: '3DUS-Fetus.mha',
-    description:
-      '3D ultrasound of a baby. Downloaded from tomovision.com.(8 MB)',
-    url: 'https://data.kitware.com/api/v1/item/635679c311dab8142820a4f4/download',
-    image: USFetusThumbnail,
-    defaults: {
-      colorPreset: 'US-Fetal',
-    },
-  },
+  // {
+  //   name: 'CTA Head and Neck',
+  //   filename: 'CTA-Head_and_Neck.zip',
+  //   description:
+  //     'CTA head and neck scan of elderly patient with tumor. (80 MB)',
+  //   url: 'https://data.kitware.com/api/v1/item/6347159711dab81428208e24/download',
+  //   image: CTAHeadThumbnail,
+  // },
+  // {
+  //   name: 'MRA Head and Neck',
+  //   filename: 'MRA-Head_and_Neck.zip',
+  //   description:
+  //     'MRA from Patient Contributed Image Repository. Click application help icon "(?)" for more info. (15 MB)',
+  //   url: 'https://data.kitware.com/api/v1/item/6352a2b311dab8142820a33b/download',
+  //   image: MRAHeadThumbnail,
+  // },
+  // {
+  //   name: 'MRI Cardiac 3D and Cine',
+  //   filename: 'MRI-Cardiac-3D_and_Cine.zip',
+  //   description:
+  //     'MRI scan with two series: 3D axial non-gated and 2 chamber cine. (4 MB)',
+  //   url: 'https://data.kitware.com/api/v1/item/6350b28f11dab8142820949d/download',
+  //   image: MRICardiacThumbnail,
+  // },
+  // {
+  //   name: 'MRI PROSTATEx',
+  //   filename: 'MRI-PROSTATEx-0004.zip',
+  //   description:
+  //     'MRI from the SPIE-AAPM-NCI PROSTATEx challenge. Click application help "(?)" icon for more info. (3 MB)',
+  //   url: 'https://data.kitware.com/api/v1/item/63527c7311dab8142820a338/download',
+  //   image: MRIPROSTATExThumbnail,
+  // },
+  // {
+  //   name: '3D US Fetus',
+  //   filename: '3DUS-Fetus.mha',
+  //   description:
+  //     '3D ultrasound of a baby. Downloaded from tomovision.com.(8 MB)',
+  //   url: 'https://data.kitware.com/api/v1/item/635679c311dab8142820a4f4/download',
+  //   image: USFetusThumbnail,
+  //   defaults: {
+  //     colorPreset: 'US-Fetal',
+  //   },
+  // },
 ];
 
 export const TOOL_COLORS = [
@@ -277,7 +286,8 @@ export const DEFAULT_PRESET_BY_MODALITY: Record<string, string> = {
   MR: 'CT-Coronary-Arteries-2',
   US: 'US-Fetal',
 };
-export const DEFAULT_PRESET = 'CT-AAA';
+// export const DEFAULT_PRESET = 'CT-AAA';
+export const DEFAULT_PRESET = 'MR-MIP'; // GGG 默认MR-MIP 灰色的3D效果
 
 export const LAYER_PRESET_BY_MODALITY: Record<string, string> = {
   ...DEFAULT_PRESET_BY_MODALITY,

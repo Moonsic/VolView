@@ -34,7 +34,7 @@ function resolvePath(...args: string[]) {
 }
 
 const rootDir = resolvePath(__dirname);
-const distDir = resolvePath(rootDir, 'dist');
+const distDir = resolvePath(rootDir, 'volview-dist');
 const itkConfig = resolvePath(rootDir, 'src', 'io', 'itk', 'itkConfig.js');
 
 const { ANALYZE_BUNDLE, SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT } =
@@ -52,6 +52,7 @@ function configureSentryPlugin() {
 }
 
 export default defineConfig({
+  base: '', // 设置为空字符串，意味着所有资源路径都是相对于根URL的相对路径。解决嵌入到A项目里路径变成了A项目的绝对路径的问题
   build: {
     outDir: distDir,
     rollupOptions: {
@@ -195,6 +196,11 @@ export default defineConfig({
     // so `npm run test:e2e:dev` can access the webdriver static server temp directory
     proxy: {
       '/tmp': config.baseUrl!,
+      // '/api': {
+			//  target: 'http://127.0.0.1:8000/', // 本地
+			// 	changeOrigin: true,
+			// 	rewrite: path1 => path1.replace(/^\/api/, '')
+			// }
     },
   },
   optimizeDeps: {

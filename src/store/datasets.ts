@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
