@@ -3,6 +3,8 @@
     <div class="vtk-gutter"></div>
     <div class="vtk-container">
       <div class="vtk-sub-container">
+
+        <!-- VtkVolumeView -->
         <vtk-volume-view
           class="vtk-view"
           ref="vtkView"
@@ -12,19 +14,29 @@
           :view-direction="viewDirection"
           :view-up="viewUp"
         >
+          <!-- 我的球体参考点，只有一个，不应该放在v-for里 -->
+          <MySpheresRepresentation
+
+          ></MySpheresRepresentation>
+
           <template v-for="(sliceProps, idx) in obliqueSliceProps" :key="idx">
+
+            <!-- VtkBaseObliqueSliceRepresentation 3个切片 -->
             <vtk-base-oblique-slice-representation
               :view-id="sliceProps.viewId"
               :image-id="currentImageID"
               :plane-normal="sliceProps.planeNormal"
               :plane-origin="sliceProps.planeOrigin"
             ></vtk-base-oblique-slice-representation>
+
+
+            <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
             <vtk-image-outline-representation
               :view-id="sliceProps.viewId"
               :image-id="currentImageID"
               :plane-normal="sliceProps.planeNormal"
               :plane-origin="sliceProps.planeOrigin"
-              :thickness="4"
+              :thickness="2"
               :color="sliceProps.outlineColor"
             ></vtk-image-outline-representation>
           </template>
@@ -44,6 +56,8 @@ import { VtkViewApi } from '@/src/types/vtk-types';
 import { LayoutViewProps } from '@/src/types';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
+import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
+
 import { useViewAnimationListener } from '@/src/composables/useViewAnimationListener';
 import useResliceCursorStore, {
   mapAxisToViewType,
@@ -108,6 +122,10 @@ const obliqueSliceProps = computed(() => {
   });
 });
 
+console.log('slices :>> ', slices);
+console.log('obliqueSliceProps :>> ', obliqueSliceProps);
+console.log('127 vtkView.value :>> ', vtkView.value);
+
 // reset camera logic
 function resetCamera() {
   if (!vtkView.value) return;
@@ -116,6 +134,23 @@ function resetCamera() {
 }
 
 useResetViewsEvents().onClick(resetCamera);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 
 <style scoped src="@/src/components/styles/vtk-view.css"></style>

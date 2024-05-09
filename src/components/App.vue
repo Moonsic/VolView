@@ -154,37 +154,37 @@ window.addEventListener('message', (event) => {
 })
 
 
-console.log('App.vue启动')
-// setTimeout(()=>{
-//   console.log('开始设置position');
-//   const position: Vector3 = [80,150,200]
-//   clickEventSetPosition.trigger(position);
-// },10000)
-
-
-// 生成一个随机数
-function randomNum(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min) + min)
-}
-// 生成一个位置
-function randomPosition(){
-  const position: Vector3 = [
-    randomNum(50,200),
-    randomNum(50,200),
-    randomNum(50,200)
-  ]
-  return position
-}
-// 生成一个位置
-function setNewPosition(){
-  const position: Vector3 = randomPosition()
-  console.log('开始设置position', position);
+console.log('VolView 启动')
+setTimeout(()=>{
+  console.log('开始设置position');
+  const position: Vector3 = [80,150,200]
   clickEventSetPosition.trigger(position);
-}
+},10000)
 
-setInterval(()=>{
-  setNewPosition()
-},5000)
+
+// // 生成一个随机数
+// function randomNum(min: number, max: number) {
+//   return Math.floor(Math.random() * (max - min) + min)
+// }
+// // 生成一个位置
+// function randomPosition(){
+//   const position: Vector3 = [
+//     randomNum(50,200),
+//     randomNum(50,200),
+//     randomNum(50,200)
+//   ]
+//   return position
+// }
+// // 生成一个位置
+// function setNewPosition(){
+//   const position: Vector3 = randomPosition()
+//   console.log('开始设置position', position);
+//   clickEventSetPosition.trigger(position);
+// }
+
+// setInterval(()=>{
+//   setNewPosition()
+// },5000)
 
 
 

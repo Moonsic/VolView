@@ -24,6 +24,16 @@ import { VtkViewApi } from '@/src/types/vtk-types';
 import { VtkViewContext } from '@/src/components/vtk/context';
 import vtkMouseCameraTrackballRotateManipulator from '@kitware/vtk.js/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
 import vtkBoundingBox from '@kitware/vtk.js/Common/DataModel/BoundingBox';
+import type { Vector3 } from '@kitware/vtk.js/types';
+
+import '@kitware/vtk.js/Rendering/Profiles/Geometry';
+import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
+import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
+import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
+import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
+import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+
 
 interface Props {
   viewId: string;
@@ -52,6 +62,7 @@ const { metadata: imageMetadata } = useImage(imageID);
 // the renderer before the renderer is deleted.
 const scope = effectScope(true);
 const view = scope.run(() => useVtkView(vtkContainerRef))!;
+console.log('55 view :>> ', view);
 onUnmounted(() => {
   scope.stop();
 });
@@ -109,9 +120,39 @@ const api: VtkViewApi = markRaw({
   interactorStyle,
   resetCamera,
 });
+console.log('api2 :>> ', api);
 
 defineExpose(api);
 provide(VtkViewContext, api);
+
+
+
+const sphere = vtkSphereSource.newInstance();
+const points: Vector3[] = [
+  [0,0,0],
+  [0.1,0.1,0.1],
+  [0.1,0.2,0.3],
+  [0.2,0.1,0.5],
+  [0.3,0.2,0.1],
+  [0.4,0.4,0.4],
+  [4,4,4],
+]
+points.forEach(item=>{
+  sphere.setCenter(item);
+  sphere.setRadius(0.01);
+  const sphereMapper = vtkMapper.newInstance();
+  sphereMapper.setInputData(sphere.getOutputData());
+  const sphereActor = vtkActor.newInstance();
+  sphereActor.setMapper(sphereMapper);
+  sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+  view.renderer.addActor(sphereActor);
+})
+view.renderWindow.render();
+view.requestRender();
+resetCamera();
+
+
+
 </script>
 
 <template>

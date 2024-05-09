@@ -121,8 +121,10 @@ function vtkPaintBrushContextRepresentation(publicAPI, model) {
   };
 
   const actorProperty = model.pipelines.brush.actor.getProperty();
+  console.log('124 actorProperty',actorProperty)
   actorProperty.setLineWidth(2);
   actorProperty.setColor([1, 0, 0]);
+  actorProperty.setOutlineVisibility(true); // 是否显示外围的线
   actorProperty.setDisplayLocation(DisplayLocation.FOREGROUND);
   actorProperty.setRepresentation(Representation.SURFACE);
 

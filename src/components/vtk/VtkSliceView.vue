@@ -47,6 +47,16 @@ onUnmounted(() => {
 view.renderer.setBackground(0, 0, 0);
 view.renderer.getActiveCamera().setParallelProjection(true);
 
+
+console.log('viewID',viewID.value) // value : "ObliqueCoronal"
+console.log('imageID',imageID.value) // value : "10"
+console.log('viewDirection',viewDirection.value) // value : "Posterior"
+console.log('viewUp',viewUp.value) // value : "Superior"
+console.log('disableAutoResetCamera',disableAutoResetCamera.value) // value : false
+// console.log('view',view)
+console.log('view.renderer',view.renderer)
+// console.log('vtkContainerRef',vtkContainerRef)
+
 // setup interactor style
 const { interactorStyle } = useVtkInteractorStyle(
   vtkInteractorStyleManipulator,

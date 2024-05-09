@@ -15,6 +15,10 @@ import type { Vector3 } from '@kitware/vtk.js/types';
 import { syncRefs, watchImmediate } from '@vueuse/core';
 import { inject, toRefs, watchEffect } from 'vue';
 
+// import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
+// import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
+// import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+
 interface Props {
   viewId: string;
   imageId: Maybe<string>;
@@ -37,6 +41,8 @@ if (!view) throw new Error('No VtkView');
 const { imageData } = useImage(imageId);
 const outlineFilter = useVtkFilter(vtkImageDataOutlineFilter, imageData);
 const outline = outlineFilter.getOutputData<vtkPolyData>(0);
+  // console.log('outlineFilter', outlineFilter)
+  // console.log('outline', outline)
 
 // slicing plane
 const slicePlane = vtkPlane.newInstance();
@@ -51,10 +57,14 @@ const rep = useVtkRepresentation({
   vtkMapperClass: vtkMapper,
 });
 
+console.log('57 view', view)
+console.log('rep.property', rep.property)
+
 // set representation properties
 watchEffect(() => {
   rep.property.setLineWidth(thickness.value);
   rep.property.setColor(color.value);
+  // rep.property.setPointSize(10);
 });
 
 // sync input plane to slice plane
@@ -69,6 +79,34 @@ watchImmediate([slicePlaneNormal, slicePlaneOrigin], () => {
 });
 
 defineExpose(rep);
+
+
+
+
+// const sphere = vtkSphereSource.newInstance();
+// const points: Vector3[] = [
+//   [0,0,0],
+//   [0.1,0.1,0.1],
+//   [0.1,0.2,0.3],
+//   [0.2,0.1,0.5],
+//   [0.3,0.2,0.1],
+//   [0.4,0.4,0.4],
+//   [4,4,4],
+// ]
+// points.forEach(item=>{
+//   sphere.setCenter(item);
+//   sphere.setRadius(0.01);
+//   const sphereMapper = vtkMapper.newInstance();
+//   sphereMapper.setInputData(sphere.getOutputData());
+//   const sphereActor = vtkActor.newInstance();
+//   sphereActor.setMapper(sphereMapper);
+//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+//   // renderer.addActor(sphereActor);
+//   view.renderer.addActor(sphereActor);
+// })
+// view.renderWindow.render();
+// view.requestRender();
+// view.resetCamera();
 </script>
 
 <template><slot></slot></template>

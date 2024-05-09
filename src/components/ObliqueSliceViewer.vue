@@ -44,20 +44,26 @@
             :view-id="id"
             :image-id="currentImageID"
           ></slice-viewer-overlay>
+
+          <!-- VtkBaseObliqueSliceRepresentation 1个切片 -->
           <vtk-base-oblique-slice-representation
             :view-id="id"
             :image-id="currentImageID"
             :plane-normal="planeNormal"
             :plane-origin="planeOrigin"
           ></vtk-base-oblique-slice-representation>
+
+          <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
           <vtk-image-outline-representation
             :view-id="id"
             :image-id="currentImageID"
             :plane-normal="planeNormal"
             :plane-origin="planeOrigin"
-            :thickness="4"
+            :thickness="2"
             :color="outlineColor"
           ></vtk-image-outline-representation>
+
+          <!-- 十字指示线 -->
           <reslice-cursor-tool
             :view-id="id"
             :view-direction="viewDirection"
@@ -76,6 +82,8 @@ import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue�
 import ResliceCursorTool from '@/src/components/tools/ResliceCursorTool.vue';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
+
+
 import VtkSliceView from '@/src/components/vtk/VtkSliceView.vue';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import { useCurrentImage } from '@/src/composables/useCurrentImage';
@@ -279,7 +287,7 @@ function resetCamera(position?: Vector3) {
     newCenter = center
   }
   // console.log('position',position)
-  // console.log('metadata',metadata)
+  console.log('metadata', metadata)
   // console.log('planeOrigin.value',planeOrigin.value)
   // console.log('newCenter',newCenter)
 
@@ -320,6 +328,16 @@ const outlineColor = computed(
       1 / 255
     ) as RGBColor
 );
+
+// console.log('viewId.value',viewId.value) // ObliqueCoronal
+// console.log('OBLIQUE_OUTLINE_COLORS', OBLIQUE_OUTLINE_COLORS)
+// {
+//     "ObliqueAxial": [ 0, 128, 255 ],
+//     "ObliqueSagittal": [ 255, 255, 0 ],
+//     "ObliqueCoronal": [ 255, 51, 51 ]
+// }
+// console.log('outlineColor',outlineColor.value) // [1, 0.2, 0.2]
+
 </script>
 
 <style scoped src="@/src/components/styles/vtk-view.css"></style>
