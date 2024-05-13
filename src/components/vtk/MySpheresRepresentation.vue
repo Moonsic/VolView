@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { toRefs, watchEffect, inject, ref } from 'vue';
-import { useImage } from '@/src/composables/useCurrentImage';
-import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
-import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
-import { Maybe } from '@/src/types';
-import { VtkViewContext } from '@/src/components/vtk/context';
-import { SlabTypes } from '@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants';
-import type { Vector3 } from '@kitware/vtk.js/types';
-import { watchImmediate } from '@vueuse/core';
-import vtkPlane from '@kitware/vtk.js/Common/DataModel/Plane';
+// import { toRefs, watchEffect, inject, ref } from 'vue';
+// import { useImage } from '@/src/composables/useCurrentImage';
+// import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
+// import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
+// import { Maybe } from '@/src/types';
+// import { VtkViewContext } from '@/src/components/vtk/context';
+// import { SlabTypes } from '@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants';
+// import type { Vector3 } from '@kitware/vtk.js/types';
+// import { watchImmediate } from '@vueuse/core';
+// import vtkPlane from '@kitware/vtk.js/Common/DataModel/Plane';
 
-import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
-import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
-import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
-import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
-import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
-import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+// import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
+// import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+// import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
+// import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
+// import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
+// import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 
 
 // interface Props {
@@ -33,11 +33,11 @@ import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 //   planeOrigin,
 // } = toRefs(props);
 
-const view = inject(VtkViewContext);
-console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
-// const api = inject(api);
-// console.log('36 api :>> ', api);
-if (!view) throw new Error('No VtkView');
+// const view = inject(VtkViewContext);
+// console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
+// // const api = inject(api);
+// // console.log('36 api :>> ', api);
+// if (!view) throw new Error('No VtkView');
 
 // const { imageData } = useImage(imageID);
 
@@ -168,7 +168,6 @@ if (!view) throw new Error('No VtkView');
 </script>
 
 <template>
-  123456
   <!-- 2222222224
   <div ref="myVtkContainer" class="my-vtk-container"></div> -->
   <slot></slot>
