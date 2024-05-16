@@ -15,9 +15,9 @@
           :view-up="viewUp"
         >
           <!-- 我的球体参考点，只有一个，不应该放在v-for里 -->
-          <!-- <MySpheresRepresentation
+          <MySpheresRepresentation
 
-          ></MySpheresRepresentation> -->
+          ></MySpheresRepresentation>
 
           <template v-for="(sliceProps, idx) in obliqueSliceProps" :key="idx">
 
@@ -56,7 +56,7 @@ import { VtkViewApi } from '@/src/types/vtk-types';
 import { LayoutViewProps } from '@/src/types';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
-// import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
+import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
 
 import { useViewAnimationListener } from '@/src/composables/useViewAnimationListener';
 import useResliceCursorStore, {
@@ -95,6 +95,7 @@ useViewAnimationListener(vtkView, viewId, viewType);
 
 // base image
 const { currentImageID } = useCurrentImage();
+// console.log('98--- :>> ', currentImageID);
 
 // reslice cursor
 const resliceStore = useResliceCursorStore();
@@ -103,6 +104,7 @@ const { resliceCursor, resliceCursorState } = resliceStore;
 // -----
 
 const resliceCenter = vtkFieldRef(resliceCursorState, 'center');
+// console.log('106 resliceCenter :>> ', resliceCenter);
 const obliqueSliceProps = computed(() => {
   return slices.value.map((sliceSpec) => {
     const planeNormal = resliceCursor.getPlaneNormalFromViewType(

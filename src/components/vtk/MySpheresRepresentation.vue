@@ -1,21 +1,24 @@
 <script setup lang="ts">
 // import { toRefs, watchEffect, inject, ref } from 'vue';
+import { inject } from 'vue';
 // import { useImage } from '@/src/composables/useCurrentImage';
 // import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
 // import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
 // import { Maybe } from '@/src/types';
-// import { VtkViewContext } from '@/src/components/vtk/context';
+import { VtkViewContext } from '@/src/components/vtk/context';
 // import { SlabTypes } from '@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants';
-// import type { Vector3 } from '@kitware/vtk.js/types';
+import type { Vector3 } from '@kitware/vtk.js/types';
 // import { watchImmediate } from '@vueuse/core';
 // import vtkPlane from '@kitware/vtk.js/Common/DataModel/Plane';
 
 // import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
-// import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
-// import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
+import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 // import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
 // import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
-// import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
+
+import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 
 // interface Props {
@@ -33,11 +36,11 @@
 //   planeOrigin,
 // } = toRefs(props);
 
-// const view = inject(VtkViewContext);
-// console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
-// // const api = inject(api);
-// // console.log('36 api :>> ', api);
-// if (!view) throw new Error('No VtkView');
+const view = inject(VtkViewContext);
+console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
+// const api = inject(api);
+// console.log('36 api :>> ', api);
+if (!view) throw new Error('No VtkView');
 
 // const { imageData } = useImage(imageID);
 
@@ -83,102 +86,54 @@
 
 
 
-
-
-
-// 2---------
-// const myVtkContainer = ref(null);
-// const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
-//   rootContainer: myVtkContainer.value,
-//   background: [0.2, 0.3, 0.4], // rgb 蓝色多一点
-// });
-// const renderer = fullScreenRenderer.getRenderer();
-// const renderWindow = fullScreenRenderer.getRenderWindow();
-// const mapper = vtkMapper.newInstance();
-
-// const actor = vtkActor.newInstance();
-// actor.setMapper(mapper);
-
-// actor.getProperty().setColor(1, 0, 0); // 设置颜色为红色
-// actor.getProperty().setPointSize(5); // 默认点大小，实际大小由polyData中的Scalars控制
-// actor.getProperty().setOpacity(0.5);
-
-
+// 画一些坐标点
 // const sphere = vtkSphereSource.newInstance();
 // const points: Vector3[] = [
-//   [0,0,0],
-//   [0.1,0.1,0.1],
-//   [0.1,0.2,0.3],
-//   [0.2,0.1,0.5],
-//   [0.3,0.2,0.1],
-//   // [0.4,0.4,0.4],
-//   // [4,4,4],
-//   // [40,40,40],
-//   // [100,100,100],
+//   [1,1,1],
+//   [10,10,10],
+//   [20,20,20],
+//   [30,30,30],
+//   [-40,-40,-40],
+//   [-133,77,57],
+//   [132,-132,132],
 // ]
 // points.forEach(item=>{
 //   sphere.setCenter(item);
-//   sphere.setRadius(0.01);
+//   sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
 //   const sphereMapper = vtkMapper.newInstance();
 //   sphereMapper.setInputData(sphere.getOutputData());
 //   const sphereActor = vtkActor.newInstance();
 //   sphereActor.setMapper(sphereMapper);
-//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
-//   renderer.addActor(sphereActor);
+//   sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
 //   view.renderer.addActor(sphereActor);
 // })
-// renderWindow.render();
-// view.renderWindow.render();
-// view.requestRender();
-// view.resetCamera();
 
 
-/// 1----------------
-// const renderer = vtkRenderer.newInstance();
-// const renderWindow = vtkRenderWindow.newInstance();
-// renderWindow.addRenderer(renderer);
 
-// const sphere = vtkSphereSource.newInstance();
-// sliceRep.mapper.setSlicePlane(slicePlane);
-// const points: Vector3[] = [
-//   [0.1,0.2,0.3],
-//   [0.2,0.1,0.5],
-//   [0.3,0.2,0.1],
-//   [0.4,0.4,0.4],
-//   [4,4,4],
-//   [40,40,40],
-//   [100,100,100],
-// ]
-// points.forEach(item=>{
-//   sphere.setCenter(item);
-//   sphere.setRadius(0.01);
-//   const sphereMapper = vtkMapper.newInstance();
-//   sliceRep.mapper.setInputData(sphere.getOutputData());
-//   // const sphereActor = vtkActor.newInstance();
-//   // sphereActor.setMapper(sphereMapper);
-//   // sliceRep.actor.getProperty().setColor(0.0, 1.0, 0.0);
-//   // renderer.addActor(sphereActor);
-//   // view.renderer.addActor(sphereActor);
-// })
-// renderWindow.render();
-// view.renderWindow.render();
-// view.requestRender();
-// view.resetCamera();
+function addSphere(position: Vector3) {
+  const sphere = vtkSphereSource.newInstance();
+  // sphere.setCenter(position);
+  console.log('setCenter :>> ', [position[0]-128,position[1]-128,position[2]-128]);
+  sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
+  sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+  const sphereMapper = vtkMapper.newInstance();
+  sphereMapper.setInputData(sphere.getOutputData());
+  const sphereActor = vtkActor.newInstance();
+  sphereActor.setMapper(sphereMapper);
+  sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
+  view.renderer.addActor(sphereActor);
+}
+
+// 设置点坐标的事件
+useSetPositionEvents().onClick((position) => addSphere(position));
+
 
 </script>
 
 <template>
-  <!-- 2222222224
-  <div ref="myVtkContainer" class="my-vtk-container"></div> -->
   <slot></slot>
 </template>
 
 <style scoped>
-.my-vtk-container {
-  /* width: 100%; */
-  width: 300px;
-  height: 300px;
-  /* position: relative;
-  margin: 0 auto; */
-}
+
 </style>
