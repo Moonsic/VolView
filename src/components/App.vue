@@ -90,6 +90,12 @@ export function useSetPositionEvents() {
   return { onClick: clickEventSetPosition.on };
 }
 
+const clickEventSetPositionList = createEventHook<Vector3[]>();
+export function useSetPositionListEvents() {
+  return { onClick: clickEventSetPositionList.on };
+}
+
+
 // B项目接收
 window.addEventListener('message', (event) => {
   // console.log('message :>> ', event)
@@ -121,40 +127,17 @@ window.addEventListener('message', (event) => {
     clickEventSetPosition.trigger(position);
   }
 
-  // 在这个项目里请求接口的例子
-  // if (event.data.filePath) {
-  //   const filePath = event.data.filePath
-  //   const url = `/api/sl/getNiiFileStream?filePath=${filePath}`
-  //   const xhr = new XMLHttpRequest();
-  //   // POST请求,link,async(是否异步)
-  //   xhr.open("GET", url, true);
-  //   // //设置请求头参数的方式,如果没有可忽略此行代码
-  //   const accessToken = String(localStorage.getItem('access_token'))
-  //   console.log('access_token :>> ',accessToken );
-  //   xhr.setRequestHeader("Authentication", accessToken);
-  //   // //设置响应类型为 blob
-  //   xhr.responseType = "blob";
-  //   // //关键部分
-  //   xhr.onload = function() {
-  //     console.log('B this :>> ', this);
-  //     //   //如果请求执行成功
-  //     if (this.status === 200) {
-  //       const blob = this.response;
-  //       // const blob = new Blob([res], { type: '' })
-  //       const newFile = new File([blob], filePath)
-  //       console.log('B newFile :>> ', newFile);
-  //       loadFiles([newFile])
-  //     }
-  //   };
-  //   // //发送请求
-  //   xhr.send();
-  // }
-
+  if (event.data.type === 'setPositionList') {
+    const positionList: Vector3[] = JSON.parse(event.data.positionList)
+    console.log('positionList', positionList);
+    clickEventSetPositionList.trigger(positionList);
+  }
 
 })
 
 
 console.log('VolView 启动')
+
 // setTimeout(()=>{
 //   console.log('开始设置position');
 //   const position: Vector3 = [80,150,200]
@@ -162,32 +145,38 @@ console.log('VolView 启动')
 // },10000)
 
 
-// 生成一个随机数
-function randomNum(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min) + min)
-}
-// 生成一个位置
-function randomPosition(){
-  const position: Vector3 = [
-    randomNum(50,200),
-    randomNum(50,200),
-    randomNum(50,200)
-  ]
-  return position
-}
-// 生成一个位置
-function setNewPosition(){
-  const position: Vector3 = randomPosition()
-  console.log('开始设置position', position);
-  clickEventSetPosition.trigger(position);
-}
+// // 生成一个随机数
+// function randomNum(min: number, max: number) {
+//   return Math.floor(Math.random() * (max - min) + min)
+// }
+// // 生成一个随机位置
+// function randomPosition(){
+//   const position: Vector3 = [
+//     randomNum(50,200),
+//     randomNum(50,200),
+//     randomNum(50,200)
+//   ]
+//   return position
+// }
 
-setInterval(()=>{
-  setNewPosition()
-},10000)
+// // 生成一个位置
+// setInterval(()=>{
+//   const position: Vector3 = randomPosition()
+//   console.log('开始设置position', position);
+//   clickEventSetPosition.trigger(position);
+// },10000)
 
 
-
+// // 生成多个位置
+// setInterval(()=>{
+//   const length = Math.floor(randomNum(3,8))
+//   const positionList: Vector3[] = []
+//   for (let index = 0; index < length; index++) {
+//     positionList.push(randomPosition())
+//   }
+//   console.log('开始设置positionList', positionList);
+//   clickEventSetPositionList.trigger(positionList);
+// },10000)
 
 
 export default defineComponent({

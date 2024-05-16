@@ -18,7 +18,7 @@ import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 // import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 
-import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
+import { useSetPositionListEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 
 // interface Props {
@@ -86,7 +86,7 @@ if (!view) throw new Error('No VtkView');
 
 
 
-// 画一些坐标点
+// // // 画一些坐标点
 // const sphere = vtkSphereSource.newInstance();
 // const points: Vector3[] = [
 //   [1,1,1],
@@ -109,23 +109,57 @@ if (!view) throw new Error('No VtkView');
 // })
 
 
+// const sphere = vtkSphereSource.newInstance();
+// function addSphere(position: Vector3) {
+//   // sphere.setCenter(position);
+//   console.log('setCenter :>> ', [position[0]-128,position[1]-128,position[2]-128]);
+//   sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
+//   sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+//   const sphereMapper = vtkMapper.newInstance();
+//   sphereMapper.setInputData(sphere.getOutputData());
+//   const sphereActor = vtkActor.newInstance();
+//   sphereActor.setMapper(sphereMapper);
+//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+//   view?.renderer.addActor(sphereActor);
+// }
 
-function addSphere(position: Vector3) {
-  const sphere = vtkSphereSource.newInstance();
-  // sphere.setCenter(position);
-  console.log('setCenter :>> ', [position[0]-128,position[1]-128,position[2]-128]);
-  sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
-  sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-  const sphereMapper = vtkMapper.newInstance();
-  sphereMapper.setInputData(sphere.getOutputData());
-  const sphereActor = vtkActor.newInstance();
-  sphereActor.setMapper(sphereMapper);
-  sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
-  view.renderer.addActor(sphereActor);
+let actors: any[] = [];
+const sphere = vtkSphereSource.newInstance();
+
+// 先清除旧的球体
+function deleteSphereList() {
+  // 遍历actors数组，并从renderer中移除每一个actor
+  if (actors.length) {
+    actors.forEach(actor => {
+      view?.renderer.removeActor(actor);
+    });
+  }
+  // 清空actors数组
+  actors = [];
+  // // 更新渲染器
+  // view?.renderWindow.render();
+}
+
+
+function addSphereList(positionList: Vector3[]) {
+  deleteSphereList() // 先清除旧的球体
+
+  positionList.forEach(position => {
+    sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
+    sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+    const sphereMapper = vtkMapper.newInstance();
+    sphereMapper.setInputData(sphere.getOutputData());
+    const sphereActor = vtkActor.newInstance();
+    sphereActor.setMapper(sphereMapper);
+    sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+    view?.renderer.addActor(sphereActor);
+
+    actors.push(sphereActor);
+  })
 }
 
 // 设置点坐标的事件
-useSetPositionEvents().onClick((position) => addSphere(position));
+useSetPositionListEvents().onClick((positionList) => addSphereList(positionList));
 
 
 </script>
