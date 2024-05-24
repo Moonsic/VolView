@@ -141,11 +141,25 @@ function deleteSphereList() {
 }
 
 
-function addSphereList(positionList: Vector3[]) {
-  deleteSphereList() // 先清除旧的球体
 
+function addSphereList(positionList: Vector3[]) {
+deleteSphereList() // 先清除旧的球体
+
+console.log('148 window.xyzCenter',window.xyzCenter)
+const [x, y, z] = window.xyzCenter
   positionList.forEach(position => {
-    sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
+    // sphere.setCenter([
+    //   position[0]-128,
+    //   position[1]-128,
+    //   position[2]-128
+    // ]);
+    sphere.setCenter([
+      position[0] - 128 - x,
+      position[1] - 128 - y,
+      position[2] - 128 - z,
+    ]);
+    // sphere.setCenter([0,0,0]);
+    // sphere.setCenter(position);
     sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
     const sphereMapper = vtkMapper.newInstance();
     sphereMapper.setInputData(sphere.getOutputData());
@@ -157,6 +171,15 @@ function addSphereList(positionList: Vector3[]) {
     actors.push(sphereActor);
   })
 }
+
+// setTimeout(()=>{
+//   addSphereList(
+//     [
+//       [0,0,0],
+//       [-2.081481458619237, 4.4918666201410815, 8.861701400950565]
+//     ]
+//   )
+// },1000)
 
 // 设置点坐标的事件
 useSetPositionListEvents().onClick((positionList) => addSphereList(positionList));

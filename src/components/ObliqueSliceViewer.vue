@@ -287,7 +287,7 @@ function resetCamera(position?: Vector3) {
     newCenter = center
   }
   // console.log('position',position)
-  console.log('metadata', metadata)
+  console.log('290 metadata', metadata)
   // console.log('planeOrigin.value',planeOrigin.value)
   // console.log('newCenter',newCenter)
 

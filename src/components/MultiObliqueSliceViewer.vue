@@ -126,7 +126,7 @@ const obliqueSliceProps = computed(() => {
 
 console.log('slices :>> ', slices);
 console.log('obliqueSliceProps :>> ', obliqueSliceProps);
-console.log('127 vtkView.value :>> ', vtkView.value);
+// console.log('127 vtkView.value :>> ', vtkView.value);
 
 // reset camera logic
 function resetCamera() {

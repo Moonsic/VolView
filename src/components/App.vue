@@ -166,14 +166,22 @@ console.log('VolView 启动')
 //   clickEventSetPosition.trigger(position);
 // },10000)
 
-
-// // 生成多个位置
+// 生成一个位置
 // setInterval(()=>{
-//   const length = Math.floor(randomNum(3,8))
-//   const positionList: Vector3[] = []
-//   for (let index = 0; index < length; index++) {
-//     positionList.push(randomPosition())
-//   }
+//   const position: Vector3 = [0,0,0]
+//   console.log('开始设置position', position);
+//   clickEventSetPosition.trigger(position);
+// },10000)
+
+// 生成多个位置
+// setInterval(()=>{
+// setTimeout(()=>{
+//   // const length = Math.floor(randomNum(3,8))
+//   // const positionList: Vector3[] = []
+//   // for (let index = 0; index < length; index++) {
+//   //   positionList.push(randomPosition())
+//   // }
+//   const positionList = [[0,0,0]]
 //   console.log('开始设置positionList', positionList);
 //   clickEventSetPositionList.trigger(positionList);
 // },10000)

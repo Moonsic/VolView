@@ -36,8 +36,10 @@ const wlConfig = useWindowingConfig(viewID, imageID);
 // setup base image
 const sliceRep = useResliceRepresentation(view, imageData);
 
-console.log('39 wlConfig',wlConfig)
-console.log('40 liceRep',sliceRep)
+// console.log('39 wlConfig',wlConfig)
+// console.log('40 liceRep',sliceRep)
+// console.log('41 liceRep actor', sliceRep.actor.getCenter())   //  [0,0,0],
+console.log('42 liceRep mapper', sliceRep.mapper.getCenter()) // [-2.081481458619237, 4.4918666201410815, 8.861701400950565]
 
 // set slice ordering to be in the back
 sliceRep.mapper.setResolveCoincidentTopologyToPolygonOffset();

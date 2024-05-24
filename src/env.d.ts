@@ -11,4 +11,9 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+
+interface Window {
+  xyzCenter: number[]
+}
+
 declare const __VERSIONS__: Record<string, string>;

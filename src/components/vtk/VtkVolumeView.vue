@@ -61,7 +61,7 @@ const { metadata: imageMetadata } = useImage(imageID);
 // the renderer before the renderer is deleted.
 const scope = effectScope(true);
 const view = scope.run(() => useVtkView(vtkContainerRef))!;
-console.log('55 view :>> ', view);
+// console.log('55 view :>> ', view);
 onUnmounted(() => {
   scope.stop();
 });
@@ -90,9 +90,12 @@ useVtkInteractionManipulator(
   { button: 1 }
 );
 
+
 // set center of rotation
 watchEffect(() => {
   const center = vtkBoundingBox.getCenter(imageMetadata.value.worldBounds);
+  console.log('96 center :>> ', center);
+  window.xyzCenter = center;
   interactorStyle.setCenterOfRotation(...center);
 });
 
@@ -119,7 +122,7 @@ const api: VtkViewApi = markRaw({
   interactorStyle,
   resetCamera,
 });
-console.log('api2 :>> ', api);
+// console.log('api2 :>> ', api);
 
 defineExpose(api);
 provide(VtkViewContext, api);
