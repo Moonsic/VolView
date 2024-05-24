@@ -244,19 +244,30 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 // 这个函数要返回一个数组，里面是3个轴的坐标
 // 想通过给定的边界数组以及用户输入的 [x, y, z] 坐标，在这个 256256256 的正方体范围内，获取相应的标准化坐标
 // 例：输入：boundsArray：上面的例子 ，inputArray：[80,150,200] 输出：[-50.08148199506104, 26.491866871132515, 80.86168933100998]
+
+// function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
+//     const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
+//     const [x, y, z] = inputArray;
+//     // 确保输入的坐标在[0, 256]范围内
+//     if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
+//         throw new Error('Input coordinates should be in the range of [0, 256]');
+//     }
+//     // 标准化坐标到[-130.081, 136.862]等对应区间
+//     const normalizedX = (x / 256) * (maxX - minX) + minX;
+//     const normalizedY = (y / 256) * (maxY - minY) + minY;
+//     const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
+//     return [normalizedX, normalizedY, normalizedZ];
+// }
+
 function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
-    const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
-    const [x, y, z] = inputArray;
-    // 确保输入的坐标在[0, 256]范围内
-    if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
-        throw new Error('Input coordinates should be in the range of [0, 256]');
-    }
-    // 标准化坐标到[-130.081, 136.862]等对应区间
-    const normalizedX = (x / 256) * (maxX - minX) + minX;
-    const normalizedY = (y / 256) * (maxY - minY) + minY;
-    const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
-    return [normalizedX, normalizedY, normalizedZ];
+    const [minX, , minY, , minZ,] = boundsArray;
+    return [
+      inputArray[0] + minX,
+      inputArray[1] + minY,
+      inputArray[2] + minZ,
+    ]
 }
+
 
 let defaultPosition: Vector3
 
@@ -287,7 +298,7 @@ function resetCamera(position?: Vector3) {
     newCenter = center
   }
   // console.log('position',position)
-  console.log('290 metadata', metadata)
+  console.log('290 metadata & center', metadata,center)
   // console.log('planeOrigin.value',planeOrigin.value)
   // console.log('newCenter',newCenter)
 

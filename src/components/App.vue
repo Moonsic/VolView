@@ -181,7 +181,7 @@ console.log('VolView 启动')
 //   // for (let index = 0; index < length; index++) {
 //   //   positionList.push(randomPosition())
 //   // }
-//   const positionList = [[0,0,0]]
+//   const positionList: Vector3[] = [[128,128,128]]
 //   console.log('开始设置positionList', positionList);
 //   clickEventSetPositionList.trigger(positionList);
 // },10000)

@@ -153,11 +153,15 @@ const [x, y, z] = window.xyzCenter
     //   position[1]-128,
     //   position[2]-128
     // ]);
-    sphere.setCenter([
-      position[0] - 128 - x,
-      position[1] - 128 - y,
-      position[2] - 128 - z,
-    ]);
+
+    const newPosition:Vector3 = [
+      position[0] - 128 + x,
+      position[1] - 128 + y,
+      position[2] - 128 + z,
+    ]
+    console.log('newPosition :>> ', newPosition);
+
+    sphere.setCenter(newPosition);
     // sphere.setCenter([0,0,0]);
     // sphere.setCenter(position);
     sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
