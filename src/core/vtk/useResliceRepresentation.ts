@@ -21,6 +21,8 @@ export function useResliceRepresentation(
 
   const plane = vtkFieldRef(sliceRep.mapper, 'slicePlane');
   onVTKEvent(plane, 'onModified', () => {
+    // console.log('plane :>> ', plane);
+    // console.log('plane :>> ', plane.value.getState());
     view.requestRender();
   });
 

@@ -217,7 +217,10 @@ const { saveDialog } = useSaveControls();
 <style scoped>
 #tools-strip {
   border-left: 1px solid #212121;
-  flex: 0 0 40px;
+  /* flex: 0 0 40px; */
+  /* 隐藏左侧工具栏 */
+  flex: 0 0 0px;
+  overflow: hidden;
 }
 
 .tool-separator {

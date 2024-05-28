@@ -15,9 +15,8 @@
           :view-up="viewUp"
         >
           <!-- 我的球体参考点，只有一个，不应该放在v-for里 -->
-          <MySpheresRepresentation
+          <MySpheresRepresentation :sphereRadius="4"></MySpheresRepresentation>
 
-          ></MySpheresRepresentation>
 
           <template v-for="(sliceProps, idx) in obliqueSliceProps" :key="idx">
 
@@ -124,8 +123,8 @@ const obliqueSliceProps = computed(() => {
   });
 });
 
-console.log('slices :>> ', slices);
-console.log('obliqueSliceProps :>> ', obliqueSliceProps);
+// console.log('slices :>> ', slices);
+// console.log('obliqueSliceProps :>> ', obliqueSliceProps);
 // console.log('127 vtkView.value :>> ', vtkView.value);
 
 // reset camera logic
@@ -139,7 +138,63 @@ useResetViewsEvents().onClick(resetCamera);
 
 
 
-
+// ObliqueSagittal黄、ObliqueCoronal红、ObliqueAxial蓝
+// [
+//   {
+//     "viewId": "ObliqueSagittal",
+//     "planeNormal": [
+//       1,
+//       3.958120942115784e-9,
+//       3.725290298461914e-9
+//     ],
+//     "planeOrigin": [
+//       -2.081481458619237,
+//       4.4918666201410815,
+//       8.861701400950565
+//     ],
+//     "outlineColor": [
+//       1,
+//       1,
+//       0
+//     ]
+//   },
+//   {
+//     "viewId": "ObliqueCoronal",
+//     "planeNormal": [
+//       7.450580596923828e-9,
+//       -1,
+//       -7.450580596923828e-9
+//     ],
+//     "planeOrigin": [
+//       -2.081481458619237,
+//       4.4918666201410815,
+//       8.861701400950565
+//     ],
+//     "outlineColor": [
+//       1,
+//       0.2,
+//       0.2
+//     ]
+//   },
+//   {
+//     "viewId": "ObliqueAxial",
+//     "planeNormal": [
+//       -3.725290964595848e-9,
+//       -7.450581929191696e-9,
+//       -0.9999999999999999
+//     ],
+//     "planeOrigin": [
+//       -2.081481458619237,
+//       4.4918666201410815,
+//       8.861701400950565
+//     ],
+//     "outlineColor": [
+//       0,
+//       0.5019607843137255,
+//       1
+//     ]
+//   }
+// ]
 
 
 

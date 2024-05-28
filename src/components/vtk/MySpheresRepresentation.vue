@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // import { toRefs, watchEffect, inject, ref } from 'vue';
-import { inject } from 'vue';
+import { toRefs, inject } from 'vue';
 // import { useImage } from '@/src/composables/useCurrentImage';
 // import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
 // import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
@@ -21,23 +21,17 @@ import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import { useSetPositionListEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 
-// interface Props {
-//   viewId: string;
-//   imageId: Maybe<string>;
-//   planeNormal: Vector3;
-//   planeOrigin: Vector3;
-// }
+interface Props {
+  sphereRadius: number;
+}
 
-// const props = defineProps<Props>();
-// const {
-//   viewId: viewID,
-//   imageId: imageID,
-//   planeNormal,
-//   planeOrigin,
-// } = toRefs(props);
+const props = defineProps<Props>();
+const {
+  sphereRadius, // 球体半径
+} = toRefs(props);
 
 const view = inject(VtkViewContext);
-console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
+// console.log('36 view :>> ', view); // 就是VtkVolume.vue里的api
 // const api = inject(api);
 // console.log('36 api :>> ', api);
 if (!view) throw new Error('No VtkView');
@@ -143,10 +137,10 @@ function deleteSphereList() {
 
 
 function addSphereList(positionList: Vector3[]) {
-deleteSphereList() // 先清除旧的球体
+  deleteSphereList() // 先清除旧的球体
 
-console.log('148 window.xyzCenter',window.xyzCenter)
-const [x, y, z] = window.xyzCenter
+  // console.log('142 window.xyzCenter',window.xyzCenter)
+  const [x, y, z] = window.xyzCenter
   positionList.forEach(position => {
     // sphere.setCenter([
     //   position[0]-128,
@@ -159,12 +153,12 @@ const [x, y, z] = window.xyzCenter
       position[1] - 128 + y,
       position[2] - 128 + z,
     ]
-    console.log('newPosition :>> ', newPosition);
+    // console.log('newPosition :>> ', newPosition);
 
     sphere.setCenter(newPosition);
     // sphere.setCenter([0,0,0]);
     // sphere.setCenter(position);
-    sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+    sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
     const sphereMapper = vtkMapper.newInstance();
     sphereMapper.setInputData(sphere.getOutputData());
     const sphereActor = vtkActor.newInstance();

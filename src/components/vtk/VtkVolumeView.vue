@@ -94,7 +94,7 @@ useVtkInteractionManipulator(
 // set center of rotation
 watchEffect(() => {
   const center = vtkBoundingBox.getCenter(imageMetadata.value.worldBounds);
-  console.log('96 center :>> ', center);
+  // console.log('96 center :>> ', center);
   window.xyzCenter = center;
   interactorStyle.setCenterOfRotation(...center);
 });

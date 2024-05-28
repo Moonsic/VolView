@@ -1,7 +1,8 @@
 .vtk-container-wrapper {
   flex: 1;
   display: grid;
-  grid-template-columns: 20px auto;
+  /* grid-template-columns: 20px auto; */
+  grid-template-columns: 0px auto;  /* 隐藏左侧20px宽的竖条 */
   grid-template-rows: auto;
   z-index: 0; /* avoids partial obscuring of focus outline */
 }
