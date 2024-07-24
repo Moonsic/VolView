@@ -123,20 +123,20 @@ window.addEventListener('message', (event) => {
 
   if (event.data.type === 'position') {
     const position: Vector3 = event.data.position.split(',')
-    console.log('position string[]', position);
+    // console.log('position string[]', position);
     clickEventSetPosition.trigger(position);
   }
 
   if (event.data.type === 'setPositionList') {
     const positionList: Vector3[] = JSON.parse(event.data.positionList)
-    console.log('positionList number[][]', positionList);
+    // console.log('positionList number[][]', positionList);
     clickEventSetPositionList.trigger(positionList);
   }
 
 })
 
 
-console.log('VolView 启动 0528')
+console.log('VolView0724')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -159,30 +159,32 @@ console.log('VolView 启动 0528')
 //   return position
 // }
 
-// // 生成一个位置
+// // // 生成一个位置
 // setInterval(()=>{
-//   const position: Vector3 = randomPosition()
+//   // const position: Vector3 = randomPosition()
+//   // const position: Vector3 = [1,1,1]
+//   const position: Vector3 = [10,10,10]
 //   console.log('开始设置position', position);
 //   clickEventSetPosition.trigger(position);
 // },10000)
 
-// // 生成一个位置
-// setInterval(()=>{
-//   const position: Vector3 = [0,0,0]
-//   console.log('开始设置position', position);
-//   clickEventSetPosition.trigger(position);
-// },10000)
 
 // // 生成多个位置
 // setInterval(()=>{
 // // setTimeout(()=>{
-//   const length = Math.floor(randomNum(4,5))
 //   const positionList: Vector3[] = []
-//   for (let index = 0; index < length; index++) {
-//     positionList.push(randomPosition())
-//   }
-//   // const positionList: Vector3[] = [[128,128,128]]
-//   console.log('开始设置positionList', positionList);
+//   // const length = Math.floor(randomNum(5,5))
+//   // for (let index = 0; index < length; index++) {
+//   //   positionList.push(randomPosition())
+//   // }
+
+//   positionList.push([192,512,512])
+//   positionList.push([96,256,256]) // 这是中心点
+//   positionList.push([0,0,0])
+//   positionList.push([256,256,256]) //
+//   positionList.push([128,128,128]) // 这是中心点
+
+//   // console.log('开始设置positionList', positionList);
 //   clickEventSetPositionList.trigger(positionList);
 // },8000)
 

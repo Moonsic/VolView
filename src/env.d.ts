@@ -13,7 +13,10 @@ interface ImportMeta {
 
 
 interface Window {
-  xyzCenter: number[]
+  // xyzCenter: number[]
+  dimensions: vec3
+  distanceList: number[]
+  xyzMinList: number[]
 }
 
 declare const __VERSIONS__: Record<string, string>;

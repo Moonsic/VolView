@@ -80,33 +80,6 @@ watchImmediate([slicePlaneNormal, slicePlaneOrigin], () => {
 
 defineExpose(rep);
 
-
-
-
-// const sphere = vtkSphereSource.newInstance();
-// const points: Vector3[] = [
-//   [0,0,0],
-//   [0.1,0.1,0.1],
-//   [0.1,0.2,0.3],
-//   [0.2,0.1,0.5],
-//   [0.3,0.2,0.1],
-//   [0.4,0.4,0.4],
-//   [4,4,4],
-// ]
-// points.forEach(item=>{
-//   sphere.setCenter(item);
-//   sphere.setRadius(0.01);
-//   const sphereMapper = vtkMapper.newInstance();
-//   sphereMapper.setInputData(sphere.getOutputData());
-//   const sphereActor = vtkActor.newInstance();
-//   sphereActor.setMapper(sphereMapper);
-//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
-//   // renderer.addActor(sphereActor);
-//   view.renderer.addActor(sphereActor);
-// })
-// view.renderWindow.render();
-// view.requestRender();
-// view.resetCamera();
 </script>
 
 <template><slot></slot></template>

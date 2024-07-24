@@ -93,9 +93,29 @@ useVtkInteractionManipulator(
 
 // set center of rotation
 watchEffect(() => {
-  const center = vtkBoundingBox.getCenter(imageMetadata.value.worldBounds);
+  const { dimensions, worldBounds } = imageMetadata.value
+  const center = vtkBoundingBox.getCenter(worldBounds);
+  // console.log('96 imageMetadata :>> ', imageMetadata.value);
+  // console.log('96 worldBounds :>> ', worldBounds);
+  // // console.log('96 dimensions :>> ', dimensions);
   // console.log('96 center :>> ', center);
-  window.xyzCenter = center;
+  const distanceList = [
+    worldBounds[1]-worldBounds[0],
+    worldBounds[3]-worldBounds[2],
+    worldBounds[5]-worldBounds[4],
+  ]
+  const xyzMinList = [
+    worldBounds[0],
+    worldBounds[2],
+    worldBounds[4],
+  ]
+  // console.log('distanceList :>> ', distanceList);
+  // console.log('xyzMinList :>> ', xyzMinList);
+  // window.xyzCenter = center; // 中心点，即传[0,0,0]点位的位置， [-1.787, -18.709, -13.121] 或 [-0.8,-21.3,-28.5]
+  window.distanceList = distanceList; // xyz3个边的长度 [256, 256, 256] 或 [205.16, 262.25, 259.69]
+  window.dimensions = dimensions; // xyz3个边的切片数量  [256, 256, 256] 或 [192, 512, 512]
+  window.xyzMinList = xyzMinList; // xyz3个边的最小值的位置 [ -103.39893849770539, 101.76231732047313, -152.48823813918796, 109.76817979897362, -158.38814344608994, 101.30891490956176 ] 或 [192, 512, 512]
+
   interactorStyle.setCenterOfRotation(...center);
 });
 

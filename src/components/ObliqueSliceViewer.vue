@@ -241,6 +241,7 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 };
 
 
+// 最新：这个方法没用了。
 // 已知又有一个数组boundsArray=[-130.0814828891307, 125.91851997189224, -123.50813484017272, 132.49186808045488, -119.1382771413773, 136.86167994327843 ]，
 // 它代表一个3维的坐标，是一个256256256的正方体，
 // 其中第1个数表示x轴的最小值，第2个数表示x轴的最大值，
@@ -251,19 +252,19 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 // 想通过给定的边界数组以及用户输入的 [x, y, z] 坐标，在这个 256256256 的正方体范围内，获取相应的标准化坐标
 // 例：输入：boundsArray：上面的例子 ，inputArray：[80,150,200] 输出：[-50.08148199506104, 26.491866871132515, 80.86168933100998]
 
-function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
-    const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
-    const [x, y, z] = inputArray;
-    // 确保输入的坐标在[0, 256]范围内
-    if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
-        throw new Error('Input coordinates should be in the range of [0, 256]');
-    }
-    // 标准化坐标到[-130.081, 136.862]等对应区间
-    const normalizedX = (x / 256) * (maxX - minX) + minX;
-    const normalizedY = (y / 256) * (maxY - minY) + minY;
-    const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
-    return [normalizedX, normalizedY, normalizedZ];
-}
+// function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
+//     const [minX, maxX, minY, maxY, minZ, maxZ] = boundsArray;
+//     const [x, y, z] = inputArray;
+//     // 确保输入的坐标在[0, 256]范围内
+//     if (x < 0 || x > 256 || y < 0 || y > 256 || z < 0 || z > 256) {
+//         throw new Error('Input coordinates should be in the range of [0, 256]');
+//     }
+//     // 标准化坐标到[-130.081, 136.862]等对应区间
+//     const normalizedX = (x / 256) * (maxX - minX) + minX;
+//     const normalizedY = (y / 256) * (maxY - minY) + minY;
+//     const normalizedZ = (z / 256) * (maxZ - minZ) + minZ;
+//     return [normalizedX, normalizedY, normalizedZ];
+// }
 
 // 这个代码用到项目里，是错误的，点击时刻点列表时，切片都不见了，不要用了
 // function getNormalizedCoordinates(boundsArray: [number, number, number, number, number, number], inputArray: [number, number, number]): Vector3 {
@@ -290,6 +291,9 @@ function resetCamera(position?: Vector3) {
   resliceStore.resetReslicePlanes(metadata);
 
   const { worldBounds } = metadata;
+
+  // console.log('metadata 295 :>> ', metadata);
+
   // planeOrigin.value = vtkBoundingBox.getCenter(worldBounds); // 原来的planeOrigin.value直接用的中心点的值
   // resliceCursorState.placeWidget(worldBounds);
 
@@ -301,17 +305,26 @@ function resetCamera(position?: Vector3) {
   const center = vtkBoundingBox.getCenter(worldBounds);
   let newCenter: Vector3
   if (position) {
-    newCenter = getNormalizedCoordinates(worldBounds, position)
+    // console.log('309 worldBounds',worldBounds)
+    // console.log('309 position',position)
+    // newCenter = getNormalizedCoordinates(worldBounds, position)
+
+    const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
+    const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
+    const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
+
+    newCenter = [
+      (position[0]/xD) * xDis + minX ,
+      (position[1]/yD) * yDis + minY ,
+      (position[2]/zD) * zDis + minZ ,
+    ]
     defaultPosition = newCenter
   } else if (defaultPosition) {
     newCenter = defaultPosition
   } else {
     newCenter = center
   }
-  // console.log('position',position)
-  // console.log('290 metadata & center', metadata,center)
-  // console.log('planeOrigin.value',planeOrigin.value)
-  // console.log('newCenter',newCenter)
+  // console.log('322 newCenter',newCenter)
 
   planeOrigin.value = newCenter // 我发现只要改变planeOrigin.value，就能马上改变位置
   resliceCursorState.placeWidget(worldBounds);

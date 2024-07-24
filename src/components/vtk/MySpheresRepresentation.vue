@@ -135,29 +135,25 @@ function deleteSphereList() {
 }
 
 
-
 function addSphereList(positionList: Vector3[]) {
   deleteSphereList() // 先清除旧的球体
 
-  // console.log('142 window.xyzCenter',window.xyzCenter)
-  const [x, y, z] = window.xyzCenter
-  positionList.forEach(position => {
-    // sphere.setCenter([
-    //   position[0]-128,
-    //   position[1]-128,
-    //   position[2]-128
-    // ]);
+  // const [x, y, z] = window.xyzCenter
+  const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
+  const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
+  const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
 
+  positionList.forEach(position => {
+
+    // 最终版本:第3个切片的左上和右下 的2点会很准确
     const newPosition:Vector3 = [
-      position[0] - 128 + x,
-      position[1] - 128 + y,
-      position[2] - 128 + z,
+      (position[0]/xD) * xDis + minX ,
+      (position[1]/yD) * yDis + minY ,
+      (position[2]/zD) * zDis + minZ ,
     ]
-    // console.log('newPosition :>> ', newPosition);
+    // console.log('newPosition :>> ',position, newPosition);
 
     sphere.setCenter(newPosition);
-    // sphere.setCenter([0,0,0]);
-    // sphere.setCenter(position);
     sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
     const sphereMapper = vtkMapper.newInstance();
     sphereMapper.setInputData(sphere.getOutputData());
