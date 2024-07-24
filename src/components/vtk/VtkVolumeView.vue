@@ -97,7 +97,7 @@ watchEffect(() => {
   const center = vtkBoundingBox.getCenter(worldBounds);
   // console.log('96 imageMetadata :>> ', imageMetadata.value);
   // console.log('96 worldBounds :>> ', worldBounds);
-  // // console.log('96 dimensions :>> ', dimensions);
+  // console.log('96 dimensions :>> ', dimensions);
   // console.log('96 center :>> ', center);
   const distanceList = [
     worldBounds[1]-worldBounds[0],

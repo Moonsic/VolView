@@ -95,6 +95,12 @@ export function useSetPositionListEvents() {
   return { onClick: clickEventSetPositionList.on };
 }
 
+const clickEventSetPositionListWidthColor = createEventHook<Vector3[]>();
+export function useSetPositionListWidthColorEvents() {
+  return { onClick: clickEventSetPositionListWidthColor.on };
+}
+
+
 
 // B项目接收
 window.addEventListener('message', (event) => {
@@ -133,6 +139,12 @@ window.addEventListener('message', (event) => {
     clickEventSetPositionList.trigger(positionList);
   }
 
+  if (event.data.type === 'setPositionListWidthColor') {
+    const positionList: any = JSON.parse(event.data.positionList)
+    // console.log('positionList number[][]', positionList);
+    clickEventSetPositionListWidthColor.trigger(positionList);
+  }
+
 })
 
 
@@ -161,9 +173,9 @@ console.log('VolView0724')
 
 // // // 生成一个位置
 // setInterval(()=>{
-//   // const position: Vector3 = randomPosition()
+//   const position: Vector3 = randomPosition()
 //   // const position: Vector3 = [1,1,1]
-//   const position: Vector3 = [10,10,10]
+//   // const position: Vector3 = [10,10,10]
 //   console.log('开始设置position', position);
 //   clickEventSetPosition.trigger(position);
 // },10000)
@@ -181,12 +193,37 @@ console.log('VolView0724')
 //   positionList.push([192,512,512])
 //   positionList.push([96,256,256]) // 这是中心点
 //   positionList.push([0,0,0])
-//   positionList.push([256,256,256]) //
-//   positionList.push([128,128,128]) // 这是中心点
+//   // positionList.push([256,256,256]) //
+//   // positionList.push([128,128,128]) // 这是中心点
 
 //   // console.log('开始设置positionList', positionList);
 //   clickEventSetPositionList.trigger(positionList);
 // },8000)
+
+
+// // 生成多个位置，带有颜色的。
+// setInterval(()=>{
+// // setTimeout(()=>{
+//   const positionList: Vector3[] = []
+//   // const length = Math.floor(randomNum(5,5))
+//   // for (let index = 0; index < length; index++) {
+//   //   positionList.push(randomPosition())
+//   // }
+
+//   // positionList.push([192,512,512])
+//   // positionList.push([96,256,256]) // 这是中心点
+//   positionList.push([0,0,0])
+//   // positionList.push([256,256,256]) //
+//   positionList.push([128,128,128]) // 这是中心点
+
+//   // console.log('开始设置positionList', positionList);
+//   // clickEventSetPositionListWidthColor.trigger(positionList);
+//   clickEventSetPositionListWidthColor.trigger({
+//     'red':[[0,0,0],[128,128,128]],
+//     'green':[[10,10,10],[118,118,118]],
+//   });
+// },8000)
+
 
 
 export default defineComponent({

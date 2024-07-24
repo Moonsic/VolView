@@ -19,7 +19,7 @@ import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 
 import { useSetPositionListEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
-
+import { useSetPositionListWidthColorEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 interface Props {
   sphereRadius: number;
@@ -146,10 +146,10 @@ function addSphereList(positionList: Vector3[]) {
   positionList.forEach(position => {
 
     // 最终版本:第3个切片的左上和右下 的2点会很准确
-    const newPosition:Vector3 = [
-      (position[0]/xD) * xDis + minX ,
-      (position[1]/yD) * yDis + minY ,
-      (position[2]/zD) * zDis + minZ ,
+    const newPosition: Vector3 = [
+      (position[0] / xD) * xDis + minX,
+      (position[1] / yD) * yDis + minY,
+      (position[2] / zD) * zDis + minZ,
     ]
     // console.log('newPosition :>> ',position, newPosition);
 
@@ -159,13 +159,51 @@ function addSphereList(positionList: Vector3[]) {
     sphereMapper.setInputData(sphere.getOutputData());
     const sphereActor = vtkActor.newInstance();
     sphereActor.setMapper(sphereMapper);
-    sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+    sphereActor.getProperty().setColor(1.0, 0.0, 0.0); // 红色
     view?.renderer.addActor(sphereActor);
 
     actors.push(sphereActor);
   })
 }
 
+
+function addSphereListWidthColor(obj: any) {
+  deleteSphereList() // 先清除旧的球体
+
+  // const [x, y, z] = window.xyzCenter
+  const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
+  const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
+  const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
+
+  Object.keys(obj).forEach((key: string) => {
+    const positionList = obj[key]
+
+    const color: number[] = normalizeColor(key)
+    positionList.forEach((position: number[]) => {
+
+      // 最终版本:第3个切片的左上和右下 的2点会很准确
+      const newPosition: Vector3 = [
+        (position[0] / xD) * xDis + minX,
+        (position[1] / yD) * yDis + minY,
+        (position[2] / zD) * zDis + minZ,
+      ]
+      // console.log('newPosition :>> ',position, newPosition);
+
+      sphere.setCenter(newPosition);
+      sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+      const sphereMapper = vtkMapper.newInstance();
+      sphereMapper.setInputData(sphere.getOutputData());
+      const sphereActor = vtkActor.newInstance();
+      sphereActor.setMapper(sphereMapper);
+      sphereActor.getProperty().setColor(color[0], color[1], color[2]);
+      view?.renderer.addActor(sphereActor);
+
+      actors.push(sphereActor);
+    })
+  })
+
+
+}
 // setTimeout(()=>{
 //   addSphereList(
 //     [
@@ -178,6 +216,54 @@ function addSphereList(positionList: Vector3[]) {
 // 设置点坐标的事件
 useSetPositionListEvents().onClick((positionList) => addSphereList(positionList));
 
+useSetPositionListWidthColorEvents().onClick((obj) => addSphereListWidthColor(obj));
+
+//将颜色值，转化成[1,1,1]
+function normalizeColor(inputColor: string): number[] {
+  const colorMap: any = {
+    'red': '#ff0000',
+    'green': '#00ff00',
+    'blue': '#0000ff',
+    // 可在此处添加更多颜色映射
+  };
+
+  let hexColor;
+
+  // 尝试从映射中获取颜色对应的十六进制代码
+  if (colorMap[inputColor]) {
+    hexColor = colorMap[inputColor];
+  }
+  // 检查输入是否为有效的六位或三位十六进制颜色代码
+  else if (/^#[0-9A-Fa-f]{3,6}$/i.test(inputColor)) {
+    hexColor = inputColor;
+  } else {
+    throw new Error('Invalid color format. Please provide a valid color name or hex code.');
+  }
+
+  // 确保颜色代码为六位形式，如果是三位则重复字符
+  hexColor = /^#[0-9A-Fa-f]{3}$/i.test(hexColor)
+    ? hexColor.replace(/[0-9A-Fa-f]/g, (c: any) => c + c)
+    : hexColor;
+
+  // 解析十六进制颜色代码为RGB，并归一化到[0, 1]区间
+  const rgb = [
+    parseInt(hexColor.slice(1, 3), 16) / 255,
+    parseInt(hexColor.slice(3, 5), 16) / 255,
+    parseInt(hexColor.slice(5), 16) / 255
+  ];
+
+  return rgb;
+}
+
+// // 示例使用
+// try {
+//   console.log(normalizeColor('red'));       // 应输出: [1, 0, 0]
+//   console.log(normalizeColor('#ffffff'));   // 应输出: [1, 1, 1]
+//   console.log(normalizeColor('#ff0000'));   // 应输出: [1, 0, 0]
+//   console.log(normalizeColor('#fff'));      // 新增测试: 应输出: [1, 1, 1]
+// } catch (error) {
+//   console.error(error.message);
+// }
 
 </script>
 
@@ -185,6 +271,4 @@ useSetPositionListEvents().onClick((positionList) => addSphereList(positionList)
   <slot></slot>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
