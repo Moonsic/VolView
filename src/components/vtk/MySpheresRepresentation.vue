@@ -19,7 +19,7 @@ import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 
 import { useSetPositionListEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
-import { useSetPositionListWidthColorEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
+import { useSetPositionListWithColorEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 interface Props {
   sphereRadius: number;
@@ -167,7 +167,7 @@ function addSphereList(positionList: Vector3[]) {
 }
 
 
-function addSphereListWidthColor(obj: any) {
+function addSphereListWithColor(obj: any) {
   deleteSphereList() // 先清除旧的球体
 
   // const [x, y, z] = window.xyzCenter
@@ -216,7 +216,7 @@ function addSphereListWidthColor(obj: any) {
 // 设置点坐标的事件
 useSetPositionListEvents().onClick((positionList) => addSphereList(positionList));
 
-useSetPositionListWidthColorEvents().onClick((obj) => addSphereListWidthColor(obj));
+useSetPositionListWithColorEvents().onClick((obj) => addSphereListWithColor(obj));
 
 //将颜色值，转化成[1,1,1]
 function normalizeColor(inputColor: string): number[] {

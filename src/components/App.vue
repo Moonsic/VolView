@@ -95,9 +95,9 @@ export function useSetPositionListEvents() {
   return { onClick: clickEventSetPositionList.on };
 }
 
-const clickEventSetPositionListWidthColor = createEventHook<Vector3[]>();
-export function useSetPositionListWidthColorEvents() {
-  return { onClick: clickEventSetPositionListWidthColor.on };
+const clickEventSetPositionListWithColor = createEventHook<Vector3[]>();
+export function useSetPositionListWithColorEvents() {
+  return { onClick: clickEventSetPositionListWithColor.on };
 }
 
 
@@ -139,16 +139,16 @@ window.addEventListener('message', (event) => {
     clickEventSetPositionList.trigger(positionList);
   }
 
-  if (event.data.type === 'setPositionListWidthColor') {
+  if (event.data.type === 'setPositionListWithColor') {
     const positionList: any = JSON.parse(event.data.positionList)
     // console.log('positionList number[][]', positionList);
-    clickEventSetPositionListWidthColor.trigger(positionList);
+    clickEventSetPositionListWithColor.trigger(positionList);
   }
 
 })
 
 
-console.log('VolView0724')
+console.log('VolView0725')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -217,8 +217,8 @@ console.log('VolView0724')
 //   positionList.push([128,128,128]) // 这是中心点
 
 //   // console.log('开始设置positionList', positionList);
-//   // clickEventSetPositionListWidthColor.trigger(positionList);
-//   clickEventSetPositionListWidthColor.trigger({
+//   // clickEventSetPositionListWithColor.trigger(positionList);
+//   clickEventSetPositionListWithColor.trigger({
 //     'red':[[0,0,0],[128,128,128]],
 //     'green':[[10,10,10],[118,118,118]],
 //   });
