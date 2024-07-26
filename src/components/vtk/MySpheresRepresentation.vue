@@ -135,7 +135,7 @@ function deleteSphereList() {
 }
 
 
-function addSphereList(positionList: Vector3[]) {
+function addSphereList(positionList: Vector3[], change?: boolean) {
   deleteSphereList() // 先清除旧的球体
 
   // const [x, y, z] = window.xyzCenter
@@ -145,13 +145,20 @@ function addSphereList(positionList: Vector3[]) {
 
   positionList.forEach(position => {
 
+    let newPosition: Vector3
+    if (change) {
+
     // 最终版本:第3个切片的左上和右下 的2点会很准确
-    const newPosition: Vector3 = [
+    newPosition = [
       (position[0] / xD) * xDis + minX,
       (position[1] / yD) * yDis + minY,
       (position[2] / zD) * zDis + minZ,
     ]
     // console.log('newPosition :>> ',position, newPosition);
+
+    } else {
+      newPosition = position
+    }
 
     sphere.setCenter(newPosition);
     sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
@@ -167,7 +174,7 @@ function addSphereList(positionList: Vector3[]) {
 }
 
 
-function addSphereListWithColor(obj: any) {
+function addSphereListWithColor(obj: any, change?: boolean) {
   deleteSphereList() // 先清除旧的球体
 
   // const [x, y, z] = window.xyzCenter
@@ -179,15 +186,22 @@ function addSphereListWithColor(obj: any) {
     const positionList = obj[key]
 
     const color: number[] = normalizeColor(key)
-    positionList.forEach((position: number[]) => {
+    positionList.forEach((position: Vector3) => {
+
+      let newPosition: Vector3
+      if (change) {
 
       // 最终版本:第3个切片的左上和右下 的2点会很准确
-      const newPosition: Vector3 = [
+      newPosition = [
         (position[0] / xD) * xDis + minX,
         (position[1] / yD) * yDis + minY,
         (position[2] / zD) * zDis + minZ,
       ]
       // console.log('newPosition :>> ',position, newPosition);
+
+      } else {
+        newPosition = position
+      }
 
       sphere.setCenter(newPosition);
       sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
@@ -214,9 +228,9 @@ function addSphereListWithColor(obj: any) {
 // },1000)
 
 // 设置点坐标的事件
-useSetPositionListEvents().onClick((positionList) => addSphereList(positionList));
+useSetPositionListEvents().onClick(([positionList,change]) => addSphereList(positionList,change));
 
-useSetPositionListWithColorEvents().onClick((obj) => addSphereListWithColor(obj));
+useSetPositionListWithColorEvents().onClick(([obj,change]) => addSphereListWithColor(obj,change));
 
 //将颜色值，转化成[1,1,1]
 function normalizeColor(inputColor: string): number[] {

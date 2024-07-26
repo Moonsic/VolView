@@ -284,7 +284,7 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 let defaultPosition: Vector3
 
 // reset camera logic
-function resetCamera(position?: Vector3) {
+function resetCamera(position?: Vector3, change?: boolean) {
   if (!vtkView.value) return;
 
   const metadata = currentImageMetadata.value;
@@ -309,15 +309,24 @@ function resetCamera(position?: Vector3) {
     // console.log('309 position',position)
     // newCenter = getNormalizedCoordinates(worldBounds, position)
 
-    const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
-    const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
-    const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
 
-    newCenter = [
-      (position[0]/xD) * xDis + minX ,
-      (position[1]/yD) * yDis + minY ,
-      (position[2]/zD) * zDis + minZ ,
-    ]
+
+    if (change) {
+
+      const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
+      const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
+      const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
+      newCenter = [
+        (position[0]/xD) * xDis + minX ,
+        (position[1]/yD) * yDis + minY ,
+        (position[2]/zD) * zDis + minZ ,
+      ]
+
+    } else {
+      newCenter = position
+    }
+
+
     defaultPosition = newCenter
   } else if (defaultPosition) {
     newCenter = defaultPosition
@@ -339,7 +348,7 @@ function resetCamera(position?: Vector3) {
 useResetViewsEvents().onClick(resetCamera);
 
 // 设置点坐标的事件
-useSetPositionEvents().onClick((position) => resetCamera(position));
+useSetPositionEvents().onClick(([position,change]) => resetCamera(position,change));
 
 // update the camera
 onVTKEvent(
