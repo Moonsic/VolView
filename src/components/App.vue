@@ -1,4 +1,10 @@
 <template>
+  <!-- <div class="box">
+    <button @click="screenshot()">截屏</button>
+    <img v-if="img" :src="img" />
+    <img id="img666" />
+    <img id="img777" />
+  </div> -->
   <drag-and-drop enabled @drop-files="loadFiles" id="app-container">
     <template v-slot="{ dragHover }">
       <v-app>
@@ -30,7 +36,6 @@
                 :loading="showLoading"
                 class="clickable"
                 >
-                <!-- @click="loadUserPromptedFiles" -->
                 <!-- @click="loadUserPromptedFiles" -->
               </welcome-page>
             </div>
@@ -85,6 +90,7 @@ import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
 
+// import html2canvas from 'html2canvas'
 
 const clickEventSetPosition = createEventHook<[Vector3,boolean]>();
 export function useSetPositionEvents() {
@@ -152,7 +158,9 @@ window.addEventListener('message', (event) => {
 })
 
 
-console.log('VolView0726')
+
+
+console.log('VolView0801')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -228,11 +236,12 @@ console.log('VolView0726')
 //   // });
 
 
-//   clickEventSetPositionListWithColor.trigger({
-//     'red':[[60,-30,55]],
-//     'green':[[60,55,30]],
+//   clickEventSetPositionListWithColor.trigger([{
+//     'red':[[10,92,23]],
+//     'blue':[[10,-92,23]],
+//     'green':[[-10,-92,23]],
 //     // 'green':[[10,10,10],[118,118,118]],
-//   });
+//   },false]);
 
 // },8000)
 
@@ -315,6 +324,21 @@ export default defineComponent({
 
     const display = useDisplay();
 
+
+    // const img = ref(null)
+    // function screenshot() {
+    //   const element: any = document.getElementById('app-container')
+    //   // 使用 html2canvas 生成 B 项目的截图
+    //   html2canvas(element).then((canvas) => {
+    //     const dataURL = canvas.toDataURL();
+    //     console.log('dataURL :>> ', dataURL)
+    //     img.value = dataURL
+
+    //     // 将截图发送回 A 项目
+    //     window.parent.postMessage({ type: 'screenshotFromVolview', screenshot: dataURL }, '*');
+    //   });
+    // }
+
     return {
       leftSideBar: ref(!display.mobile.value),
       loadUserPromptedFiles,
@@ -322,6 +346,8 @@ export default defineComponent({
       hasData,
       showLoading,
       layout,
+      // img,
+      // screenshot
     };
   },
 });
@@ -370,4 +396,16 @@ export default defineComponent({
   box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.4);
   padding: 64px;
 }
+
+/* .box {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 999;
+  width: 500px;
+  border: 2px solid #fff;
+  img {
+    width: 500px;
+  }
+} */
 </style>

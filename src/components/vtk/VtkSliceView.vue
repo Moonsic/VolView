@@ -53,7 +53,9 @@ view.renderer.getActiveCamera().setParallelProjection(true);
 // console.log('viewDirection',viewDirection.value) // value : "Posterior"
 // console.log('viewUp',viewUp.value) // value : "Superior"
 // console.log('disableAutoResetCamera',disableAutoResetCamera.value) // value : false
-// console.log('view.renderer',view.renderer)
+// console.log('view.renderer',view)
+
+// console.log('57 view', view)
 
 // setup interactor style
 const { interactorStyle } = useVtkInteractorStyle(

@@ -285,6 +285,8 @@ let defaultPosition: Vector3
 
 // reset camera logic
 function resetCamera(position?: Vector3, change?: boolean) {
+  // console.log('288 vtkView.value :>> ', vtkView.value);
+
   if (!vtkView.value) return;
 
   const metadata = currentImageMetadata.value;
@@ -381,6 +383,32 @@ const outlineColor = computed(
 //     "ObliqueCoronal": [ 255, 51, 51 ]
 // }
 // console.log('outlineColor',outlineColor.value) // [1, 0.2, 0.2]
+
+
+
+// setTimeout(()=>{
+// console.log('390 view', vtkView.value)
+// },22000)
+
+// B项目接收
+window.addEventListener('message', (event: any) => {
+  // console.log('2 ObliqueSliceViewer message :>> ', event)
+  if (event.data.type === 'screenshot') {
+    // console.log('2 vtkView.value:>> ', vtkView.value)
+    const getViewsList = vtkView.value?.renderWindow.getViews()
+    // console.log('2 164 getViewsList :>> ', getViewsList);
+
+    if (getViewsList && getViewsList.length) {
+      // console.log('2 165t :>> ');
+      getViewsList[0]?.captureNextImage().then((imageData: string) => {
+        // 将截图发送回 A 项目
+        window.parent.postMessage({ type: 'screenshotList', screenshot: imageData }, '*');
+      })
+      vtkView.value?.renderWindow.render()
+    }
+  }
+})
+
 
 </script>
 

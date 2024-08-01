@@ -57,7 +57,8 @@ const rep = useVtkRepresentation({
   vtkMapperClass: vtkMapper,
 });
 
-// console.log('57 view', view)
+// console.log('60 view', view)
+
 // console.log('rep.property', rep.property)
 
 // set representation properties

@@ -125,7 +125,6 @@ const obliqueSliceProps = computed(() => {
 
 // console.log('slices :>> ', slices);
 // console.log('obliqueSliceProps :>> ', obliqueSliceProps);
-// console.log('127 vtkView.value :>> ', vtkView.value);
 
 // reset camera logic
 function resetCamera() {
@@ -135,6 +134,28 @@ function resetCamera() {
 }
 
 useResetViewsEvents().onClick(resetCamera);
+
+
+
+
+// B项目接收
+window.addEventListener('message', (event: any) => {
+  // console.log('1 MultiObliqueSliceViewer message :>> ', event)
+  if (event.data.type === 'screenshot') {
+    // console.log('1 vtkView.value:>> ', vtkView.value)
+    const getViewsList = vtkView.value?.renderWindow.getViews()
+    // console.log('1 164 getViewsList :>> ', getViewsList);
+
+    if (getViewsList && getViewsList.length) {
+      // console.log('1 165t :>> ');
+      getViewsList[0]?.captureNextImage().then((imageData: string) => {
+        // 将截图发送回 A 项目
+        window.parent.postMessage({ type: 'screenshot3D', screenshot: imageData }, '*');
+      })
+      vtkView.value?.renderWindow.render()
+    }
+  }
+})
 
 
 
