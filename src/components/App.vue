@@ -1,10 +1,5 @@
 <template>
-  <!-- <div class="box">
-    <button @click="screenshot()">截屏</button>
-    <img v-if="img" :src="img" />
-    <img id="img666" />
-    <img id="img777" />
-  </div> -->
+
   <drag-and-drop enabled @drop-files="loadFiles" id="app-container">
     <template v-slot="{ dragHover }">
       <v-app>
@@ -89,8 +84,6 @@ import { useImageStore } from '@/src/store/datasets-images';
 import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
-
-// import html2canvas from 'html2canvas'
 
 const clickEventSetPosition = createEventHook<[Vector3,boolean]>();
 export function useSetPositionEvents() {
@@ -324,21 +317,6 @@ export default defineComponent({
 
     const display = useDisplay();
 
-
-    // const img = ref(null)
-    // function screenshot() {
-    //   const element: any = document.getElementById('app-container')
-    //   // 使用 html2canvas 生成 B 项目的截图
-    //   html2canvas(element).then((canvas) => {
-    //     const dataURL = canvas.toDataURL();
-    //     console.log('dataURL :>> ', dataURL)
-    //     img.value = dataURL
-
-    //     // 将截图发送回 A 项目
-    //     window.parent.postMessage({ type: 'screenshotFromVolview', screenshot: dataURL }, '*');
-    //   });
-    // }
-
     return {
       leftSideBar: ref(!display.mobile.value),
       loadUserPromptedFiles,
@@ -346,8 +324,6 @@ export default defineComponent({
       hasData,
       showLoading,
       layout,
-      // img,
-      // screenshot
     };
   },
 });
@@ -397,15 +373,4 @@ export default defineComponent({
   padding: 64px;
 }
 
-/* .box {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 999;
-  width: 500px;
-  border: 2px solid #fff;
-  img {
-    width: 500px;
-  }
-} */
 </style>
