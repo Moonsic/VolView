@@ -7,10 +7,16 @@ import { useToast } from '@/src/composables/useToast';
 import { TYPE } from 'vue-toastification';
 import { ToastID, ToastOptions } from 'vue-toastification/dist/types/types';
 
+// const NotificationMessages = {
+//   Loading: 'Loading datasets...',
+//   Done: 'Datasets loaded!',
+//   Error: 'Some files failed to load',
+// };
+
 const NotificationMessages = {
-  Loading: 'Loading datasets...',
-  Done: 'Datasets loaded!',
-  Error: 'Some files failed to load',
+  Loading: '加载中...',
+  Done: '加载成功!',
+  Error: '加载失败',
 };
 
 const LoadingToastOptions = {

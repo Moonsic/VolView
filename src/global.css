@@ -28,3 +28,15 @@ ol:not([class]) {
   padding-left: 20px;
   margin-bottom: 16px;
 }
+
+/*  提示框固定宽度，因为在源代码里 页面小于600px时宽度就会变成100vw */
+/* .Vue-Toastification__container {
+  width: 600px !important;
+} */
+
+@media only screen and (max-width: 600px) {
+  .Vue-Toastification__container {
+    width: 330px !important;
+  }
+}
+
