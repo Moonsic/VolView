@@ -35,11 +35,15 @@
             "
             :manipulator-props="{ button: 3 }"
           ></vtk-mouse-interaction-manipulator>
+
+          <!-- 鼠标按住左右滑、上下滑，改变亮度的。删不得，否则已进入页面就是全黑的，只能在内部改 -->
           <vtk-slice-view-window-manipulator
             :view-id="id"
             :image-id="currentImageID"
             :manipulator-config="windowingManipulatorProps"
           ></vtk-slice-view-window-manipulator>
+
+          <!--文字信息，比如上下左右的 LR 方向信息，以及左下角的亮度信息。亮度信息现在注释掉，方向要保留。 -->
           <slice-viewer-overlay
             :view-id="id"
             :image-id="currentImageID"
@@ -284,7 +288,8 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 let defaultPosition: Vector3
 
 // reset camera logic
-function resetCamera(position?: Vector3, change?: boolean) {
+// change默认不传是false，直接赋值。之前做的功能是给我位置信息，我自己再转化的，现在给我的位置信息我不需要再转化了，所以是false。
+function resetCamera(position?: Vector3, change = false) {
   // console.log('288 vtkView.value :>> ', vtkView.value);
 
   if (!vtkView.value) return;
@@ -350,7 +355,7 @@ function resetCamera(position?: Vector3, change?: boolean) {
 useResetViewsEvents().onClick(resetCamera);
 
 // 设置点坐标的事件
-useSetPositionEvents().onClick(([position,change]) => resetCamera(position,change));
+useSetPositionEvents().onClick(([position,change]) => resetCamera(position, change));
 
 // update the camera
 onVTKEvent(

@@ -31,7 +31,8 @@
                 :loading="showLoading"
                 class="clickable"
                 >
-                <!-- @click="loadUserPromptedFiles" -->
+                <!-- @click="loadUserPro÷mptedFiles" -->
+                <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->
               </welcome-page>
             </div>
           </div>
@@ -128,9 +129,14 @@ window.addEventListener('message', (event) => {
 
 
   if (event.data.type === 'position') {
-    const position: Vector3 = event.data.position.split(',')
-    const change: boolean = event.data.change
-    // console.log('position string[]', position);
+    // 要把'20,-30,40'变成[20,-30,40]，split只把它变成string[]，map再处理成number[]
+    // const position: Vector3 = event.data.position.split(',').map((item:string) => Number(item))
+
+    // 最新写法: postion像下面的setPositionList一样用JSON.stringify传递。以前的写法是传递 Sting(array)
+    const position: Vector3 = JSON.parse(event.data.position)
+    const change: boolean = event.data.change || false
+    // console.log('position number[]', position);
+    // console.log('change', change);
     clickEventSetPosition.trigger([position, change]);
   }
 
@@ -153,7 +159,7 @@ window.addEventListener('message', (event) => {
 
 
 
-console.log('VolView0801')
+console.log('VolView_V1021')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -178,12 +184,13 @@ console.log('VolView0801')
 
 // // // 生成一个位置
 // setInterval(()=>{
-//   const position: Vector3 = randomPosition()
+//   // const position: Vector3 = randomPosition()
 //   // const position: Vector3 = [1,1,1]
 //   // const position: Vector3 = [10,10,10]
+//   const position: Vector3 = [30,30,40]
 //   console.log('开始设置position', position);
-//   clickEventSetPosition.trigger(position);
-// },10000)
+//   clickEventSetPosition.trigger([position,false]);
+// },16000)
 
 
 // // 生成多个位置

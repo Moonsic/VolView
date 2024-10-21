@@ -4,7 +4,7 @@ import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { Maybe } from '@/src/types';
 import { VtkViewContext } from '@/src/components/vtk/context';
-import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
+// import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
 import { useOrientationLabels } from '@/src/composables/useOrientationLabels';
 import DicomQuickInfoButton from '@/src/components/DicomQuickInfoButton.vue';
 
@@ -26,11 +26,14 @@ const {
   slice,
   range: sliceRange,
 } = useSliceConfig(viewId, imageId);
-const {
-  config: wlConfig,
-  width: windowWidth,
-  level: windowLevel,
-} = useWindowingConfig(viewId, imageId);
+
+// 注释了亮度的信息
+// const {
+//   config: wlConfig,
+//   width: windowWidth,
+//   level: windowLevel,
+// } = useWindowingConfig(viewId, imageId);
+
 </script>
 
 <template>
@@ -50,9 +53,10 @@ const {
         <div v-if="sliceConfig">
           Slice: {{ slice + 1 }}/{{ sliceRange[1] + 1 }}
         </div>
-        <div v-if="wlConfig">
+        <!-- 把左下角的亮度信息注释了 -->
+        <!-- <div v-if="wlConfig">
           W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
-        </div>
+        </div> -->
       </div>
     </template>
     <template v-slot:top-right>

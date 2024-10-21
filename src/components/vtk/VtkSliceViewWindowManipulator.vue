@@ -34,7 +34,7 @@ if (!interactorStyle?.isA('vtkInteractorStyleManipulator')) {
 const config = computed(() => {
   return {
     button: 1,
-    dragEnabled: true,
+    dragEnabled: false, // 这里是控制是否可以拖拽改变亮度，之前默认是true，我现在改成false，不能拖拽。
     scrollEnabled: false,
     ...manipulatorConfig?.value,
   };
