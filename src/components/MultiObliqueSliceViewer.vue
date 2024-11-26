@@ -15,7 +15,7 @@
           :view-up="viewUp"
         >
           <!-- 我的球体参考点，只有一个，不应该放在v-for里 -->
-          <MySpheresRepresentation :sphereRadius="4"></MySpheresRepresentation>
+          <MySpheresRepresentation :sphereRadius="2.6"></MySpheresRepresentation>
 
 
           <template v-for="(sliceProps, idx) in obliqueSliceProps" :key="idx">

@@ -31,7 +31,7 @@
                 :loading="showLoading"
                 class="clickable"
                 >
-                <!-- @click="loadUserPro÷mptedFiles" -->
+                <!-- @click="loadUserPromptedFiles" -->
                 <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->
               </welcome-page>
             </div>
@@ -101,6 +101,12 @@ export function useSetPositionListWithColorEvents() {
   return { onClick: clickEventSetPositionListWithColor.on };
 }
 
+const clickEventSetPositionListWithColorAndArrow = createEventHook<[Vector3[],boolean]>();
+export function useSetPositionListWithColorAndArrowEvents() {
+  return { onClick: clickEventSetPositionListWithColorAndArrow.on };
+}
+
+
 
 
 // B项目接收
@@ -154,12 +160,21 @@ window.addEventListener('message', (event) => {
     clickEventSetPositionListWithColor.trigger([positionList, change]);
   }
 
+
+  if (event.data.type === 'setPositionListWithColorAndArrow') {
+    const positionList: any = JSON.parse(event.data.positionList)
+    // console.log('Arrow positionList number[][]', positionList);
+    const change: boolean = event.data.change
+    clickEventSetPositionListWithColorAndArrow.trigger([positionList, change]);
+  }
+
+
 })
 
 
 
 
-console.log('VolView_V1021')
+console.log('VolView_V1126')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -243,6 +258,45 @@ console.log('VolView_V1021')
 //     // 'green':[[10,10,10],[118,118,118]],
 //   },false]);
 
+// },8000)
+
+
+// // 生成多个位置，带有颜色的。
+// setInterval(()=>{
+// // setTimeout(()=>{
+
+//   console.log('Setting');
+//   clickEventSetPositionListWithColor.trigger([{
+//     'red':[[10,92,23]],
+//     'blue':[[10,-92,23]],
+//     'green':[[-10,-92,23]],
+//     // 'green':[[10,10,10],[118,118,118]],
+//   },false]);
+
+// },8000)
+
+
+// // 生成多个位置，带有颜色的，带有箭头的。
+// setInterval(()=>{
+//   console.log('生成多个位置，带有颜色的，带有箭头的。');
+//   clickEventSetPositionListWithColorAndArrow.trigger([
+//     {
+//     'red':[
+//       [ randomPosition(),[ 0.949, -0.055, -0.309 ],],
+//       [ randomPosition(),[ 0.581, -0.261, -0.771 ],],
+//     ],
+//     'blue':[
+//       [[10,-92,23],[ -0.959, -0.253, 0.132 ],],
+//     ],
+//     'green':[
+//       [[-10,-92,23],[ -0.046, 0.514, 0.856 ]],
+//       [[-20,-92,23],[ -1, 0, 0 ]],
+//       [[-30,-92,23],[ 0,1, 0 ]],
+//       [[-40,-92,23],[ 0.577,0.577, 0.577 ]],
+//       [[-38,-9,19],[ 0.577,0.577, 0.577 ]],
+//       [[-33,-1,19],[ 0.577,0.577, 0.577 ]],
+//     ],
+//   },false]);
 // },8000)
 
 

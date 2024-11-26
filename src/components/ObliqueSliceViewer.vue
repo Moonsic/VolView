@@ -74,7 +74,7 @@
           ></reslice-cursor-tool>
 
           <!-- 画球体 -->
-          <MySpheresRepresentation :sphereRadius="3"></MySpheresRepresentation>
+          <MySpheresRepresentation :sphereRadius="2.6"></MySpheresRepresentation>
 
           <slot></slot>
         </vtk-slice-view>
