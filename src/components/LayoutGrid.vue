@@ -7,23 +7,33 @@
     <div v-for="(item, i) in items" :key="i" class="d-flex flex-equal">
       <layout-grid v-if="item.type === 'layout'" :layout="(item as Layout)" />
       <div v-else class="layout-item">
-        <component
-          :is="item.component"
-          :key="item.id"
-          :id="item.id"
-          :type="item.viewType"
-          v-bind="item.props"
-        />
+        <div class="color-border" :class="`layout-item-${item.id}`">
+          <component
+            :is="item.component"
+            :key="item.id"
+            :id="item.id"
+            :type="item.viewType"
+            v-bind="item.props"
+          />
+        </div>
       </div>
     </div>
+
+    <!-- id: -->
+    <!-- ObliqueCoronal -->
+    <!-- ObliqueSagittal -->
+    <!-- ObliqueAxial -->
+    <!-- Oblique3D -->
 
     <!-- <div v-for="(item, i) in items" :key="i" class="d-flex flex-equal">
       <layout-grid v-if="item.type === 'layout'" :layout="(item as Layout)" />
       <div v-else class="layout-item">
         {{ item.id }}
         {{ item.props }}
+        {{ item }}
       </div>
     </div> -->
+
   </div>
 </template>
 
@@ -92,6 +102,27 @@ export default defineComponent({
 .layout-item {
   display: flex;
   flex: 1;
-  border: 1px solid #222;
+  border: 1px solid #000;
+  background-color: #000;
 }
+
+.color-border {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.layout-item-ObliqueCoronal {
+  border: 2px solid rgba(255, 51, 51,.8);
+}
+.layout-item-ObliqueSagittal {
+  border: 2px solid rgba(255, 255, 0,.8);
+}
+.layout-item-ObliqueAxial {
+  border: 2px solid rgba(0, 128, 255,.8);
+}
+/* .layout-item-Oblique3D {
+  border: 2px solid rgba(0, 0, 0,.6);
+} */
+
 </style>

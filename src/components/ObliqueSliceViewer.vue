@@ -36,7 +36,7 @@
             :manipulator-props="{ button: 3 }"
           ></vtk-mouse-interaction-manipulator>
 
-          <!-- 鼠标按住左右滑、上下滑，改变亮度的。删不得，否则已进入页面就是全黑的，只能在内部改 -->
+          <!-- 鼠标按住左右滑、上下滑，改变亮度的。不能删，否则已进入页面就是全黑的，只能在内部改 -->
           <vtk-slice-view-window-manipulator
             :view-id="id"
             :image-id="currentImageID"
@@ -58,6 +58,7 @@
           ></vtk-base-oblique-slice-representation>
 
           <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
+           <!-- 添加了透明度为0，意味着边框不显示了 -->
           <vtk-image-outline-representation
             :view-id="id"
             :image-id="currentImageID"
@@ -65,6 +66,7 @@
             :plane-origin="planeOrigin"
             :thickness="2"
             :color="outlineColor"
+            :opacity="0"
           ></vtk-image-outline-representation>
 
           <!-- 十字指示线 -->

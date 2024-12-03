@@ -309,6 +309,8 @@ export function openFileDialog() {
 export async function loadFiles(files: File[]) {
   // console.log('1 files :>> ', files);
   const dataSources = files.map(fileToDataSource);
+  // console.log('1 dataSources :>> ', dataSources);
+
   return loadDataSources(dataSources);
 }
 

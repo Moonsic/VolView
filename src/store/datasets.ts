@@ -37,6 +37,8 @@ export const useDatasetStore = defineStore('dataset', () => {
     return undefined;
   });
 
+  // console.log('primaryImageID', primaryImageID)
+
   const primaryDataset = computed<vtkImageData | null>(() => {
     const { dataIndex } = imageStore;
     return (primaryImageID.value && dataIndex[primaryImageID.value]) || null;

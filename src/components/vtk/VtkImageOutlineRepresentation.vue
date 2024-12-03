@@ -26,13 +26,15 @@ interface Props {
   planeOrigin: Vector3;
   color?: Vector3;
   thickness?: number;
+  opacity?: number; // 我新加的透明度，透明度为0就是隐藏
 }
 
 const props = withDefaults(defineProps<Props>(), {
   thickness: 1,
+  opacity: 1,
   color: () => [1, 1, 1] as Vector3,
 });
-const { imageId, planeNormal, planeOrigin, color, thickness } = toRefs(props);
+const { imageId, planeNormal, planeOrigin, color, thickness, opacity } = toRefs(props);
 
 const view = inject(VtkViewContext);
 if (!view) throw new Error('No VtkView');
@@ -65,7 +67,7 @@ const rep = useVtkRepresentation({
 watchEffect(() => {
   rep.property.setLineWidth(thickness.value);
   rep.property.setColor(color.value);
-  // rep.property.setPointSize(10);
+  rep.property.setOpacity(opacity.value); // 前3个视图透明度为0，就是隐藏框线。
 });
 
 // sync input plane to slice plane
