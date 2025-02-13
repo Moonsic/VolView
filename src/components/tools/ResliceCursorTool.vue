@@ -46,14 +46,18 @@ onViewMounted(view.renderWindowView, () => {
 
   resliceCursorState.getStatesWithLabel('sphere').forEach((handle) => {
     const h = handle as ResliceCursorWidgetState;
-    h.setScale1(10);
-    h.setOpacity(128);
+    // console.log('h :>> ', h, h.getCenter());
+    // console.log('h :>> ', h,h.getOffset());
+
+    h.setScale1(10); // 十字线的圆形大小，一共5个圆形，默认是10
+    h.setOpacity(80); // 圆形的透明度，默认128
   });
 
   resliceCursorState.getStatesWithLabel('line').forEach((handle) => {
     const h = handle as ResliceCursorWidgetState;
+    // console.log('line h :>> ', h);
     h.setScale3(1, 1, 1);
-    h.setOpacity(100);
+    h.setOpacity(100); // 默认100
   });
 
   const xLines = [

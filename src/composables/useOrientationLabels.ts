@@ -6,6 +6,12 @@ import { EPSILON } from '@/src/constants';
 import { View } from '@/src/core/vtk/types';
 import { vtkFieldRef } from '@/src/core/vtk/vtkFieldRef';
 
+
+// 经过分析，这里是拿到一个Vector3位置，过滤每个值否则大于EPSILON，EPSILON是一个标准，过滤掉哪个非常小的方向，可忽略不计的方向。值越大，越严格，值越小，越不严格。
+// 然后显示 前后左右上下，如果是1个字母，说明头比较正，朝向一个正方向，如果是2-3个字母，说明头有点偏，比如偏向左前方、左前上方。
+// LPS  RAI: L代表左，P代表后，S代表上，R代表右，I代表下，A代表前。
+// 还有排序，排序说明哪个字母在前面，值越大，更朝向哪里。
+// Math.abs表示绝对值，Math.sign代表正负：+1、-1、0
 export function toOrderedLabels(vec: Vector3) {
   return (
     vec
@@ -31,11 +37,12 @@ export function toOrderedLabels(vec: Vector3) {
 export function useOrientationLabels(view: MaybeRef<View>) {
   const renderer = computed(() => unref(view).renderer);
   const camera = vtkFieldRef(renderer, 'activeCamera');
-
   const top = ref('');
   const left = ref('');
   const bottom = ref('');
   const right = ref('');
+  // console.log('renderer :>> ', renderer);
+
 
   function updateAxes() {
     const vup = camera.value.getViewUp();

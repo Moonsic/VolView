@@ -19,7 +19,14 @@ const { viewId, imageId } = toRefs(props);
 const view = inject(VtkViewContext);
 if (!view) throw new Error('No VtkView');
 
-const { top: topLabel, left: leftLabel } = useOrientationLabels(view);
+// console.log('22 view :>> ', view);
+
+const {
+  top: topLabel,
+  left: leftLabel,
+  bottom: bottomLabel,
+  right: rightLabel
+ } = useOrientationLabels(view);
 
 const {
   config: sliceConfig,
@@ -46,6 +53,16 @@ const {
     <template v-slot:middle-left>
       <div class="annotation-cell">
         <span>{{ leftLabel }}</span>
+      </div>
+    </template>
+    <template v-slot:middle-right>
+      <div class="annotation-cell">
+        <span>{{ rightLabel }}</span>
+      </div>
+    </template>
+    <template v-slot:bottom-center>
+      <div class="annotation-cell">
+        <span>{{ bottomLabel }}</span>
       </div>
     </template>
     <template v-slot:bottom-left>

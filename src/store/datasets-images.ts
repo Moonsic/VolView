@@ -80,6 +80,7 @@ export const useImageStore = defineStore('images', {
 
       // GGG 在这里让布局改成默认为Oblique View布局
       const viewStore = useViewStore();
+      // console.log('viewStore',viewStore)
       setTimeout(() => {
           viewStore.setLayout(Layouts['Oblique View'])
       },50)

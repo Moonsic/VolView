@@ -30,8 +30,8 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
-                @click="loadUserPromptedFiles"
                 >
+                <!-- @click="loadUserPromptedFiles" -->
                 <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->
               </welcome-page>
             </div>
@@ -113,13 +113,21 @@ export function useSetPositionListWithColorAndArrowEvents() {
 window.addEventListener('message', (event) => {
   // console.log('message :>> ', event)
 
+  if (event.data.type === 'clear') {
+    loadFiles([])
+  }
+
   if (event.data.type === 'file') {
-    const fileUrl = event.data.fileUrl
+    const fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
     const filePath = event.data.filePath
     // 使用fileUrl获取Blob并处理
     // 从Blob URL创建新的Blob对象
-    fetch(fileUrl)
-      .then(response => response.blob())
+    // , {
+    //   headers: {
+    //     'Cache-Control': 'no-cache', // 不从缓存中拿数据
+    //   }
+    // }
+    fetch(fileUrl).then(response => response.blob())
       .then(blob => {
         const fileName = filePath; // 文件名
         const mimeType = '';       // MIME类型
@@ -174,7 +182,7 @@ window.addEventListener('message', (event) => {
 
 
 
-console.log('VolView_V1201')
+console.log('VolView_V20250102')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');

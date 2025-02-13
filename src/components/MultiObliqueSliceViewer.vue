@@ -141,6 +141,8 @@ useResetViewsEvents().onClick(resetCamera);
 // B项目接收
 window.addEventListener('message', (event: any) => {
   // console.log('1 MultiObliqueSliceViewer message :>> ', event)
+
+  // 截图
   if (event.data.type === 'screenshot') {
     // console.log('1 vtkView.value:>> ', vtkView.value)
     const getViewsList = vtkView.value?.renderWindow.getViews()
@@ -155,6 +157,12 @@ window.addEventListener('message', (event: any) => {
       vtkView.value?.renderWindow.render()
     }
   }
+
+  // 回到中心位置
+  if (event.data.type === 'resetView') {
+    resetCamera()
+  }
+
 })
 
 
