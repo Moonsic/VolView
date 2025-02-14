@@ -10,12 +10,12 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import replace from '@rollup/plugin-replace';
 
-import pkgLock from './package-lock.json';
+// import pkgLock from './package-lock.json';
 import { config } from './wdio.shared.conf';
 
-if (pkgLock.lockfileVersion !== 2) {
-  throw new Error('package-lock.json is not version 2!');
-}
+// if (pkgLock.lockfileVersion !== 2) {
+//   throw new Error('package-lock.json is not version 2!');
+// }
 
 function resolveNodeModulePath(moduleName: string) {
   const require = createRequire(import.meta.url);
@@ -74,10 +74,15 @@ export default defineConfig({
     sourcemap: true,
   },
   define: {
-    __VERSIONS__: {
-      volview: pkgLock.version,
-      'vtk.js': pkgLock.dependencies['@kitware/vtk.js'].version,
-      'itk-wasm': pkgLock.dependencies['itk-wasm'].version,
+    // __VERSIONS__: {
+    //   volview: pkgLock.version,
+    //   'vtk.js': pkgLock.dependencies['@kitware/vtk.js'].version,
+    //   'itk-wasm': pkgLock.dependencies['itk-wasm'].version,
+    // },
+     __VERSIONS__: {
+      volview: "4.2.0",
+      'vtk.js': "29.11.2",
+      'itk-wasm': "1.0.0-b.156",
     },
   },
   resolve: {
