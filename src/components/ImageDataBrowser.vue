@@ -94,48 +94,19 @@ export default defineComponent({
     const thumbnails = reactive<Record<string, Thumbnail>>({});
     const thumbnailer = createVTKImageThumbnailer();
 
-    // watch(
-    //   nonDICOMImages,
-    //   (imageIDs) => {
-    //     // console.log('watch nonDICOMImages :>> ', imageIDs);
-    //     // 改变的时候，加载最后一个，也是最新一个
-    //     dataStore.setPrimarySelection({type: 'image', dataID: imageIDs[imageIDs.length - 1]});
-    //     dataStore.setPrimarySelection(imageIDs[imageIDs.length - 1]);
-
-    //     // GGG 然后把前面的都删掉，只留下一个。
-    //     imageIDs.forEach((id,index) => {
-    //       if(index < imageIDs.length - 1) {
-    //         imageStore.deleteData(id);
-    //       }
-    //     });
-
-    //     imageIDs.forEach(async (id) => {
-    //       const cacheKey = imageCacheKey(id);
-    //       if (!(cacheKey in thumbnails)) {
-    //         const imageData = imageStore.dataIndex[id];
-    //         const canvasIM = thumbnailer.generate(imageData);
-    //         const imageURI = thumbnailer.imageDataToDataURI(canvasIM, 100, 100);
-    //         const dims = imageData.getDimensions();
-    //         const aspectRatio = dims[0] / dims[1];
-    //         thumbnails[cacheKey] = { imageURI, aspectRatio };
-    //       }
-    //     });
-
-    //     // delete old thumbnails
-    //     const idLookup = new Set(imageIDs.map((id) => imageCacheKey(id)));
-    //     Object.keys(thumbnails).forEach((cacheKey) => {
-    //       if (!idLookup.has(cacheKey)) {
-    //         delete thumbnails[cacheKey];
-    //       }
-    //     });
-    //   },
-    //   { immediate: true, deep: true }
-    // );
-
-
     watch(
       nonDICOMImages,
       (imageIDs) => {
+        // console.log('imageIDs :>> ', imageIDs);
+        // GGG 改变的时候，加载最后一个，也是最新一个;现在setPrimarySelection只接收一个id，而不是以前一个对象了
+        dataStore.setPrimarySelection(imageIDs[imageIDs.length - 1]);
+        // GGG 然后把前面的都删掉，只留下一个。
+        imageIDs.forEach((id,index) => {
+          if(index < imageIDs.length - 1) {
+            imageStore.deleteData(id);
+          }
+        });
+
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);
           if (!(cacheKey in thumbnails)) {

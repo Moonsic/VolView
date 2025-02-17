@@ -236,14 +236,19 @@ const sliceDomain = computed(() => {
 
 // the core update camera function
 const updateResliceCamera = (resetFocalPoint: boolean) => {
-  if (!vtkView.value || !resliceCursorState.getImage()) return;
-  resliceCursor.updateCameraPoints(
-    vtkView.value.renderer,
-    widgetViewType.value,
-    resetFocalPoint,
-    false,
-    true
-  );
+  // if (!vtkView.value || !resliceCursorState.getImage()) return;
+
+ // GGG 注释，因为报错，官方也报错，等官方解决
+  // console.log('object 1:>> ', vtkView.value.renderer);
+  // console.log('object 2:>> ',  widgetViewType.value);
+  // console.log('object 3:>> ', resetFocalPoint);
+  // resliceCursor.updateCameraPoints(
+  //   vtkView.value.renderer,
+  //   widgetViewType.value,
+  //   resetFocalPoint,
+  //   false,
+  //   true
+  // );
 };
 
 

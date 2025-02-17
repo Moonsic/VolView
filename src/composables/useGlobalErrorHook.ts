@@ -6,13 +6,15 @@ export function useGlobalErrorHook() {
   const messageStore = useMessageStore();
 
   const onError = (event: ErrorEvent) => {
-    console.error(event);
+    // console.error(event); // GGG注释掉
     const errorMessage = event.message ?? 'Unknown global error';
 
     captureException(event.error ?? errorMessage);
 
     const details = event.error ? event.error : { details: errorMessage };
-    messageStore.addError('Application error (click for details)', details);
+    console.log('error: ', details); // GGG添加
+
+    // messageStore.addError('Application error (click for details)', details); // GGG注释掉，左下角不弹出报错
   };
 
   onMounted(() => {
