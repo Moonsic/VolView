@@ -1,7 +1,6 @@
 <script
   setup
   lang="ts"
-  ,
   generic="T, KeyProp extends keyof T, TitleProp extends keyof T"
 >
 /* global T, KeyProp, TitleProp */
@@ -27,7 +26,7 @@ const props = withDefaults(
 const itemsToRender = computed(() =>
   props.items.map((item) => ({
     key: item[props.itemKey] as string | number | symbol,
-    title: item[props.itemTitle],
+    title: item[props.itemTitle] as string | undefined,
   }))
 );
 </script>
@@ -48,7 +47,11 @@ const itemsToRender = computed(() =>
             @click="toggle"
           >
             <slot name="item-prepend" :key="key" :item="items[idx]"></slot>
-            <span class="overflow-hidden">{{ title }}</span>
+            <v-tooltip :text="title" location="end">
+              <template #activator="{ props }">
+                <span v-bind="props" class="text-truncate">{{ title }}</span>
+              </template>
+            </v-tooltip>
             <v-spacer />
             <slot name="item-append" :key="key" :item="items[idx]"></slot>
           </v-chip>

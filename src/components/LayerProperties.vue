@@ -1,6 +1,5 @@
 <script lang="ts">
 import { computed, defineComponent, PropType, toRefs } from 'vue';
-import { getImageID } from '@/src/utils/dataSelection';
 import { InitViewSpecs } from '../config';
 import { useImageStore } from '../store/datasets-images';
 import { BlendConfig } from '../types/views';
@@ -25,9 +24,7 @@ export default defineComponent({
 
     const imageName = computed(() => {
       const { selection } = props.layer;
-      const imageID = getImageID(selection);
-      if (imageID === undefined) throw new Error('imageID is undefined');
-      return imageStore.metadata[imageID].name;
+      return imageStore.metadata[selection].name;
     });
 
     const layerColoringStore = useLayerColoringStore();
@@ -43,11 +40,12 @@ export default defineComponent({
 
     const blendConfig = computed(
       () =>
-        // assume one 2D view has mounted
-        layerConfigs.value.find(({ config }) => config)!.config!.blendConfig
+        // may be undefined if a 2D view has not been mounted
+        layerConfigs.value.find(({ config }) => config)?.config?.blendConfig
     );
 
     const setBlendConfig = (key: keyof BlendConfig, value: any) => {
+      if (layerConfigs.value.length === 0) return;
       layerConfigs.value.forEach(({ viewID }) =>
         layerColoringStore.updateBlendConfig(viewID, layerID.value, {
           [key]: value,

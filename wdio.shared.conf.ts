@@ -65,7 +65,7 @@ export const config: Options.Testrunner = {
       },
     ],
     [
-      'image-comparison',
+      'visual',
       {
         baselineFolder: path.resolve(ROOT, 'tests/baseline/'),
         formatImageName:
@@ -80,7 +80,7 @@ export const config: Options.Testrunner = {
   reporters: ['spec', 'html-nice'],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 90 * 1000,
+    timeout: 120 * 1000,
   },
 
   //

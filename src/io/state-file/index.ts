@@ -12,7 +12,7 @@ import { retypeFile } from '../io';
 import { ARCHIVE_FILE_TYPES } from '../mimeTypes';
 
 export const MANIFEST = 'manifest.json';
-export const MANIFEST_VERSION = '3.0.0';
+export const MANIFEST_VERSION = '4.0.0';
 
 export async function serialize() {
   const datasetStore = useDatasetStore();
@@ -35,7 +35,6 @@ export async function serialize() {
         activeSegmentGroupID: null,
         activeSegment: null,
         brushSize: 8,
-        labelmapOpacity: 1,
       },
       crop: {},
       current: Tools.WindowLevel,

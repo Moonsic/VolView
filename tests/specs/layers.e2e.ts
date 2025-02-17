@@ -18,8 +18,8 @@ describe('Add Layer button', () => {
     // Wait for both volumes to appear in list
     await browser.waitUntil(
       async () => {
-        const menus = await volViewPage.datasetMenuButtons;
-        return menus.length >= 2;
+        const menus = volViewPage.datasetMenuButtons;
+        return (await menus.length) >= 2;
       },
       {
         timeout: DOWNLOAD_TIMEOUT,
@@ -30,7 +30,7 @@ describe('Add Layer button', () => {
     // Wait for a primary selection
     await volViewPage.waitForViews();
     // kludge for CI (dataset not seen as layerable yet without?)
-    await browser.pause(10000);
+    await browser.pause(15000);
 
     const menus = await volViewPage.datasetMenuButtons;
     await menus[1].click();
@@ -56,7 +56,7 @@ describe('Add Layer button', () => {
     await browser.waitUntil(
       async function slidersExist() {
         const layerOpacitySliders = await volViewPage.layerOpacitySliders;
-        return layerOpacitySliders.length > 0;
+        return (await layerOpacitySliders.length) > 0;
       },
       {
         timeoutMsg: `Expected at least one layer opacity slider`,

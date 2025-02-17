@@ -2,7 +2,7 @@ import { computed, reactive, ref, toRaw, watch } from 'vue';
 import vtkDataArray from '@kitware/vtk.js/Common/Core/DataArray';
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import vtkBoundingBox from '@kitware/vtk.js/Common/DataModel/BoundingBox';
-import type { RGBAColor } from '@kitware/vtk.js/types';
+import type { RGBAColor, TypedArray } from '@kitware/vtk.js/types';
 import { defineStore } from 'pinia';
 import { useImageStore } from '@/src/store/datasets-images';
 import { join, normalize } from '@/src/utils/path';
@@ -10,16 +10,14 @@ import { useIdStore } from '@/src/store/id';
 import { onImageDeleted } from '@/src/composables/onImageDeleted';
 import { normalizeForStore, removeFromArray } from '@/src/utils';
 import { SegmentMask } from '@/src/types/segment';
-import { DEFAULT_SEGMENT_MASKS } from '@/src/config';
+import { DEFAULT_SEGMENT_MASKS, CATEGORICAL_COLORS } from '@/src/config';
 import { readImage, writeImage } from '@/src/io/readWriteImage';
 import {
-  DataSelection,
+  type DataSelection,
   getImage,
-  selectionEquals,
-  findImageID,
-  getImageID,
-  getDataID,
+  isRegularImage,
 } from '@/src/utils/dataSelection';
+import vtkImageExtractComponents from '@/src/utils/imageExtractComponentsFilter';
 import vtkLabelMap from '../vtk/LabelMap';
 import {
   StateFile,
@@ -38,6 +36,7 @@ export const DEFAULT_SEGMENT_COLOR: RGBAColor = [255, 0, 0, 255];
 export const makeDefaultSegmentName = (value: number) => `Segment ${value}`;
 export const makeDefaultSegmentGroupName = (baseName: string, index: number) =>
   `Segment Group ${index} for ${baseName}`;
+const numberer = (index: number) => (index <= 1 ? '' : `${index}`); // start numbering at 2
 
 export interface SegmentGroupMetadata {
   name: string;
@@ -65,21 +64,56 @@ export function createLabelmapFromImage(imageData: vtkImageData) {
   return labelmap;
 }
 
+function convertToUint8(array: number[] | TypedArray): Uint8Array {
+  const uint8Array = new Uint8Array(array.length);
+  for (let i = 0; i < array.length; i++) {
+    const value = array[i];
+    uint8Array[i] = value < 0 || value > 255 ? 0 : value;
+  }
+  return uint8Array;
+}
+
+function getLabelMapScalars(imageData: vtkImageData) {
+  const scalars = imageData.getPointData().getScalars();
+  let values = scalars.getData();
+
+  if (!(values instanceof LabelmapArrayType)) {
+    values = convertToUint8(values);
+  }
+
+  return vtkDataArray.newInstance({
+    numberOfComponents: scalars.getNumberOfComponents(),
+    values,
+  });
+}
+
 export function toLabelMap(imageData: vtkImageData) {
   const labelmap = vtkLabelMap.newInstance(
-    imageData.get(
-      'spacing',
-      'origin',
-      'direction',
-      'extent',
-      'dataDescription',
-      'pointData'
-    )
+    imageData.get('spacing', 'origin', 'direction', 'extent', 'dataDescription')
   );
+
   labelmap.setDimensions(imageData.getDimensions());
   labelmap.computeTransforms();
 
+  // outline rendering only supports UInt8Array image types
+  const scalars = getLabelMapScalars(imageData);
+  labelmap.getPointData().setScalars(scalars);
+
   return labelmap;
+}
+
+export function extractEachComponent(input: vtkImageData) {
+  const numComponents = input
+    .getPointData()
+    .getScalars()
+    .getNumberOfComponents();
+  const extractComponentsFilter = vtkImageExtractComponents.newInstance();
+  extractComponentsFilter.setInputData(input);
+  return Array.from({ length: numComponents }, (_, i) => {
+    extractComponentsFilter.setComponents([i]);
+    extractComponentsFilter.update();
+    return extractComponentsFilter.getOutputData() as vtkImageData;
+  });
 }
 
 export const useSegmentGroupStore = defineStore('segmentGroup', () => {
@@ -159,6 +193,22 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
     });
   });
 
+  function pickUniqueName(
+    formatName: (index: number) => string,
+    parentID: string
+  ) {
+    const existingNames = new Set(
+      Object.values(metadataByID).map((meta) => meta.name)
+    );
+    let name = '';
+    do {
+      const nameIndex = nextDefaultIndex[parentID] ?? 1;
+      nextDefaultIndex[parentID] = nameIndex + 1;
+      name = formatName(nameIndex);
+    } while (existingNames.has(name));
+    return name;
+  }
+
   /**
    * Creates a new labelmap entry from a parent/source image.
    */
@@ -177,16 +227,10 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
       'value'
     );
 
-    // pick a unique name
-    let name = '';
-    const existingNames = new Set(
-      Object.values(metadataByID).map((meta) => meta.name)
+    const name = pickUniqueName(
+      (index: number) => makeDefaultSegmentGroupName(baseName, index),
+      parentID
     );
-    do {
-      const nameIndex = nextDefaultIndex[parentID] ?? 1;
-      nextDefaultIndex[parentID] = nameIndex + 1;
-      name = makeDefaultSegmentGroupName(baseName, nameIndex);
-    } while (existingNames.has(name));
 
     return addLabelmap.call(this, labelmap, {
       name,
@@ -206,58 +250,65 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
     delete metadataByID[id];
   }
 
-  let lastColorIndex = 0;
+  let nextColorIndex = 0;
   function getNextColor() {
-    const color = DEFAULT_SEGMENT_MASKS[lastColorIndex].color;
-    lastColorIndex = (lastColorIndex + 1) % DEFAULT_SEGMENT_MASKS.length;
-    return [...color];
+    const color = CATEGORICAL_COLORS[nextColorIndex];
+    nextColorIndex = (nextColorIndex + 1) % CATEGORICAL_COLORS.length;
+    return [...color, 255];
   }
 
-  function decodeSegments(image: DataSelection) {
-    if (image.type === 'image') {
-      return structuredClone(DEFAULT_SEGMENT_MASKS);
+  async function decodeSegments(
+    imageId: DataSelection,
+    image: vtkLabelMap,
+    component = 0
+  ) {
+    if (!isRegularImage(imageId)) {
+      // dicom image
+      const dicomStore = useDICOMStore();
+
+      const volumeBuildResults = await dicomStore.volumeBuildResults[imageId];
+      if (volumeBuildResults.modality === 'SEG') {
+        const segments =
+          volumeBuildResults.builtImageResults.metaInfo.segmentAttributes[
+            component
+          ];
+        return segments.map((segment) => ({
+          value: segment.labelID,
+          name: segment.SegmentLabel,
+          color: [...segment.recommendedDisplayRGBValue, 255],
+          visible: true,
+        }));
+      }
     }
 
-    const dicomStore = useDICOMStore();
-    const volumeInfo = dicomStore.volumeInfo[image.volumeKey];
-    const segmentSequence = undefined; // volumeInfo.SegmentSequence;
-    if (!segmentSequence) {
-      return [
-        {
-          value: 255,
-          name: volumeInfo.SeriesDescription || 'Unknown Segment',
-          color: getNextColor(),
-        },
-      ];
-    }
-    // TODO convert Recommended Display CIELab Value (0062,000D) tag to a segment color
-    // TODO convert SegmentDescription (0062,0006) tag to a segment name
-    return [
-      {
-        value: 255,
-        name: volumeInfo.SeriesDescription || 'Unknown Segment',
-        color: [255, 0, 255, 255],
-      },
-    ];
+    const [min, max] = image.getPointData().getScalars().getRange();
+    const noZeroBackground = Math.max(min, 1);
+    const values = Array.from(
+      { length: max - noZeroBackground + 1 },
+      (_, i) => i + noZeroBackground
+    );
+    return values.map((value) => ({
+      value,
+      name: makeDefaultSegmentName(value),
+      color: getNextColor(),
+      visible: true,
+    }));
   }
 
   /**
    * Converts an image to a labelmap.
    */
   async function convertImageToLabelmap(
-    image: DataSelection,
-    parent: DataSelection
+    imageID: DataSelection,
+    parentID: DataSelection
   ) {
-    if (selectionEquals(image, parent))
+    if (imageID === parentID)
       throw new Error('Cannot convert an image to be a labelmap of itself');
 
     // Build vtkImageData for DICOMs
     const [childImage, parentImage] = await Promise.all(
-      [image, parent].map(getImage)
+      [imageID, parentID].map(getImage)
     );
-
-    const imageID = getImageID(image);
-    const parentID = getImageID(parent);
 
     if (!imageID || !parentID)
       throw new Error('Image and/or parent datasets do not exist');
@@ -274,27 +325,44 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
       );
     }
 
-    const name = imageStore.metadata[imageID].name;
-    // Don't remove image if DICOM as user may have selected child image as primary selection by now
-    const deleteImage = image.type !== 'dicom';
+    // cache name before deleting
+    const baseName = imageStore.metadata[imageID].name;
+
+    // Don't remove image if DICOM. User may have selected segment group image as primary selection by now
+    const deleteImage = isRegularImage(imageID);
     if (deleteImage) {
       imageStore.deleteData(imageID);
     }
 
-    const resampled = await ensureSameSpace(parentImage, childImage, true);
-    const copyNeeded = resampled === childImage && !deleteImage;
-    const ownedMemoryImage = copyNeeded
-      ? structuredClone(resampled)
-      : resampled;
-    const labelmapImage = toLabelMap(ownedMemoryImage);
+    const componentCount = childImage
+      .getPointData()
+      .getScalars()
+      .getNumberOfComponents();
+    // for each component, create create new vtkImageData with just one component, pulled from each component of childImage
+    const images =
+      componentCount === 1 ? [childImage] : extractEachComponent(childImage);
 
-    const segments = decodeSegments(image);
-    const { order, byKey } = normalizeForStore(segments, 'value');
-    const segmentGroupStore = useSegmentGroupStore();
-    segmentGroupStore.addLabelmap(labelmapImage, {
-      name,
-      parentImage: parentID,
-      segments: { order, byValue: byKey },
+    images.forEach(async (image, component) => {
+      const matchingParentSpace = await ensureSameSpace(
+        parentImage,
+        image,
+        true
+      );
+      const labelmapImage = toLabelMap(matchingParentSpace);
+
+      const segments = await decodeSegments(imageID, labelmapImage, component);
+      const { order, byKey } = normalizeForStore(segments, 'value');
+      const segmentGroupStore = useSegmentGroupStore();
+
+      const name = pickUniqueName(
+        (index: number) => `${baseName} ${numberer(index)}`,
+        parentID
+      );
+      segmentGroupStore.addLabelmap(labelmapImage, {
+        name,
+        parentImage: parentID,
+        segments: { order, byValue: byKey },
+      });
     });
   }
 
@@ -331,6 +399,7 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
       name: makeDefaultSegmentName(value),
       value,
       color: DEFAULT_SEGMENT_COLOR,
+      visible: true,
     };
   }
 
@@ -409,7 +478,7 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
           path: `labels/${id}.${saveFormat.value}`,
           metadata: {
             ...metadata,
-            parentImage: getDataID(metadata.parentImage),
+            parentImage: metadata.parentImage,
           },
         };
       });
@@ -465,7 +534,7 @@ export const useSegmentGroupStore = defineStore('segmentGroup', () => {
     labelMaps.forEach((labelMap, index) => {
       const { metadata } = labelMap;
       // map parent id to new id
-      const parentImage = findImageID(dataIDMap[metadata.parentImage]);
+      const parentImage = dataIDMap[metadata.parentImage];
       metadata.parentImage = parentImage;
 
       const newID = newLabelmapIDs[index];

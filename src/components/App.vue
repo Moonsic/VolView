@@ -30,6 +30,7 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
+                @click="loadUserPromptedFiles"
                 >
                 <!-- @click="loadUserPromptedFiles" -->
                 <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->
@@ -37,7 +38,7 @@
             </div>
           </div>
         </v-main>
-        <keyboard-shortcuts />
+        <controls-modal />
       </v-app>
       <persistent-overlay
         :disabled="!dragHover"
@@ -80,11 +81,15 @@ import LayoutGrid from '@/src/components/LayoutGrid.vue';
 import ModulePanel from '@/src/components/ModulePanel.vue';
 import DragAndDrop from '@/src/components/DragAndDrop.vue';
 import PersistentOverlay from '@/src/components/PersistentOverlay.vue';
-import KeyboardShortcuts from '@/src/components/KeyboardShortcuts.vue';
+import ControlsModal from '@/src/components/ControlsModal.vue';
 import { useImageStore } from '@/src/store/datasets-images';
 import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
+import {
+  populateAuthorizationToken,
+  stripTokenFromUrl,
+} from '@/src/utils/token';
 
 const clickEventSetPosition = createEventHook<[Vector3,boolean]>();
 export function useSetPositionEvents() {
@@ -182,7 +187,7 @@ window.addEventListener('message', (event) => {
 
 
 
-console.log('VolView_V20250102')
+console.log('VolView_V20250214')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -318,7 +323,7 @@ export default defineComponent({
     DragAndDrop,
     ModulePanel,
     PersistentOverlay,
-    KeyboardShortcuts,
+    ControlsModal,
     WelcomePage,
     // AppBar,
   },
@@ -346,6 +351,9 @@ export default defineComponent({
     );
 
     // --- parse URL -- //
+
+    populateAuthorizationToken();
+    stripTokenFromUrl();
 
     const urlParams = vtkURLExtract.extractURLParameters() as UrlParams;
 

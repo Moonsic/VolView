@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SegmentGroupOpacity from '@/src/components/SegmentGroupOpacity.vue';
 import SegmentList from '@/src/components/SegmentList.vue';
 import CloseableDialog from '@/src/components/CloseableDialog.vue';
 import SaveSegmentGroupDialog from '@/src/components/SaveSegmentGroupDialog.vue';
@@ -10,6 +11,7 @@ import {
   DataSelection,
 } from '@/src/utils/dataSelection';
 import { useSegmentGroupStore } from '@/src/store/segmentGroups';
+import { useGlobalLayerColorConfig } from '@/src/composables/useGlobalLayerColorConfig';
 import { usePaintToolStore } from '@/src/store/tools/paint';
 import { Maybe } from '@/src/types';
 import { reactive, ref, computed, watch, toRaw } from 'vue';
@@ -25,9 +27,20 @@ const currentSegmentGroups = computed(() => {
   const { orderByParent, metadataByID } = segmentGroupStore;
   if (!(currentImageID.value in orderByParent)) return [];
   return orderByParent[currentImageID.value].map((id) => {
+    const { sampledConfig, updateConfig } = useGlobalLayerColorConfig(id);
     return {
       id,
       name: metadataByID[id].name,
+      visibility: sampledConfig.value?.config?.blendConfig.visibility ?? true,
+      toggleVisibility: () => {
+        const currentBlend = sampledConfig.value!.config!.blendConfig;
+        updateConfig({
+          blendConfig: {
+            ...currentBlend,
+            visibility: !currentBlend.visibility,
+          },
+        });
+      },
     };
   });
 });
@@ -35,7 +48,7 @@ const currentSegmentGroups = computed(() => {
 const paintStore = usePaintToolStore();
 const currentSegmentGroupID = computed({
   get: () => paintStore.activeSegmentGroupID,
-  set: (id) => paintStore.setActiveLabelmap(id),
+  set: (id) => paintStore.setActiveSegmentGroup(id),
 });
 
 // clear selection if we delete the active segment group
@@ -150,7 +163,7 @@ function openSaveDialog(id: string) {
 </script>
 
 <template>
-  <div class="my-2" v-if="currentImageID">
+  <div class="mt-2" v-if="currentImageID">
     <div
       class="text-grey text-subtitle-2 d-flex align-center justify-space-evenly mb-2"
     >
@@ -190,7 +203,12 @@ function openSaveDialog(id: string) {
         </v-list>
       </v-menu>
     </div>
-    <v-divider />
+    <v-divider class="my-4" />
+
+    <segment-group-opacity
+      v-if="currentSegmentGroupID"
+      :group-id="currentSegmentGroupID"
+    />
     <v-radio-group
       v-model="currentSegmentGroupID"
       hide-details
@@ -206,6 +224,20 @@ function openSaveDialog(id: string) {
           <div class="d-flex flex-row align-center w-100" :title="group.name">
             <span class="group-name">{{ group.name }}</span>
             <v-spacer />
+            <v-btn
+              icon
+              variant="flat"
+              size="small"
+              @click.stop="group.toggleVisibility"
+            >
+              <v-icon v-if="group.visibility" style="pointer-events: none"
+                >mdi-eye</v-icon
+              >
+              <v-icon v-else style="pointer-events: none">mdi-eye-off</v-icon>
+              <v-tooltip location="left" activator="parent">{{
+                group.visibility ? 'Hide' : 'Show'
+              }}</v-tooltip>
+            </v-btn>
             <v-btn
               icon="mdi-content-save"
               size="small"
@@ -228,7 +260,7 @@ function openSaveDialog(id: string) {
         </template>
       </v-radio>
     </v-radio-group>
-    <v-divider />
+    <v-divider class="my-4" />
   </div>
   <div v-else class="text-center text-caption">No selected image</div>
   <segment-list

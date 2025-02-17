@@ -14,6 +14,7 @@ import { StateFile, DatasetType } from '../io/state-file/schema';
 import { serializeData } from '../io/state-file/utils';
 import { useFileStore } from './datasets-files';
 import { ImageMetadata } from '../types/image';
+import { compareImageSpaces } from '../utils/imageSpace';
 
 export const defaultImageMetadata = () => ({
   name: '(none)',
@@ -28,7 +29,7 @@ export const defaultImageMetadata = () => ({
 });
 
 interface State {
-  id: string; // 只保留一个
+  // id: string; // 只保留一个
   idList: string[]; // list of IDs
   dataIndex: Record<string, vtkImageData>; // ID -> VTK object
   metadata: Record<string, ImageMetadata>; // ID -> metadata
@@ -42,14 +43,18 @@ export const useImageStore = defineStore('images', {
     metadata: Object.create(null),
   }),
   actions: {
-    addVTKImageData(name: string, imageData: vtkImageData) {
-      // GGG 添加一个新的图像
+    addVTKImageData(name: string, imageData: vtkImageData, useId?: string) {
+      if (useId && useId in this.dataIndex) {
+        throw new Error('ID already exists');
+      }
+
+      const id = useId || useIdStore().nextId();
 
       // console.log('useImageStore addVTKImageData :>> ', name, imageData);
 
       // 原来的，push进数组
-      const id = useIdStore().nextId();
-      this.id = id
+      // const id = useIdStore().nextId();
+      // this.id = id
       this.idList.push(id);
       this.dataIndex[id] = imageData;
 
@@ -93,6 +98,17 @@ export const useImageStore = defineStore('images', {
         delete this.metadata[id];
         removeFromArray(this.idList, id);
       }
+    },
+
+    checkAllImagesSameSpace() {
+      if (this.idList.length < 2) return false;
+
+      const dataFirst = this.dataIndex[this.idList[0]];
+      const allEqual = this.idList.slice(1).every((id) => {
+        return compareImageSpaces(this.dataIndex[id], dataFirst);
+      });
+
+      return allEqual;
     },
 
     async serialize(stateFile: StateFile) {

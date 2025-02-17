@@ -9,12 +9,13 @@
       <div v-else class="layout-item">
         <div class="color-border" :class="`layout-item-${item.id}`">
           <component
-            :is="item.component"
-            :key="item.id"
-            :id="item.id"
-            :type="item.viewType"
-            v-bind="item.props"
-          />
+          :is="item.component"
+          :key="item.id"
+          :id="item.id"
+          :type="item.viewType"
+          v-bind="item.props"
+          @focus="onFocusView(item.id!, item.viewType!)"
+        />
         </div>
       </div>
     </div>
@@ -46,6 +47,13 @@ import { useViewStore } from '../store/views';
 
 export default defineComponent({
   name: 'LayoutGrid',
+  methods: {
+    onFocusView(id: string, type: string) {
+      if (type === '2D') {
+        useViewStore().setActiveViewID(id);
+      }
+    },
+  },
   props: {
     layout: {
       type: Object as PropType<Layout>,

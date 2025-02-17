@@ -16,6 +16,8 @@ import vtkPiecewiseFunctionProxy from '@kitware/vtk.js/Proxy/Core/PiecewiseFunct
 import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
 import useViewAnimationStore from '@/src/store/view-animation';
+import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
+import { useVolumeColoringInitializer } from '@/src/composables/useVolumeColoringInitializer';
 import { useResizeObserver } from '../composables/useResizeObserver';
 import { useCurrentImage } from '../composables/useCurrentImage';
 import useVolumeColoringStore from '../store/view-configs/volume-coloring';
@@ -42,17 +44,11 @@ export default defineComponent({
 
     const { currentImageID, currentImageData } = useCurrentImage();
 
+    useVolumeColoringInitializer(TARGET_VIEW_ID, currentImageID);
+
     const volumeColorConfig = computed(() =>
       volumeColoringStore.getConfig(TARGET_VIEW_ID, currentImageID.value)
     );
-
-    watch(volumeColorConfig, () => {
-      const imageID = currentImageID.value;
-      if (imageID && !volumeColorConfig.value) {
-        // creates a default color config
-        volumeColoringStore.updateConfig(TARGET_VIEW_ID, imageID, {});
-      }
-    });
 
     const colorTransferFunctionRef = computed(
       () => volumeColorConfig.value?.transferFunction
@@ -284,19 +280,20 @@ export default defineComponent({
     onKeyDown('Control', () => pwfWidget.setShiftOpacityValues(true));
     onKeyUp('Control', () => pwfWidget.setShiftOpacityValues(false));
 
+    const reset = () => {
+      rangeShift.value = 0;
+      rangeWidth.value = fullMappingRangeWidth.value;
+    };
     // reset case
-    watch(
-      [selectedPreset, currentImageID],
-      () => {
-        rangeShift.value = 0;
-        rangeWidth.value = fullMappingRangeWidth.value;
-      },
-      { immediate: true }
-    );
+    watch([selectedPreset, currentImageID], reset, { immediate: true });
+
+    useResetViewsEvents().onClick(reset);
 
     watch([rangeShift, rangeWidth], ([shift, width]) => {
       const imageID = currentImageID.value;
-      if (!imageID) return;
+      const config = volumeColoringStore.getConfig(TARGET_VIEW_ID, imageID);
+      // wait for config to be initialized with preset "all view default" for particular image
+      if (!imageID || !config) return;
 
       const fullRange = fullMappingRange.value;
       const fullWidth = fullMappingRangeWidth.value;

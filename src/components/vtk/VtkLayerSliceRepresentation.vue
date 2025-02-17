@@ -10,14 +10,14 @@ import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunc
 import { vtkFieldRef } from '@/src/core/vtk/vtkFieldRef';
 import { syncRef } from '@vueuse/core';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
-import { LayerID, useLayersStore } from '@/src/store/datasets-layers';
+import { useLayersStore } from '@/src/store/datasets-layers';
 import useLayerColoringStore from '@/src/store/view-configs/layers';
 import { useLayerConfigInitializer } from '@/src/composables/useLayerConfigInitializer';
 import { applyColoring } from '@/src/composables/useColoringEffect';
 
 interface Props {
   viewId: string;
-  layerId: LayerID;
+  layerId: string;
   parentId: string;
   axis: LPSAxis;
 }
@@ -73,7 +73,9 @@ const applyLayerColoring = () => {
   if (!config) return;
 
   const cfun = sliceRep.property.getRGBTransferFunction(0);
-  const ofun = sliceRep.property.getScalarOpacity(0);
+  const ofun = sliceRep.property.getPiecewiseFunction(0);
+
+  if (!cfun || !ofun) throw new Error('Missing transfer functions');
 
   applyColoring({
     props: {

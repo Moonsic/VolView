@@ -1,30 +1,32 @@
 import JSZip from 'jszip';
 import { z } from 'zod';
 import type { Vector3 } from '@kitware/vtk.js/types';
-import vtkPiecewiseFunctionProxy, {
+import vtkPiecewiseFunctionProxy from '@kitware/vtk.js/Proxy/Core/PiecewiseFunctionProxy';
+import type {
   PiecewiseGaussian,
   PiecewiseNode,
 } from '@kitware/vtk.js/Proxy/Core/PiecewiseFunctionProxy';
 
 import type { AnnotationTool, ToolID } from '@/src/types/annotation-tool';
 import { Tools as ToolsEnum } from '@/src/store/tools/types';
-import { Ruler } from '@/src/types/ruler';
-import { Rectangle } from '@/src/types/rectangle';
-import { Polygon } from '@/src/types/polygon';
-import { LPSCroppingPlanes } from '@/src/types/crop';
-import { FrameOfReference } from '@/src/utils/frameOfReference';
-import { Optional } from '@/src/types';
+import type { Ruler } from '@/src/types/ruler';
+import type { Rectangle } from '@/src/types/rectangle';
+import type { Polygon } from '@/src/types/polygon';
+import type { LPSCroppingPlanes } from '@/src/types/crop';
+import type { FrameOfReference } from '@/src/utils/frameOfReference';
+import type { Optional } from '@/src/types';
 
-import {
+import type {
   CameraConfig,
   SliceConfig,
   WindowLevelConfig,
   LayersConfig,
+  SegmentGroupConfig,
   VolumeColorConfig,
 } from '../../store/view-configs/types';
-import { LPSAxisDir, LPSAxis } from '../../types/lps';
+import type { LPSAxisDir, LPSAxis } from '../../types/lps';
 import { LayoutDirection } from '../../types/layout';
-import {
+import type {
   ColorBy,
   ColorTransferFunction,
   OpacityFunction,
@@ -112,6 +114,7 @@ const SliceConfig = z.object({
   min: z.number(),
   max: z.number(),
   axisDirection: LPSAxisDir,
+  syncState: z.boolean(),
 }) satisfies z.ZodType<SliceConfig>;
 
 const CameraConfig = z.object({
@@ -120,6 +123,7 @@ const CameraConfig = z.object({
   focalPoint: Vector3.optional(),
   directionOfProjection: Vector3.optional(),
   viewUp: Vector3.optional(),
+  syncState: z.boolean().optional(),
 }) satisfies z.ZodType<CameraConfig>;
 
 const ColorBy = z.object({
@@ -202,6 +206,7 @@ const VolumeColorConfig = z.object({
 
 const BlendConfig = z.object({
   opacity: z.number(),
+  visibility: z.boolean(),
 }) satisfies z.ZodType<BlendConfig>;
 
 const LayersConfig = z.object({
@@ -211,10 +216,16 @@ const LayersConfig = z.object({
   blendConfig: BlendConfig,
 }) satisfies z.ZodType<LayersConfig>;
 
+const SegmentGroupConfig = z.object({
+  outlineOpacity: z.number(),
+  outlineThickness: z.number(),
+}) satisfies z.ZodType<SegmentGroupConfig>;
+
 const ViewConfig = z.object({
   window: WindowLevelConfig.optional(),
   slice: SliceConfig.optional(),
   layers: LayersConfig.optional(),
+  segmentGroup: SegmentGroupConfig.optional(),
   camera: CameraConfig.optional(),
   volumeColorConfig: VolumeColorConfig.optional(),
 });
@@ -236,6 +247,7 @@ const SegmentMask = z.object({
   value: z.number(),
   name: z.string(),
   color: RGBAColor,
+  visible: z.boolean().default(true),
 });
 
 export const SegmentGroupMetadata = z.object({
@@ -313,7 +325,7 @@ const Paint = z.object({
   activeSegmentGroupID: z.string().nullable(),
   activeSegment: z.number().nullish(),
   brushSize: z.number(),
-  labelmapOpacity: z.number(),
+  labelmapOpacity: z.number().optional(), // labelmapOpacity now ignored.  Opacity per segment group via layerColoring store.
 });
 
 const LPSCroppingPlanes = z.object({

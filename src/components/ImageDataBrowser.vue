@@ -6,16 +6,17 @@ import ImageListCard from '@/src/components/ImageListCard.vue';
 import { createVTKImageThumbnailer } from '@/src/core/thumbnailers/vtk-image';
 import { useSegmentGroupStore } from '@/src/store/segmentGroups';
 import {
-  DataSelection,
-  ImageSelection,
+  isRegularImage,
+  type DataSelection,
   selectionEquals,
 } from '@/src/utils/dataSelection';
 import { useImageStore } from '../store/datasets-images';
-import { useDICOMStore } from '../store/datasets-dicom';
 import { useDatasetStore } from '../store/datasets';
 
 import { useMultiSelection } from '../composables/useMultiSelection';
 import { useLayersStore } from '../store/datasets-layers';
+import { useViewSliceStore } from '../store/view-configs/slicing';
+import { useViewCameraStore } from '../store/view-configs/camera';
 
 function imageCacheKey(dataID: string) {
   return `image-${dataID}`;
@@ -29,15 +30,16 @@ export default defineComponent({
   },
   setup() {
     const imageStore = useImageStore();
-    const dicomStore = useDICOMStore();
     const dataStore = useDatasetStore();
     const layersStore = useLayersStore();
     const segmentGroupStore = useSegmentGroupStore();
+    const viewSliceStore = useViewSliceStore();
+    const viewCameraStore = useViewCameraStore();
 
     const primarySelection = computed(() => dataStore.primarySelection);
 
     const nonDICOMImages = computed(() =>
-      imageStore.idList.filter((id) => !(id in dicomStore.imageIDToVolumeKey))
+      imageStore.idList.filter((id) => isRegularImage(id))
     );
 
     const images = computed(() => {
@@ -45,23 +47,17 @@ export default defineComponent({
 
       const layerImages = layersStore
         .getLayers(primarySelection.value)
-        .filter(({ selection }) => selection.type === 'image');
-      const layerImageIDs = layerImages.map(
-        ({ selection }) => (selection as ImageSelection).dataID
-      );
+        .filter(({ selection }) => isRegularImage(selection));
+      const layerImageIDs = layerImages.map(({ selection }) => selection);
       const loadedLayerImageIDs = layerImages
         .filter(({ id }) => id in layersStore.layerImages)
-        .map(({ selection }) => (selection as ImageSelection).dataID);
+        .map(({ selection }) => selection);
 
       const selectedImageID =
-        primarySelection.value?.type === 'image' &&
-        primarySelection.value?.dataID;
+        isRegularImage(primarySelection.value) && primarySelection.value;
 
       return nonDICOMImages.value.map((id) => {
-        const selectionKey = {
-          type: 'image',
-          dataID: id,
-        } as DataSelection;
+        const selectionKey = id as DataSelection;
         const isLayer = layerImageIDs.includes(id);
         const layerLoaded = loadedLayerImageIDs.includes(id);
         const layerLoading = isLayer && !layerLoaded;
@@ -98,20 +94,48 @@ export default defineComponent({
     const thumbnails = reactive<Record<string, Thumbnail>>({});
     const thumbnailer = createVTKImageThumbnailer();
 
+    // watch(
+    //   nonDICOMImages,
+    //   (imageIDs) => {
+    //     // console.log('watch nonDICOMImages :>> ', imageIDs);
+    //     // 改变的时候，加载最后一个，也是最新一个
+    //     dataStore.setPrimarySelection({type: 'image', dataID: imageIDs[imageIDs.length - 1]});
+    //     dataStore.setPrimarySelection(imageIDs[imageIDs.length - 1]);
+
+    //     // GGG 然后把前面的都删掉，只留下一个。
+    //     imageIDs.forEach((id,index) => {
+    //       if(index < imageIDs.length - 1) {
+    //         imageStore.deleteData(id);
+    //       }
+    //     });
+
+    //     imageIDs.forEach(async (id) => {
+    //       const cacheKey = imageCacheKey(id);
+    //       if (!(cacheKey in thumbnails)) {
+    //         const imageData = imageStore.dataIndex[id];
+    //         const canvasIM = thumbnailer.generate(imageData);
+    //         const imageURI = thumbnailer.imageDataToDataURI(canvasIM, 100, 100);
+    //         const dims = imageData.getDimensions();
+    //         const aspectRatio = dims[0] / dims[1];
+    //         thumbnails[cacheKey] = { imageURI, aspectRatio };
+    //       }
+    //     });
+
+    //     // delete old thumbnails
+    //     const idLookup = new Set(imageIDs.map((id) => imageCacheKey(id)));
+    //     Object.keys(thumbnails).forEach((cacheKey) => {
+    //       if (!idLookup.has(cacheKey)) {
+    //         delete thumbnails[cacheKey];
+    //       }
+    //     });
+    //   },
+    //   { immediate: true, deep: true }
+    // );
+
+
     watch(
       nonDICOMImages,
       (imageIDs) => {
-        // console.log('watch nonDICOMImages :>> ', imageIDs);
-        // 改变的时候，加载最后一个，也是最新一个
-        dataStore.setPrimarySelection({type: 'image', dataID: imageIDs[imageIDs.length - 1]});
-
-        // GGG 然后把前面的都删掉，只留下一个。
-        imageIDs.forEach((id,index) => {
-          if(index < imageIDs.length - 1) {
-            imageStore.deleteData(id);
-          }
-        });
-
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);
           if (!(cacheKey in thumbnails)) {
@@ -135,6 +159,23 @@ export default defineComponent({
       { immediate: true, deep: true }
     );
 
+    // --- sync --- //
+    const sameSpaceImages = computed(() => {
+      return imageStore.checkAllImagesSameSpace();
+    });
+    const isSync = computed(() => {
+      return viewSliceStore.isSync() && viewCameraStore.isSync();
+    });
+    function toggleSyncImages() {
+      viewSliceStore.toggleSyncImages();
+      viewCameraStore.toggleSyncCameras();
+      viewCameraStore.disableCameraAutoReset = isSync.value;
+    }
+    watch(isSync, () => {
+      viewSliceStore.updateSyncConfigs();
+      viewCameraStore.updateSyncConfigs();
+    });
+
     // --- selection --- //
 
     const { selected, selectedAll, selectedSome, toggleSelectAll } =
@@ -147,10 +188,7 @@ export default defineComponent({
 
     function convertToLabelMap(key: string) {
       if (primarySelection.value) {
-        segmentGroupStore.convertImageToLabelmap(
-          { type: 'image', dataID: key },
-          primarySelection.value
-        );
+        segmentGroupStore.convertImageToLabelmap(key, primarySelection.value);
       }
     }
 
@@ -173,6 +211,9 @@ export default defineComponent({
       setPrimarySelection: (sel: DataSelection) => {
         dataStore.setPrimarySelection(sel);
       },
+      sameSpaceImages,
+      toggleSyncImages,
+      isSync,
     };
   },
 });
@@ -195,6 +236,22 @@ export default defineComponent({
           />
         </v-col>
         <v-col cols="6" align-self="center" class="d-flex justify-end">
+          <v-btn
+            icon
+            variant="text"
+            :disabled="!sameSpaceImages"
+            @click.stop="toggleSyncImages"
+          >
+            <v-icon v-if="isSync">mdi-lock</v-icon>
+            <v-icon flip="vertical" v-else>mdi-lock-open-variant</v-icon>
+            <v-tooltip
+              :disabled="!sameSpaceImages"
+              location="left"
+              activator="parent"
+            >
+              Sync Images
+            </v-tooltip>
+          </v-btn>
           <v-btn
             icon
             variant="text"
@@ -272,9 +329,9 @@ export default defineComponent({
                       image.layerable ? convertToLabelMap(image.id) : null
                     "
                   >
-                    <v-icon v-if="!image.layerable" class="mr-1"
-                      >mdi-alert</v-icon
-                    >
+                    <v-icon v-if="!image.layerable" class="mr-1">
+                      mdi-alert
+                    </v-icon>
                     Convert to Segment Group
                     <v-tooltip
                       activator="parent"

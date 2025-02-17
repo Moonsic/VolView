@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toRefs, watchEffect, inject, computed } from 'vue';
+import { toRefs, watchEffect, inject, computed, unref } from 'vue';
 import { useImage } from '@/src/composables/useCurrentImage';
 import { useSliceRepresentation } from '@/src/core/vtk/useSliceRepresentation';
 import { LPSAxis } from '@/src/types/lps';
@@ -16,8 +16,9 @@ import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunc
 import { vtkFieldRef } from '@/src/core/vtk/vtkFieldRef';
 import { syncRef } from '@vueuse/core';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
-import { usePaintToolStore } from '@/src/store/tools/paint';
-import { storeToRefs } from 'pinia';
+import useLayerColoringStore from '@/src/store/view-configs/layers';
+import { useSegmentGroupConfigStore } from '@/src/store/view-configs/segmentGroups';
+import { useSegmentGroupConfigInitializer } from '@/src/composables/useSegmentGroupConfigInitializer';
 
 interface Props {
   viewId: string;
@@ -60,10 +61,27 @@ sliceRep.property.setUseLookupTableScalarRange(true);
 sliceRep.mapper.setResolveCoincidentTopologyToPolygonOffset();
 sliceRep.mapper.setResolveCoincidentTopologyPolygonOffsetParameters(-2, -2);
 
-// set opacity from painting tool
-const { labelmapOpacity: sliceOpacity } = storeToRefs(usePaintToolStore());
+useSegmentGroupConfigInitializer(viewId.value, segmentationId.value);
+const coloringStore = useLayerColoringStore();
+
+// visibility
+const visibility = computed(
+  () =>
+    coloringStore.getConfig(viewId.value, segmentationId.value)!.blendConfig
+      .visibility
+);
 watchEffect(() => {
-  sliceRep.property.setOpacity(sliceOpacity.value);
+  sliceRep.actor.setVisibility(visibility.value);
+});
+
+// opacity
+const opacity = computed(
+  () =>
+    coloringStore.getConfig(viewId.value, segmentationId.value)!.blendConfig
+      .opacity
+);
+watchEffect(() => {
+  sliceRep.property.setOpacity(opacity.value);
 });
 
 // set slicing mode
@@ -87,6 +105,8 @@ const applySegmentColoring = () => {
   const cfun = sliceRep.property.getRGBTransferFunction(0);
   const ofun = sliceRep.property.getPiecewiseFunction(0);
 
+  if (!cfun || !ofun) throw new Error('Missing transfer functions');
+
   cfun.removeAllPoints();
   ofun.removeAllPoints();
 
@@ -100,7 +120,7 @@ const applySegmentColoring = () => {
     const r = segment.color[0] || 0;
     const g = segment.color[1] || 0;
     const b = segment.color[2] || 0;
-    const a = segment.color[3] || 0;
+    const a = (segment.visible && segment.color[3]) || 0;
     cfun.addRGBPoint(segment.value, r / 255, g / 255, b / 255);
     ofun.addPoint(segment.value, a / 255);
 
@@ -117,6 +137,33 @@ const applySegmentColoring = () => {
 };
 
 watchEffect(applySegmentColoring);
+
+const configStore = useSegmentGroupConfigStore();
+const config = computed(() =>
+  configStore.getConfig(unref(viewId), unref(segmentationId))
+);
+
+const outlineThickness = computed(() => config.value?.outlineThickness ?? 2);
+sliceRep.property.setUseLabelOutline(true);
+sliceRep.property.setUseLookupTableScalarRange(true);
+
+watchEffect(() => {
+  sliceRep.property.setLabelOutlineOpacity(config.value?.outlineOpacity ?? 1);
+});
+
+watchEffect(() => {
+  if (!metadata.value) return; // segment group just deleted
+
+  const thickness = outlineThickness.value;
+  const { segments } = metadata.value;
+  const largestValue = Math.max(...segments.order);
+
+  const segThicknesses = Array.from({ length: largestValue }, (_, value) => {
+    const segment = segments.byValue[value + 1];
+    return ((!segment || segment.visible) && thickness) || 0;
+  });
+  sliceRep.property.setLabelOutlineThickness(segThicknesses);
+});
 
 defineExpose(sliceRep);
 </script>

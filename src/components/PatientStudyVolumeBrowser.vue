@@ -3,7 +3,7 @@ import { computed, defineComponent, reactive, toRefs, watch } from 'vue';
 import { Image } from 'itk-wasm';
 import type { PropType } from 'vue';
 import GroupableItem from '@/src/components/GroupableItem.vue';
-import { DataSelection, DICOMSelection } from '@/src/utils/dataSelection';
+import { DataSelection, isDicomImage } from '@/src/utils/dataSelection';
 import { getDisplayName, useDICOMStore } from '../store/datasets-dicom';
 import { useDatasetStore } from '../store/datasets';
 import { useMultiSelection } from '../composables/useMultiSelection';
@@ -16,6 +16,10 @@ const canvas = document.createElement('canvas');
 function dicomCacheKey(volKey: string) {
   return `dicom-${volKey}`;
 }
+
+type Thumbnail =
+  | { kind: 'image'; value: string }
+  | { kind: 'text'; value: string };
 
 // Assume itkImage type is Uint8Array
 function itkImageToURI(itkImage: Image) {
@@ -78,21 +82,16 @@ export default defineComponent({
       const primarySelection = primarySelectionRef.value;
       const layerVolumes = layersStore
         .getLayers(primarySelection)
-        .filter(({ selection }) => selection.type === 'dicom');
-      const layerVolumeKeys = layerVolumes.map(
-        ({ selection }) => (selection as DICOMSelection).volumeKey
-      );
+        .filter(({ selection }) => isDicomImage(selection));
+      const layerVolumeKeys = layerVolumes.map(({ selection }) => selection);
       const loadedLayerVolumeKeys = layerVolumes
         .filter(({ id }) => id in layersStore.layerImages)
-        .map(({ selection }) => (selection as DICOMSelection).volumeKey);
+        .map(({ selection }) => selection);
       const selectedVolumeKey =
-        primarySelection?.type === 'dicom' && primarySelection.volumeKey;
+        isDicomImage(primarySelection) && primarySelection;
 
       return volumeKeys.value.map((volumeKey) => {
-        const selectionKey = {
-          type: 'dicom',
-          volumeKey,
-        } as DataSelection;
+        const selectionKey = volumeKey as DataSelection;
         const isLayer = layerVolumeKeys.includes(volumeKey);
         const layerLoaded = loadedLayerVolumeKeys.includes(volumeKey);
         const layerLoading = isLayer && !layerLoaded;
@@ -121,7 +120,7 @@ export default defineComponent({
 
     // --- thumbnails --- //
 
-    const thumbnailCache = reactive<Record<string, string>>({});
+    const thumbnailCache = reactive<Record<string, Thumbnail>>({});
 
     watch(
       volumeKeys,
@@ -136,7 +135,12 @@ export default defineComponent({
             const thumb = await generateDICOMThumbnail(dicomStore, key);
             if (thumb !== null) {
               const encodedImage = itkImageToURI(thumb);
-              thumbnailCache[cacheKey] = encodedImage;
+              thumbnailCache[cacheKey] = { kind: 'image', value: encodedImage };
+            } else {
+              thumbnailCache[cacheKey] = {
+                kind: 'text',
+                value: dicomStore.volumeInfo[key].Modality,
+              };
             }
           } catch (err) {
             if (err instanceof Error) {
@@ -145,6 +149,10 @@ export default defineComponent({
                 details: `${err}. More details can be found in the developer's console.`,
               });
             }
+            thumbnailCache[cacheKey] = {
+              kind: 'text',
+              value: dicomStore.volumeInfo[key].Modality,
+            };
           }
         });
 
@@ -245,7 +253,12 @@ export default defineComponent({
                     cover
                     height="150"
                     width="150"
-                    :src="(thumbnailCache || {})[volume.cacheKey] || ''"
+                    :src="
+                      (thumbnailCache[volume.cacheKey] &&
+                        thumbnailCache[volume.cacheKey].kind === 'image' &&
+                        thumbnailCache[volume.cacheKey].value) ||
+                      ''
+                    "
                   >
                     <template v-slot:placeholder>
                       <v-row
@@ -254,9 +267,18 @@ export default defineComponent({
                         justify="center"
                       >
                         <v-progress-circular
+                          v-if="thumbnailCache[volume.cacheKey] === undefined"
                           indeterminate
                           color="grey-lighten-5"
                         />
+                        <span
+                          v-else-if="
+                            thumbnailCache[volume.cacheKey] &&
+                            thumbnailCache[volume.cacheKey].kind === 'text'
+                          "
+                        >
+                          {{ thumbnailCache[volume.cacheKey].value }}
+                        </span>
                       </v-row>
                     </template>
                     <persistent-overlay>

@@ -73,6 +73,8 @@ import { useWebGLWatchdog } from '@/src/composables/useWebGLWatchdog';
 import VtkOrientationMarker from '@/src/components/vtk/VtkOrientationMarker.vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import useVolumeColoringStore from '@/src/store/view-configs/volume-coloring';
+import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
+import { whenever } from '@vueuse/core';
 
 interface Props extends LayoutViewProps {
   viewDirection: LPSAxisDir;
@@ -91,11 +93,20 @@ function resetCamera() {
   vtkView.value.renderer.updateLightsGeometryToFollowCamera();
 }
 
+useResetViewsEvents().onClick(resetCamera);
+
 useWebGLWatchdog(vtkView);
 useViewAnimationListener(vtkView, viewId, viewType);
 
 // base image
 const { currentImageID, isImageLoading } = useCurrentImage();
+
+whenever(
+  computed(() => !isImageLoading.value),
+  () => {
+    resetCamera();
+  }
+);
 
 // color preset
 const coloringStore = useVolumeColoringStore();

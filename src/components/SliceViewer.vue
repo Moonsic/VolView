@@ -33,6 +33,7 @@
           class="vtk-view"
           ref="vtkView"
           data-testid="vtk-view vtk-two-view"
+          :disable-auto-reset-camera="disableCameraAutoReset"
           :view-id="id"
           :image-id="currentImageID"
           :view-direction="viewDirection"
@@ -46,6 +47,10 @@
           <vtk-mouse-interaction-manipulator
             :manipulator-constructor="vtkMouseCameraTrackballPanManipulator"
             :manipulator-props="{ button: 1, shift: true }"
+          ></vtk-mouse-interaction-manipulator>
+          <vtk-mouse-interaction-manipulator
+            :manipulator-constructor="vtkMouseCameraTrackballPanManipulator"
+            :manipulator-props="{ button: 2 }"
           ></vtk-mouse-interaction-manipulator>
           <vtk-mouse-interaction-manipulator
             v-if="currentTool === Tools.Zoom"
@@ -143,6 +148,7 @@
 
 <script setup lang="ts">
 import { ref, toRefs, computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useCurrentImage } from '@/src/composables/useCurrentImage';
 import { LPSAxisDir } from '@/src/types/lps';
 import { getLPSAxisFromDir } from '@/src/utils/lps';
@@ -167,6 +173,7 @@ import SliceSlider from '@/src/components/SliceSlider.vue';
 import SliceViewerOverlay from '@/src/components/SliceViewerOverlay.vue';
 import { useToolSelectionStore } from '@/src/store/tools/toolSelection';
 import { useAnnotationToolStore, useToolStore } from '@/src/store/tools';
+import { useViewCameraStore } from '@/src/store/view-configs/camera';
 import { doesToolFrameMatchViewAxis } from '@/src/composables/annotationTool';
 import { useWebGLWatchdog } from '@/src/composables/useWebGLWatchdog';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
@@ -175,7 +182,8 @@ import VtkSliceViewSlicingManipulator from '@/src/components/vtk/VtkSliceViewSli
 import VtkMouseInteractionManipulator from '@/src/components/vtk/VtkMouseInteractionManipulator.vue';
 import vtkMouseCameraTrackballPanManipulator from '@kitware/vtk.js/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomToMouseManipulator from '@kitware/vtk.js/Interaction/Manipulators/MouseCameraTrackballZoomToMouseManipulator';
-import { storeToRefs } from 'pinia';
+import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
+import { whenever } from '@vueuse/core';
 
 interface Props extends LayoutViewProps {
   viewDirection: LPSAxisDir;
@@ -186,6 +194,8 @@ const vtkView = ref<VtkViewApi>();
 
 const props = defineProps<Props>();
 
+const { disableCameraAutoReset } = storeToRefs(useViewCameraStore());
+
 const { id: viewId, type: viewType, viewDirection, viewUp } = toRefs(props);
 const viewAxis = computed(() => getLPSAxisFromDir(viewDirection.value));
 
@@ -195,6 +205,8 @@ function resetCamera() {
   if (!vtkView.value) return;
   vtkView.value.resetCamera();
 }
+
+useResetViewsEvents().onClick(resetCamera);
 
 useWebGLWatchdog(vtkView);
 useViewAnimationListener(vtkView, viewId, viewType);
@@ -211,6 +223,13 @@ const { currentImageID, currentLayers, currentImageMetadata, isImageLoading } =
 const { slice: currentSlice, range: sliceRange } = useSliceConfig(
   viewId,
   currentImageID
+);
+
+whenever(
+  computed(() => !isImageLoading.value),
+  () => {
+    resetCamera();
+  }
 );
 
 // segmentations

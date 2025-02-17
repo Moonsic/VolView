@@ -11,6 +11,7 @@ import { hexaToRGBA, rgbaToHexa } from '@/src/utils/color';
 import { reactive, ref, toRefs, computed, watch } from 'vue';
 import { SegmentMask } from '@/src/types/segment';
 import { usePaintToolStore } from '@/src/store/tools/paint';
+import type { RGBAColor } from '@kitware/vtk.js/types';
 
 const props = defineProps({
   groupId: {
@@ -57,12 +58,35 @@ watch(
   { immediate: true }
 );
 
+const toggleVisible = (value: number) => {
+  const segment = segmentGroupStore.getSegment(groupId.value, value);
+  if (!segment) return;
+  segmentGroupStore.updateSegment(groupId.value, value, {
+    visible: !segment.visible,
+  });
+};
+
+const allVisible = computed(() => {
+  return segments.value.every((seg) => seg.visible);
+});
+
+function toggleGlobalVisible() {
+  const visible = !allVisible.value;
+
+  segments.value.forEach((seg) => {
+    segmentGroupStore.updateSegment(groupId.value, seg.value, {
+      visible,
+    });
+  });
+}
+
 // --- editing state --- //
 
 const editingSegmentValue = ref<Maybe<number>>(null);
 const editState = reactive({
   name: '',
   color: '',
+  opacity: 1,
 });
 const editDialog = ref(false);
 
@@ -83,14 +107,20 @@ function startEditing(value: number) {
   if (!editingSegment.value) return;
   editState.name = editingSegment.value.name;
   editState.color = rgbaToHexa(editingSegment.value.color);
+  editState.opacity = editingSegment.value.color[3] / 255;
 }
 
 function stopEditing(commit: boolean) {
-  if (editingSegmentValue.value && commit)
+  if (editingSegmentValue.value && commit) {
+    const color = [
+      ...(hexaToRGBA(editState.color).slice(0, 3) as [number, number, number]),
+      Math.round(editState.opacity * 255),
+    ] as RGBAColor;
     segmentGroupStore.updateSegment(groupId.value, editingSegmentValue.value, {
       name: editState.name ?? makeDefaultSegmentName(editingSegmentValue.value),
-      color: hexaToRGBA(editState.color),
+      color,
     });
+  }
   editingSegmentValue.value = null;
   editDialog.value = false;
 }
@@ -106,6 +136,17 @@ function deleteEditingSegment() {
 </script>
 
 <template>
+  <v-btn @click.stop="toggleGlobalVisible" class="my-1">
+    Toggle Segments
+    <slot name="append">
+      <v-icon v-if="allVisible" class="pl-2">mdi-eye</v-icon>
+      <v-icon v-else class="pl-2">mdi-eye-off</v-icon>
+      <v-tooltip location="top" activator="parent">{{
+        allVisible ? 'Hide' : 'Show'
+      }}</v-tooltip>
+    </slot>
+  </v-btn>
+
   <editable-chip-list
     v-model="selectedSegment"
     :items="segments"
@@ -113,17 +154,34 @@ function deleteEditingSegment() {
     item-title="name"
     create-label-text="New segment"
     @create="addNewSegment"
+    class="my-4"
   >
     <template #item-prepend="{ item }">
       <!-- dot container keeps overflowing name from squishing dot width  -->
       <div class="dot-container mr-3">
         <div
           class="color-dot"
-          :style="{ background: rgbaToHexa(item.color) }"
+          :style="{ background: rgbaToHexa([...item.color.slice(0,3), 255] as RGBAColor) }"
         />
       </div>
     </template>
-    <template #item-append="{ key }">
+    <template #item-append="{ key, item }">
+      <v-btn
+        icon
+        size="small"
+        density="compact"
+        class="ml-auto mr-1"
+        variant="plain"
+        @click.stop="toggleVisible(key as number)"
+      >
+        <v-icon v-if="item.visible" style="pointer-events: none"
+          >mdi-eye</v-icon
+        >
+        <v-icon v-else style="pointer-events: none">mdi-eye-off</v-icon>
+        <v-tooltip location="left" activator="parent">{{
+          item.visible ? 'Hide' : 'Show'
+        }}</v-tooltip>
+      </v-btn>
       <v-btn
         icon="mdi-pencil"
         size="small"
@@ -148,6 +206,7 @@ function deleteEditingSegment() {
       v-if="!!editingSegment"
       v-model:name="editState.name"
       v-model:color="editState.color"
+      v-model:opacity="editState.opacity"
       @delete="deleteEditingSegment"
       @cancel="stopEditing(false)"
       @done="stopEditing(true)"
