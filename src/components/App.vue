@@ -30,7 +30,6 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
-                @click="loadUserPromptedFiles"
                 >
                 <!-- @click="loadUserPromptedFiles" -->
                 <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->
@@ -91,22 +90,22 @@ import {
   stripTokenFromUrl,
 } from '@/src/utils/token';
 
-const clickEventSetPosition = createEventHook<[Vector3,boolean]>();
+const clickEventSetPosition = createEventHook<[Vector3, boolean]>();
 export function useSetPositionEvents() {
   return { onClick: clickEventSetPosition.on };
 }
 
-const clickEventSetPositionList = createEventHook<[Vector3[],boolean]>();
+const clickEventSetPositionList = createEventHook<[Vector3[], boolean]>();
 export function useSetPositionListEvents() {
   return { onClick: clickEventSetPositionList.on };
 }
 
-const clickEventSetPositionListWithColor = createEventHook<[Vector3[],boolean]>();
+const clickEventSetPositionListWithColor = createEventHook<[Vector3[], boolean]>();
 export function useSetPositionListWithColorEvents() {
   return { onClick: clickEventSetPositionListWithColor.on };
 }
 
-const clickEventSetPositionListWithColorAndArrow = createEventHook<[Vector3[],boolean]>();
+const clickEventSetPositionListWithColorAndArrow = createEventHook<[Vector3[], boolean]>();
 export function useSetPositionListWithColorAndArrowEvents() {
   return { onClick: clickEventSetPositionListWithColorAndArrow.on };
 }
@@ -138,7 +137,7 @@ window.addEventListener('message', (event) => {
         const mimeType = '';       // MIME类型
         // const mimeType = 'application/vnd.unknown.nifti-1'; // MIME类型
         // 创建一个新的File对象
-        const file = new File([blob], fileName, {type: mimeType});
+        const file = new File([blob], fileName, { type: mimeType });
         // console.log('B file :>> ', file);
         // 现在你可以像处理本地文件一样处理这个File对象
         loadFiles([file])
@@ -290,27 +289,42 @@ console.log('VolView_V20250214')
 
 
 // // 生成多个位置，带有颜色的，带有箭头的。
-// setInterval(()=>{
+// setTimeout(() => {
 //   console.log('生成多个位置，带有颜色的，带有箭头的。');
 //   clickEventSetPositionListWithColorAndArrow.trigger([
 //     {
-//     'red':[
-//       [ randomPosition(),[ 0.949, -0.055, -0.309 ],],
-//       [ randomPosition(),[ 0.581, -0.261, -0.771 ],],
-//     ],
-//     'blue':[
-//       [[10,-92,23],[ -0.959, -0.253, 0.132 ],],
-//     ],
-//     'green':[
-//       [[-10,-92,23],[ -0.046, 0.514, 0.856 ]],
-//       [[-20,-92,23],[ -1, 0, 0 ]],
-//       [[-30,-92,23],[ 0,1, 0 ]],
-//       [[-40,-92,23],[ 0.577,0.577, 0.577 ]],
-//       [[-38,-9,19],[ 0.577,0.577, 0.577 ]],
-//       [[-33,-1,19],[ 0.577,0.577, 0.577 ]],
-//     ],
-//   },false]);
-// },8000)
+
+//       'green': [
+//       [[1.3308410635218024, -22.1647720337005, -11.396423340784168], [0.949, -0.055, -0.309]],
+//         // [[0, 0, 0], [0.949, -0.055, -0.309],],
+//       ],
+
+
+//       'red': [
+//       [[100, -22.1647720337005, -11.396423340784168], [0.949, -0.055, -0.309]],
+//         // [[0, 0, 0], [0.949, -0.055, -0.309],],
+//       ],
+//       'blue': [
+//       [[1.3308410635218024, 100, -11.396423340784168], [0.949, -0.055, -0.309]],
+//         // [[0, 0, 0], [0.949, -0.055, -0.309],],
+//       ],
+//       // 'red':[
+//       //   [ randomPosition(),[ 0.949, -0.055, -0.309 ],],
+//       //   [ randomPosition(),[ 0.581, -0.261, -0.771 ],],
+//       // ],
+//       // 'blue':[
+//       //   [[10,-92,23],[ -0.959, -0.253, 0.132 ],],
+//       // ],
+//       // 'green':[
+//       //   [[-10,-92,23],[ -0.046, 0.514, 0.856 ]],
+//       //   [[-20,-92,23],[ -1, 0, 0 ]],
+//       //   [[-30,-92,23],[ 0,1, 0 ]],
+//       //   [[-40,-92,23],[ 0.577,0.577, 0.577 ]],
+//       //   [[-38,-9,19],[ 0.577,0.577, 0.577 ]],
+//       //   [[-33,-1,19],[ 0.577,0.577, 0.577 ]],
+//       // ],
+//     }, false]);
+// }, 5000)
 
 
 

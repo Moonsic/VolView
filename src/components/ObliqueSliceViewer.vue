@@ -3,6 +3,14 @@
     <div class="vtk-gutter"></div>
     <div class="vtk-container">
       <div class="vtk-sub-container">
+
+          <!-- id:{{ id }}- 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial -->
+          <!-- {{ currentImageID }}-
+          {{ viewDirection }}-
+          {{ viewUp }}
+          {{ sliceDomain }} -->
+          <!-- {{ planeOrigin}} -->
+
         <vtk-slice-view
           class="vtk-view"
           ref="vtkView"
@@ -76,7 +84,8 @@
           ></reslice-cursor-tool>
 
           <!-- 画球体 -->
-          <MySpheresRepresentation :sphereRadius="2.6"></MySpheresRepresentation>
+          <!-- :sliceDomain="sliceDomain"没用到 -->
+          <MySpheresRepresentation :sphereRadius="2.6" :id="id" :planeOrigin="planeOrigin"></MySpheresRepresentation>
 
           <slot></slot>
         </vtk-slice-view>
@@ -236,6 +245,7 @@ const sliceDomain = computed(() => {
 
 // the core update camera function
 const updateResliceCamera = (resetFocalPoint: boolean) => {
+  // console.log('planeOrigin.value :>> ', planeOrigin.value);
   // if (!vtkView.value || !resliceCursorState.getImage()) return;
 
  // GGG 注释，因为报错，官方也报错，等官方解决
@@ -369,6 +379,7 @@ onVTKEvent(
   resliceCursorState,
   'onModified',
   batchForNextTask(() => {
+    // console.log('1 :>> ',);
     updateResliceCamera(false);
   })
 );

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // import { toRefs, watchEffect, inject, ref } from 'vue';
-import { toRefs, inject, watch, nextTick } from 'vue';
+import { toRefs, inject } from 'vue';
 // import { useImage } from '@/src/composables/useCurrentImage';
 // import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
 // import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
@@ -27,17 +27,11 @@ import {
 
 interface Props {
   sphereRadius: number;
-  id: string; // 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial
-  // sliceDomain: any; // 这是最大和最小{min:-105.334,max:149.664} {-126.169,max:128.831} {min:-116.103,max:138.896}
-  planeOrigin: number[]; // 十字线的中心点
 }
 
 const props = defineProps<Props>();
 const {
   sphereRadius, // 球体半径
-  id,
-  // sliceDomain,
-  planeOrigin, // 十字线的中心点
 } = toRefs(props);
 
 const view = inject(VtkViewContext);
@@ -194,22 +188,9 @@ function deleteSphereList() {
   // view?.renderWindow.render();
 }
 
-// 所有数据，包括颜色和箭头，用于滑动时。只展示附近的点，所以要把所有的点先保存下来
-let objAll: any = null
 
-
-// 清空是传[[1000, 1000, 1000]]二维数组过来，而不是[]空数组
 function addSphereList(positionList: Vector3[], change?: boolean) {
   deleteSphereList() // 先清除旧的球体
-  // console.log('positionList  addSphereList:>> ', positionList);
-  // console.log('222JSON.stringify(positionList) === JSON.stringify([1000, 1000, 1000]):>> ', JSON.stringify(positionList) === JSON.stringify([[1000, 1000, 1000]]));
-
-  // 如果是清空的，就把objAll = null，目前就在结构像弹窗，点击保存按钮后，选中同事清空时间点，的时候，才会调addSphereList这个方法
-  if (JSON.stringify(positionList) === JSON.stringify([[1000, 1000, 1000]])) {
-    objAll = null
-  }
-
-  // console.log('objAll  addSphereList:>> ', objAll);
 
   // const [x, y, z] = window.xyzCenter
   const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
@@ -251,9 +232,6 @@ function addSphereList(positionList: Vector3[], change?: boolean) {
 // 添加球体，带颜色
 function addSphereListWithColor(obj: any, change?: boolean) {
   deleteSphereList() // 先清除旧的球体
-
-  objAll = JSON.parse(JSON.stringify(obj))
-
 
   // const [x, y, z] = window.xyzCenter
   const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
@@ -299,43 +277,20 @@ function addSphereListWithColor(obj: any, change?: boolean) {
 }
 
 
-
 // 添加球体，带颜色，带箭头
 function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
-
-  // if (id.value === 'ObliqueCoronal') {
-  //   console.log('addSphereListWithColorAndArrow :>> ', obj);
-  // }
-  // 先把所有的点保存下来
-  objAll = JSON.parse(JSON.stringify(obj))
-
   deleteSphereList() // 先清除旧的球体
 
-  // const [xC, yC, zC] = window.xyzCenter
+  // const [x, y, z] = window.xyzCenter
   const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
   const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
   const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
 
 
-
-  // 第一个视图
-  // if (id.value === 'ObliqueCoronal') {
-
-    // // 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial
-    // console.log('id :>> ', id.value);
-    // // 这是最大和最小{min:-105.334,max:149.664} {-126.169,max:128.831} {min:-116.103,max:138.896}
-    // console.log('sliceDomain :>> ', sliceDomain.value);
-    // console.log('planeOrigin :>> ', planeOrigin.value);
-
-    // // console.log('obj :>> ', obj);
-    // console.log('window.xyzCenter :>> ', window.xyzCenter);
-    // console.log('window.dimensions :>> ', window.dimensions);
-    // console.log('window.distanceList :>> ', window.distanceList);
-    // console.log('window.xyzMinList :>> ', window.xyzMinList);
-
-  // }
-
-  const nearValue = 2
+  // console.log('obj :>> ', obj);
+  // console.log('window.dimensions :>> ', window.dimensions);
+  // console.log('window.distanceList :>> ', window.distanceList);
+  // console.log('window.xyzMinList :>> ', window.xyzMinList);
 
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
@@ -343,33 +298,6 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
     positionList.forEach((item: [Vector3, Vector3]) => {
       const position = item[0]
       const direction = item[1]
-
-      // 在这里拦截一下，与当前十字线的距离的绝对值，大于nearValue的点就算远的点，远的点不显示。能显示的都是近的点
-      // 第一个视图 Y轴
-      if (id.value === 'ObliqueCoronal') {
-        const y = position[1]
-        if (Math.abs(y - planeOrigin.value[1]) > nearValue) {
-          return
-        }
-      }
-
-      // 第2个视图 X轴
-      if (id.value === 'ObliqueSagittal') {
-        const x = position[0]
-        if (Math.abs(x - planeOrigin.value[0]) > nearValue) {
-          return
-        }
-      }
-
-      // 第3个视图 Z轴
-      if (id.value === 'ObliqueAxial') {
-        const z = position[2]
-        if (Math.abs(z - planeOrigin.value[2]) > nearValue) {
-          return
-        }
-      }
-
-      // planeOrigin
 
       let newPosition: Vector3
       if (change) {
@@ -420,18 +348,18 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
       arrowActor.setScale(arrowLength, arrowLength, arrowLength);
 
       // 设置箭头的起点为球体的中心
-      arrowActor.setPosition(newPosition[0], newPosition[1], newPosition[2]);
+      arrowActor.setPosition(newPosition[0],newPosition[1],newPosition[2]);
 
       // 将箭头向反方向偏移，使基点在球表面上；
       // 半径是2.8的情况下才是/1，箭头起点正好在球表面上；
       // 半径是2.6的情况下才是/1.05，箭头起点正好在球表面上；
-      const offset = arrowLength / 1.05;
+      const offset = arrowLength/1.05;
       const adjustedPosition: [number, number, number] = [
         newPosition[0] + direction[0] * offset,
         newPosition[1] + direction[1] * offset,
         newPosition[2] + direction[2] * offset,
       ];
-      arrowActor.setPosition(adjustedPosition[0], adjustedPosition[1], adjustedPosition[2]);
+      arrowActor.setPosition(adjustedPosition[0],adjustedPosition[1],adjustedPosition[2]);
 
       view?.renderer.addActor(arrowActor);
       actors.push(arrowActor);
@@ -443,41 +371,6 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
   })
 
 }
-
-
-
-// 防抖，防抖是指在一系列连续的操作中，只在最后一次操作后的一段时间内执行一次操作
-function debounce<T extends Function>(fn: T, delay: number): T {
-  let timer: any = null;
-  return function (this: any, ...args: any[]) {
-    clearTimeout(timer)
-    timer = window.setTimeout(() => {
-      fn.apply(this, args)
-    }, delay)
-  } as unknown as T;
-}
-
-// 使用防抖包装，500毫秒内连续触发只执行最后一次
-const debouncedGetMegData = debounce(() => {
-  addSphereListWithColorAndArrow(objAll, false)
-}, 200)
-
-
-// 这里做一下防抖
-watch(() => planeOrigin.value, () => {
-  // if (id.value === 'ObliqueCoronal') {
-  //   console.log('planeOrigin.value222 :>> ', planeOrigin.value);
-  // }
-  if (!objAll) {
-    return
-  }
-
-  nextTick(() => {
-    debouncedGetMegData()
-  })
-})
-
-
 
 
 // setTimeout(()=>{

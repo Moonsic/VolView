@@ -15,7 +15,7 @@
           :view-up="viewUp"
         >
           <!-- 我的球体参考点，只有一个，不应该放在v-for里 -->
-          <MySpheresRepresentation :sphereRadius="2.6"></MySpheresRepresentation>
+          <MySpheresRepresentation3D :sphereRadius="2.6"></MySpheresRepresentation3D>
 
 
           <template v-for="(sliceProps, idx) in obliqueSliceProps" :key="idx">
@@ -55,7 +55,7 @@ import { VtkViewApi } from '@/src/types/vtk-types';
 import { LayoutViewProps } from '@/src/types';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
-import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
+import MySpheresRepresentation3D from '@/src/components/vtk/MySpheresRepresentation3D.vue'; // 3D里的球体是不会改变的，所以就单独写一个组件，里面的内容就是以前的内容，没有改
 
 import { useViewAnimationListener } from '@/src/composables/useViewAnimationListener';
 import useResliceCursorStore, {
