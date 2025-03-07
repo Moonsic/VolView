@@ -335,7 +335,7 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
 
   // }
 
-  const nearValue = 2
+  const nearValue = 2.6 // 距离和球体半径一样，即正好碰到切片的就是附近的。
 
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]

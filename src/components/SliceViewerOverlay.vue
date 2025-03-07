@@ -67,9 +67,10 @@ const {
     </template>
     <template v-slot:bottom-left>
       <div class="annotation-cell">
-        <div v-if="sliceConfig">
+        <!-- GGG 这里是新版本加的吧，以前没有，但滚动slice也没改变，官网上也是，估计有bug -->
+        <!-- <div v-if="sliceConfig">
           Slice: {{ slice + 1 }}/{{ sliceRange[1] + 1 }}
-        </div>
+        </div> -->
         <!-- 把左下角的亮度信息注释了 -->
         <!-- <div v-if="wlConfig">
           W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}

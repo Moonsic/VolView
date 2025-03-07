@@ -38,9 +38,34 @@ ol:not([class]) {
   width: 600px !important;
 } */
 
-@media only screen and (max-width: 600px) {
+/* @media only screen and (max-width: 600px) {
   .Vue-Toastification__container {
-    width: 280px !important;
+    width: 200px;
   }
+
+  .Vue-Toastification__toast {
+    padding: 8px 16px;
+    min-width: 200px;
+    min-height: 40px;
+  }
+} */
+
+/* 最新的写法，直接用!important，不用考虑@media */
+.Vue-Toastification__container {
+  width: 160px !important;
+  left: 16px !important;
+  bottom: 16px !important;
 }
 
+.Vue-Toastification__toast {
+  padding: 8px 16px;
+  min-width: 160px;
+  min-height: 40px;
+  border-radius: 30px;
+  margin-bottom: 0;
+  color: #eee;
+}
+
+.Vue-Toastification__toast--success {
+  background-color: rgba(76, 175, 80, 0.9);
+}

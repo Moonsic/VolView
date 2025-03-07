@@ -73,9 +73,9 @@ export function useLoadingNotifications() {
         content: NotificationMessages.Done,
         options: {
           type: TYPE.SUCCESS,
-          timeout: 3000,
-          closeButton: 'button',
-          closeOnClick: true,
+          timeout: 800, // GGG：加载成功后自动消失时间的时间，默认是3000毫秒
+          closeButton: false, // 默认是'button',
+          closeOnClick: false, // 默认是true，点击关闭
           onClose() {
             toastID = null;
           },

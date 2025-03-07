@@ -11,9 +11,10 @@ const fullUrl = (relative) => {
 
 // GGG 生产环境路径改成/static/volview-dist/itk/xxx 才能被A项目访问到
 
-const isProd = process.env.NODE_ENV === 'production'; // 是否为生产环境
+// const isProd = process.env.NODE_ENV === 'production'; // 是否为生产环境
+// const path = isProd ? '/static/volview-dist' : '' // 旧版本是这样写。生产环境要区分
 
-const path = isProd ? '/static/volview-dist' : ''
+const path =  '' // 新版本不区分isProd了
 
 const itkConfig = {
   pipelineWorkerUrl: fullUrl(`${path}/itk/itk-wasm-pipeline.min.worker.js`),
