@@ -70,6 +70,7 @@ export const useDatasetStore = defineStore('dataset', () => {
     }
   }
 
+  // 清除某个结构像
   const remove = (id: string) => {
     if (id === primarySelection.value) {
       primarySelection.value = null;
@@ -84,6 +85,23 @@ export const useDatasetStore = defineStore('dataset', () => {
     layersStore.remove(id);
   };
 
+  // 清除当前结构像
+  const removeAll = () => {
+    // 当前没有结构像就return
+    if (!primarySelection.value) {
+      return
+    }
+    const id: string = primarySelection.value as string;
+    primarySelection.value = null;
+    if (isDicomImage(id)) {
+      dicomStore.deleteVolume(id);
+    }
+    imageStore.deleteData(id);
+    fileStore.remove(id);
+    layersStore.remove(id);
+  };
+
+
   return {
     primaryImageID,
     primarySelection,
@@ -92,5 +110,6 @@ export const useDatasetStore = defineStore('dataset', () => {
     setPrimarySelection,
     serialize,
     remove,
+    removeAll,
   };
 });

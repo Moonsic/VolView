@@ -89,6 +89,8 @@ import {
   populateAuthorizationToken,
   stripTokenFromUrl,
 } from '@/src/utils/token';
+import { useDatasetStore } from '@/src/store/datasets';
+
 
 const clickEventSetPosition = createEventHook<[Vector3, boolean]>();
 export function useSetPositionEvents() {
@@ -112,18 +114,27 @@ export function useSetPositionListWithColorAndArrowEvents() {
 
 
 
-
 // B项目接收
 window.addEventListener('message', (event) => {
   // console.log('message :>> ', event)
 
   if (event.data.type === 'clear') {
-    loadFiles([])
+    const dataStore = useDatasetStore();
+    dataStore.removeAll(); // 把结构像清除
+    clickEventSetPositionList.trigger([[[1000, 1000, 1000]], false]); // 把点清除
   }
 
   if (event.data.type === 'file') {
-    const fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
+    let fileUrl = ''
     const filePath = event.data.filePath
+
+    // 大数据平台不加t，否则会报错
+    if (event.data?.system === 'bigData') {
+      fileUrl = `${event.data.fileUrl}`
+    } else {
+      fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
+    }
+
     // 使用fileUrl获取Blob并处理
     // 从Blob URL创建新的Blob对象
     // , {
@@ -434,7 +445,7 @@ export default defineComponent({
   border-right: 1px solid rgb(var(--v-theme-background));
 }
 
-#content-main > .v-content__wrap {
+#content-main>.v-content__wrap {
   display: flex;
 }
 
@@ -443,7 +454,7 @@ export default defineComponent({
   margin-top: 15px;
 }
 
-.alert > .v-snack__wrapper {
+.alert>.v-snack__wrapper {
   /* transition background color */
   transition: background-color 0.25s;
 }
@@ -464,5 +475,4 @@ export default defineComponent({
   box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.4);
   padding: 64px;
 }
-
 </style>

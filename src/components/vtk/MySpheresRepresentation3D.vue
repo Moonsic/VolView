@@ -295,9 +295,18 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
     const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
-    positionList.forEach((item: [Vector3, Vector3]) => {
-      const position = item[0]
-      const direction = item[1]
+    positionList.forEach((item: Vector3 | [Vector3, Vector3]) => {
+      // console.log('item :>> ', item);
+      let position: Vector3
+      let direction: Vector3 | undefined
+
+      // item下是2维数组，说明是带了箭头的，item是一个一维数组，说明只有位置，没有箭头
+      if (Array.isArray(item[0]) && Array.isArray(item[1])) {
+        position = item[0] as Vector3
+        direction = item[1] as Vector3
+      } else {
+        position = item as Vector3
+      }
 
       let newPosition: Vector3
       if (change) {
@@ -326,44 +335,46 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
       sphereActor.getProperty().setOpacity(0.7);
 
 
+      if (direction && direction.length) {
 
-      // 画一个箭头
-      arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
-      arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
-      arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
-      arrowSource.setTipLength(0.4); // 箭头部长度 0.35
-      arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
-      arrowSource.set({ direction })
+        // 画一个箭头
+        arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
+        arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
+        arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
+        arrowSource.setTipLength(0.4); // 箭头部长度 0.35
+        arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
+        arrowSource.set({ direction })
 
-      const arrowMapper = vtkMapper.newInstance();
-      arrowMapper.setInputData(arrowSource.getOutputData());
-      const arrowActor = vtkActor.newInstance();
-      arrowActor.setMapper(arrowMapper);
-      arrowActor.getProperty().setColor(color[0], color[1], color[2]);
-      // arrowActor.getProperty().setOpacity(0.7); // 箭头不加透明度比较好
+        const arrowMapper = vtkMapper.newInstance();
+        arrowMapper.setInputData(arrowSource.getOutputData());
+        const arrowActor = vtkActor.newInstance();
+        arrowActor.setMapper(arrowMapper);
+        arrowActor.getProperty().setColor(color[0], color[1], color[2]);
+        // arrowActor.getProperty().setOpacity(0.7); // 箭头不加透明度比较好
 
-      // 设置箭头长度
-      const arrowLength = 4;
-      // 将箭头设置为正确的长度
-      arrowActor.setScale(arrowLength, arrowLength, arrowLength);
+        // 设置箭头长度
+        const arrowLength = 4;
+        // 将箭头设置为正确的长度
+        arrowActor.setScale(arrowLength, arrowLength, arrowLength);
 
-      // 设置箭头的起点为球体的中心
-      arrowActor.setPosition(newPosition[0],newPosition[1],newPosition[2]);
+        // 设置箭头的起点为球体的中心
+        arrowActor.setPosition(newPosition[0], newPosition[1], newPosition[2]);
 
-      // 将箭头向反方向偏移，使基点在球表面上；
-      // 半径是2.8的情况下才是/1，箭头起点正好在球表面上；
-      // 半径是2.6的情况下才是/1.05，箭头起点正好在球表面上；
-      const offset = arrowLength/1.05;
-      const adjustedPosition: [number, number, number] = [
-        newPosition[0] + direction[0] * offset,
-        newPosition[1] + direction[1] * offset,
-        newPosition[2] + direction[2] * offset,
-      ];
-      arrowActor.setPosition(adjustedPosition[0],adjustedPosition[1],adjustedPosition[2]);
+        // 将箭头向反方向偏移，使基点在球表面上；
+        // 半径是2.8的情况下才是/1，箭头起点正好在球表面上；
+        // 半径是2.6的情况下才是/1.05，箭头起点正好在球表面上；
+        const offset = arrowLength / 1.05;
+        const adjustedPosition: [number, number, number] = [
+          newPosition[0] + direction[0] * offset,
+          newPosition[1] + direction[1] * offset,
+          newPosition[2] + direction[2] * offset,
+        ];
+        arrowActor.setPosition(adjustedPosition[0], adjustedPosition[1], adjustedPosition[2]);
 
-      view?.renderer.addActor(arrowActor);
-      actors.push(arrowActor);
+        view?.renderer.addActor(arrowActor);
+        actors.push(arrowActor);
 
+      }
 
       view?.renderer.addActor(sphereActor);
       actors.push(sphereActor);
