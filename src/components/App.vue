@@ -92,27 +92,33 @@ import {
 import { useDatasetStore } from '@/src/store/datasets';
 
 
-const clickEventSetPosition = createEventHook<[Vector3, boolean]>();
+const clickEventSetPosition = createEventHook<[Vector3]>();
 export function useSetPositionEvents() {
   return { onClick: clickEventSetPosition.on };
 }
 
-const clickEventSetPositionList = createEventHook<[Vector3[], boolean]>();
-export function useSetPositionListEvents() {
-  return { onClick: clickEventSetPositionList.on };
+const clickEventSetPoints = createEventHook<[Vector3[], number]>();
+export function useSetPointsEvents() {
+  return { onClick: clickEventSetPoints.on };
 }
 
-const clickEventSetPositionListWithColor = createEventHook<[Vector3[], boolean]>();
-export function useSetPositionListWithColorEvents() {
-  return { onClick: clickEventSetPositionListWithColor.on };
+// const clickEventSetPointsColor = createEventHook<[Vector3[], number]>();
+// export function useSetPointsColorEvents() {
+//   return { onClick: clickEventSetPointsColor.on };
+// }
+
+const clickEventSetPointsColorArrow = createEventHook<[Vector3[], number]>();
+export function useSetPointsColorArrowEvents() {
+  return { onClick: clickEventSetPointsColorArrow.on };
 }
 
-const clickEventSetPositionListWithColorAndArrow = createEventHook<[Vector3[], boolean]>();
-export function useSetPositionListWithColorAndArrowEvents() {
-  return { onClick: clickEventSetPositionListWithColorAndArrow.on };
+const clickEventClearPoints = createEventHook();
+export function useClearPointsEvents() {
+  return { onClick: clickEventClearPoints.on };
 }
 
 
+const DEFAULT_RADIUS = 2.6; // 默认半径是2.6
 
 // B项目接收
 window.addEventListener('message', (event) => {
@@ -121,7 +127,7 @@ window.addEventListener('message', (event) => {
   if (event.data.type === 'clear') {
     const dataStore = useDatasetStore();
     dataStore.removeAll(); // 把结构像清除
-    clickEventSetPositionList.trigger([[[1000, 1000, 1000]], false]); // 把点清除
+    clickEventSetPoints.trigger([[[1000, 1000, 1000]], DEFAULT_RADIUS]); // 把点清除
   }
 
   if (event.data.type === 'file') {
@@ -157,40 +163,46 @@ window.addEventListener('message', (event) => {
   }
 
 
-  if (event.data.type === 'position') {
+  if (event.data.type === 'setPosition') {
     // 要把'20,-30,40'变成[20,-30,40]，split只把它变成string[]，map再处理成number[]
     // const position: Vector3 = event.data.position.split(',').map((item:string) => Number(item))
 
-    // 最新写法: postion像下面的setPositionList一样用JSON.stringify传递。以前的写法是传递 Sting(array)
+    // 最新写法: postion像下面的setPoints一样用JSON.stringify传递。以前的写法是传递 Sting(array)
     const position: Vector3 = JSON.parse(event.data.position)
-    const change: boolean = event.data.change || false
+    // const change: boolean = event.data.change || false
     // console.log('position number[]', position);
     // console.log('change', change);
-    clickEventSetPosition.trigger([position, change]);
+    clickEventSetPosition.trigger([position]);
   }
 
-  if (event.data.type === 'setPositionList') {
+  if (event.data.type === 'setPoints') {
     const positionList: Vector3[] = JSON.parse(event.data.positionList)
     // console.log('positionList number[][]', positionList);
-    const change: boolean = event.data.change
-    clickEventSetPositionList.trigger([positionList, change]);
+    const radius: number = event.data.radius || DEFAULT_RADIUS
+    // const change: boolean = event.data.change || false
+    clickEventSetPoints.trigger([positionList, radius]);
   }
 
-  if (event.data.type === 'setPositionListWithColor') {
-    const positionList: any = JSON.parse(event.data.positionList)
-    // console.log('positionList number[][]', positionList);
-    const change: boolean = event.data.change
-    clickEventSetPositionListWithColor.trigger([positionList, change]);
-  }
+  // if (event.data.type === 'setPointsColor') {
+  //   const positionList: any = JSON.parse(event.data.positionList)
+  //   // console.log('positionList number[][]', positionList);
+  //   const radius: number = event.data.radius || DEFAULT_RADIUS
+  //   // const change: boolean = event.data.change || false
+  //   clickEventSetPointsColor.trigger([positionList, radius]);
+  // }
 
 
-  if (event.data.type === 'setPositionListWithColorAndArrow') {
+  if (event.data.type === 'setPointsColorArrow') {
     const positionList: any = JSON.parse(event.data.positionList)
     // console.log('Arrow positionList number[][]', positionList);
-    const change: boolean = event.data.change
-    clickEventSetPositionListWithColorAndArrow.trigger([positionList, change]);
+    const radius: number = event.data.radius || DEFAULT_RADIUS
+    // const change: boolean = event.data.change || false
+    clickEventSetPointsColorArrow.trigger([positionList, radius]);
   }
 
+  if (event.data.type === 'clearPoints') {
+    clickEventClearPoints.trigger();
+  }
 
 })
 
@@ -198,7 +210,7 @@ window.addEventListener('message', (event) => {
 
 
 // console.log('VolView_V20250214')
-console.log('VolView_V20250307')
+console.log('VolView_V20250313')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
@@ -248,7 +260,7 @@ console.log('VolView_V20250307')
 //   // positionList.push([128,128,128]) // 这是中心点
 
 //   // console.log('开始设置positionList', positionList);
-//   clickEventSetPositionList.trigger(positionList);
+//   clickEventSetPoints.trigger(positionList);
 // },8000)
 
 
@@ -268,14 +280,14 @@ console.log('VolView_V20250307')
 //   // positionList.push([128,128,128]) // 这是中心点
 
 //   // console.log('开始设置positionList', positionList);
-//   // clickEventSetPositionListWithColor.trigger(positionList);
-//   // clickEventSetPositionListWithColor.trigger({
+//   // clickEventSetPointsColor.trigger(positionList);
+//   // clickEventSetPointsColor.trigger({
 //   //   'red':[[0,0,0],[128,128,128]],
 //   //   'green':[[10,10,10],[118,118,118]],
 //   // });
 
 
-//   clickEventSetPositionListWithColor.trigger([{
+//   clickEventSetPointsColor.trigger([{
 //     'red':[[10,92,23]],
 //     'blue':[[10,-92,23]],
 //     'green':[[-10,-92,23]],
@@ -290,7 +302,7 @@ console.log('VolView_V20250307')
 // // setTimeout(()=>{
 
 //   console.log('Setting');
-//   clickEventSetPositionListWithColor.trigger([{
+//   clickEventSetPointsColor.trigger([{
 //     'red':[[10,92,23]],
 //     'blue':[[10,-92,23]],
 //     'green':[[-10,-92,23]],
@@ -303,7 +315,7 @@ console.log('VolView_V20250307')
 // // 生成多个位置，带有颜色的，带有箭头的。
 // setTimeout(() => {
 //   console.log('生成多个位置，带有颜色的，带有箭头的。');
-//   clickEventSetPositionListWithColorAndArrow.trigger([
+//   clickEventSetPointsColorArrow.trigger([
 //     {
 
 //       'green': [

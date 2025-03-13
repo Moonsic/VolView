@@ -1,32 +1,20 @@
 <script setup lang="ts">
-// import { toRefs, watchEffect, inject, ref } from 'vue';
 import { toRefs, inject, watch, nextTick } from 'vue';
-// import { useImage } from '@/src/composables/useCurrentImage';
-// import { useResliceRepresentation } from '@/src/core/vtk/useResliceRepresentation';
-// import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
-// import { Maybe } from '@/src/types';
 import { VtkViewContext } from '@/src/components/vtk/context';
-// import { SlabTypes } from '@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants';
 import type { Vector3 } from '@kitware/vtk.js/types';
-// import { watchImmediate } from '@vueuse/core';
-// import vtkPlane from '@kitware/vtk.js/Common/DataModel/Plane';
-
-// import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
-// import vtkRenderWindow from '@kitware/vtk.js/Rendering/Core/RenderWindow';
-// import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import vtkArrowSource from '@kitware/vtk.js/Filters/Sources/ArrowSource';
 
 import {
-  useSetPositionListEvents,
-  useSetPositionListWithColorEvents,
-  useSetPositionListWithColorAndArrowEvents,
+  useSetPointsEvents,
+  // useSetPointsColorEvents,
+  useSetPointsColorArrowEvents,
+  useClearPointsEvents,
 } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 interface Props {
-  sphereRadius: number;
   id: string; // 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial
   // sliceDomain: any; // 这是最大和最小{min:-105.334,max:149.664} {-126.169,max:128.831} {min:-116.103,max:138.896}
   planeOrigin: number[]; // 十字线的中心点
@@ -34,7 +22,6 @@ interface Props {
 
 const props = defineProps<Props>();
 const {
-  sphereRadius, // 球体半径
   id,
   // sliceDomain,
   planeOrigin, // 十字线的中心点
@@ -46,86 +33,7 @@ const view = inject(VtkViewContext);
 // console.log('36 api :>> ', api);
 if (!view) throw new Error('No VtkView');
 
-// const { imageData } = useImage(imageID);
 
-// // bind window configs
-// const wlConfig = useWindowingConfig(viewID, imageID);
-
-// // setup base image
-// const sliceRep = useResliceRepresentation(view, imageData);
-
-// console.log('39999 view',view)
-// console.log('39999 wlConfig',wlConfig)
-// console.log('40000 liceRep',sliceRep)
-// console.log('planeNormal',planeNormal)
-// console.log('planeOrigin',planeOrigin)
-
-// // set slice ordering to be in the back
-// sliceRep.mapper.setResolveCoincidentTopologyToPolygonOffset();
-// sliceRep.mapper.setResolveCoincidentTopologyPolygonOffsetParameters(1, 1);
-
-// // create slicing plane
-// const slicePlane = vtkPlane.newInstance();
-// sliceRep.mapper.setSlicePlane(slicePlane);
-
-// // initialize visual properties
-// sliceRep.mapper.setSlabType(SlabTypes.MAX);
-// sliceRep.mapper.setSlabThickness(1);
-
-// // set plane normal
-// watchImmediate([planeNormal, planeOrigin], ([normal, origin]) => {
-//   const plane = sliceRep.mapper.getSlicePlane();
-//   if (!plane) return;
-//   plane.setNormal(normal);
-//   plane.setOrigin(origin);
-// });
-
-// // sync windowing
-// watchEffect(() => {
-//   sliceRep.property.setColorLevel(wlConfig.level.value);
-//   sliceRep.property.setColorWindow(wlConfig.width.value);
-// });
-
-// defineExpose(sliceRep);
-
-
-
-// // // 画一些坐标点
-// const sphere = vtkSphereSource.newInstance();
-// const points: Vector3[] = [
-//   [1,1,1],
-//   [10,10,10],
-//   [20,20,20],
-//   [30,30,30],
-//   [-40,-40,-40],
-//   [-133,77,57],
-//   [132,-132,132],
-// ]
-// points.forEach(item=>{
-//   sphere.setCenter(item);
-//   sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-//   const sphereMapper = vtkMapper.newInstance();
-//   sphereMapper.setInputData(sphere.getOutputData());
-//   const sphereActor = vtkActor.newInstance();
-//   sphereActor.setMapper(sphereMapper);
-//   sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
-//   view.renderer.addActor(sphereActor);
-// })
-
-
-// const sphere = vtkSphereSource.newInstance();
-// function addSphere(position: Vector3) {
-//   // sphere.setCenter(position);
-//   console.log('setCenter :>> ', [position[0]-128,position[1]-128,position[2]-128]);
-//   sphere.setCenter([position[0]-128,position[1]-128,position[2]-128]);
-//   sphere.setRadius(4); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-//   const sphereMapper = vtkMapper.newInstance();
-//   sphereMapper.setInputData(sphere.getOutputData());
-//   const sphereActor = vtkActor.newInstance();
-//   sphereActor.setMapper(sphereMapper);
-//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
-//   view?.renderer.addActor(sphereActor);
-// }
 
 // 将颜色值，转化成[1,1,1]
 function normalizeColor(inputColor: string): number[] {
@@ -196,46 +104,25 @@ function deleteSphereList() {
 
 // 所有数据，包括颜色和箭头，用于滑动时。只展示附近的点，所以要把所有的点先保存下来
 let objAll: any = null
+let sphereRadius: number // 球体半径
 
 
 // 清空是传[[1000, 1000, 1000]]二维数组过来，而不是[]空数组
-function addSphereList(positionList: Vector3[], change?: boolean) {
+function addPoints(positionList: Vector3[], radius: number) {
   deleteSphereList() // 先清除旧的球体
-  // console.log('positionList  addSphereList:>> ', positionList);
-  // console.log('222JSON.stringify(positionList) === JSON.stringify([1000, 1000, 1000]):>> ', JSON.stringify(positionList) === JSON.stringify([[1000, 1000, 1000]]));
+  // console.log('positionList  addPoints:>> ', positionList);
 
-  // 如果是清空的，就把objAll = null，目前就在结构像弹窗，点击保存按钮后，选中同事清空时间点，的时候，才会调addSphereList这个方法
+  // 如果是清空的，就把objAll = null，目前就在结构像弹窗，点击保存按钮后，选中同事清空时间点，的时候，才会调addPoints这个方法
   if (JSON.stringify(positionList) === JSON.stringify([[1000, 1000, 1000]])) {
     objAll = null
   }
 
-  // console.log('objAll  addSphereList:>> ', objAll);
-
-  // const [x, y, z] = window.xyzCenter
-  const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
-  const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
-  const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
-
   positionList.forEach(position => {
 
-    let newPosition: Vector3
-    if (change) {
-      // 目前不考虑change为true的情况
-      // 最终版本:第3个切片的左上和右下 的2点会很准确
-      newPosition = [
-        (position[0] / xD) * xDis + minX,
-        (position[1] / yD) * yDis + minY,
-        (position[2] / zD) * zDis + minZ,
-      ]
-      // console.log('newPosition :>> ',position, newPosition);
-
-    } else {
-      // 现在change都是false,，直接看这里
-      newPosition = position
-    }
+    const newPosition: Vector3 = position
 
     sphere.setCenter(newPosition);
-    sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+    sphere.setRadius(radius); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
     const sphereMapper = vtkMapper.newInstance();
     sphereMapper.setInputData(sphere.getOutputData());
     const sphereActor = vtkActor.newInstance();
@@ -248,94 +135,59 @@ function addSphereList(positionList: Vector3[], change?: boolean) {
   })
 }
 
-// 添加球体，带颜色
-function addSphereListWithColor(obj: any, change?: boolean) {
+// // 添加球体，带颜色
+// function addPointsColor(obj: any, radius: number) {
+//   deleteSphereList() // 先清除旧的球体
+//   objAll = JSON.parse(JSON.stringify(obj))
+//   Object.keys(obj).forEach((key: string) => {
+//     const positionList = obj[key]
+//     const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
+//     positionList.forEach((position: Vector3) => {
+//       const newPosition: Vector3 = position
+//       sphere.setCenter(newPosition);
+//       sphere.setRadius(radius); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+//       const sphereMapper = vtkMapper.newInstance();
+//       sphereMapper.setInputData(sphere.getOutputData());
+//       const sphereActor = vtkActor.newInstance();
+//       sphereActor.setMapper(sphereMapper);
+//       sphereActor.getProperty().setColor(color[0], color[1], color[2]);
+//       sphereActor.getProperty().setOpacity(0.7);
+//       view?.renderer.addActor(sphereActor);
+//       actors.push(sphereActor);
+//     })
+//   })
+// }
+
+// 清空所有点位，但要设置一个远一点的店
+function clearPoints() {
+  objAll = null // 要清空所有的数据
   deleteSphereList() // 先清除旧的球体
-
-  objAll = JSON.parse(JSON.stringify(obj))
-
-
-  // const [x, y, z] = window.xyzCenter
-  const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
-  const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
-  const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
-
-
-  Object.keys(obj).forEach((key: string) => {
-    const positionList = obj[key]
-
-    const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
-    positionList.forEach((position: Vector3) => {
-
-      let newPosition: Vector3
-      if (change) {
-        // 目前不考虑change为true的情况
-        // 最终版本:第3个切片的左上和右下 的2点会很准确
-        newPosition = [
-          (position[0] / xD) * xDis + minX,
-          (position[1] / yD) * yDis + minY,
-          (position[2] / zD) * zDis + minZ,
-        ]
-        // console.log('newPosition :>> ',position, newPosition);
-
-      } else {
-        // 现在change都是false，直接看这里
-        newPosition = position
-      }
-
-      sphere.setCenter(newPosition);
-      sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-      const sphereMapper = vtkMapper.newInstance();
-      sphereMapper.setInputData(sphere.getOutputData());
-      const sphereActor = vtkActor.newInstance();
-      sphereActor.setMapper(sphereMapper);
-      sphereActor.getProperty().setColor(color[0], color[1], color[2]);
-      sphereActor.getProperty().setOpacity(0.7);
-      view?.renderer.addActor(sphereActor);
-      actors.push(sphereActor);
-    })
-  })
-
+  sphere.setCenter([1000, 1000, 1000]);
+  sphere.setRadius(0.1); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+  const sphereMapper = vtkMapper.newInstance();
+  sphereMapper.setInputData(sphere.getOutputData());
+  const sphereActor = vtkActor.newInstance();
+  sphereActor.setMapper(sphereMapper);
+  sphereActor.getProperty().setColor(1.0, 0.0, 0.0); // 红色
+  sphereActor.getProperty().setOpacity(0); // 0是不透明
+  view?.renderer.addActor(sphereActor);
+  actors.push(sphereActor);
 }
 
 
-
 // 添加球体，带颜色，带箭头
-function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
+function addPointsColorArrow(obj: any, radius: number) {
 
   // if (id.value === 'ObliqueCoronal') {
-  //   console.log('addSphereListWithColorAndArrow :>> ', obj);
+  //   console.log('addPointsColorArrow :>> ', obj);
   // }
   // 先把所有的点保存下来
   objAll = JSON.parse(JSON.stringify(obj))
+  sphereRadius = radius
 
   deleteSphereList() // 先清除旧的球体
 
-  // const [xC, yC, zC] = window.xyzCenter
-  const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
-  const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
-  const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
-
-
-
-  // 第一个视图
-  // if (id.value === 'ObliqueCoronal') {
-
-  // // 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial
-  // console.log('id :>> ', id.value);
-  // // 这是最大和最小{min:-105.334,max:149.664} {-126.169,max:128.831} {min:-116.103,max:138.896}
-  // console.log('sliceDomain :>> ', sliceDomain.value);
-  // console.log('planeOrigin :>> ', planeOrigin.value);
-
-  // // console.log('obj :>> ', obj);
-  // console.log('window.xyzCenter :>> ', window.xyzCenter);
-  // console.log('window.dimensions :>> ', window.dimensions);
-  // console.log('window.distanceList :>> ', window.distanceList);
-  // console.log('window.xyzMinList :>> ', window.xyzMinList);
-
-  // }
-
-  const nearValue = 2.6 // 距离和球体半径一样，即正好碰到切片的就是附近的。
+  const nearRadius = sphereRadius // 距离和球体半径一样，即正好碰到切片的就是附近的。
 
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
@@ -357,48 +209,31 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
       // 第一个视图 Y轴
       if (id.value === 'ObliqueCoronal') {
         const y = position[1]
-        if (Math.abs(y - planeOrigin.value[1]) > nearValue) {
+        if (Math.abs(y - planeOrigin.value[1]) > nearRadius) {
           return
         }
       }
-
       // 第2个视图 X轴
       if (id.value === 'ObliqueSagittal') {
         const x = position[0]
-        if (Math.abs(x - planeOrigin.value[0]) > nearValue) {
+        if (Math.abs(x - planeOrigin.value[0]) > nearRadius) {
           return
         }
       }
-
       // 第3个视图 Z轴
       if (id.value === 'ObliqueAxial') {
         const z = position[2]
-        if (Math.abs(z - planeOrigin.value[2]) > nearValue) {
+        if (Math.abs(z - planeOrigin.value[2]) > nearRadius) {
           return
         }
       }
 
       // planeOrigin
 
-      let newPosition: Vector3
-      if (change) {
-        // 目前不考虑change为true的情况
-        // 最终版本:第3个切片的左上和右下 的2点会很准确
-        newPosition = [
-          (position[0] / xD) * xDis + minX,
-          (position[1] / yD) * yDis + minY,
-          (position[2] / zD) * zDis + minZ,
-        ]
-        // console.log('newPosition :>> ',position, newPosition);
-
-      } else {
-        // 现在change都是false，直接看这里
-        newPosition = position
-      }
+      const newPosition: Vector3 = position
 
       sphere.setCenter(newPosition);
-      sphere.setRadius(sphereRadius.value); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-      // sphere.setRadius(2.6); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
+      sphere.setRadius(sphereRadius); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
       const sphereMapper = vtkMapper.newInstance();
       sphereMapper.setInputData(sphere.getOutputData());
       const sphereActor = vtkActor.newInstance();
@@ -435,7 +270,9 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
         // 将箭头向反方向偏移，使基点在球表面上；
         // 半径是2.8的情况下才是/1，箭头起点正好在球表面上；
         // 半径是2.6的情况下才是/1.05，箭头起点正好在球表面上；
-        const offset = arrowLength / 1.05;
+        // const offset = arrowLength / 1.05;
+        const offset = (6 * radius * radius) / (6 * radius - 5) // 让deepseek推理出来的算法
+
         const adjustedPosition: [number, number, number] = [
           newPosition[0] + direction[0] * offset,
           newPosition[1] + direction[1] * offset,
@@ -456,7 +293,6 @@ function addSphereListWithColorAndArrow(obj: any, change?: boolean) {
 }
 
 
-
 // 防抖，防抖是指在一系列连续的操作中，只在最后一次操作后的一段时间内执行一次操作
 function debounce<T extends Function>(fn: T, delay: number): T {
   let timer: any = null;
@@ -470,7 +306,7 @@ function debounce<T extends Function>(fn: T, delay: number): T {
 
 // 使用防抖包装，500毫秒内连续触发只执行最后一次
 const debouncedGetMegData = debounce(() => {
-  addSphereListWithColorAndArrow(objAll, false)
+  addPointsColorArrow(objAll, sphereRadius)
 }, 200)
 
 
@@ -488,24 +324,11 @@ watch(() => planeOrigin.value, () => {
   })
 })
 
-
-
-
-// setTimeout(()=>{
-//   addSphereList(
-//     [
-//       [0,0,0],
-//       [-2.081481458619237, 4.4918666201410815, 8.861701400950565]
-//     ]
-//   )
-// },1000)
-
 // 设置点坐标的事件
-useSetPositionListEvents().onClick(([positionList, change]) => addSphereList(positionList, change));
-useSetPositionListWithColorEvents().onClick(([obj, change]) => addSphereListWithColor(obj, change));
-useSetPositionListWithColorAndArrowEvents().onClick(([obj, change]) => addSphereListWithColorAndArrow(obj, change));
-
-
+useSetPointsEvents().onClick(([positionList, radius]) => addPoints(positionList, radius));
+// useSetPointsColorEvents().onClick(([obj, radius]) => addPointsColor(obj, radius));
+useSetPointsColorArrowEvents().onClick(([obj, radius]) => addPointsColorArrow(obj, radius));
+useClearPointsEvents().onClick(() => clearPoints());
 
 </script>
 

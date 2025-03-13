@@ -85,7 +85,7 @@
 
           <!-- 画球体 -->
           <!-- :sliceDomain="sliceDomain"没用到 -->
-          <MySpheresRepresentation :sphereRadius="2.6" :id="id" :planeOrigin="planeOrigin"></MySpheresRepresentation>
+          <MySpheresRepresentation :id="id" :planeOrigin="planeOrigin"></MySpheresRepresentation>
 
           <slot></slot>
         </vtk-slice-view>
@@ -306,7 +306,7 @@ let defaultPosition: Vector3
 
 // reset camera logic
 // change默认不传是false，直接赋值。之前做的功能是给我位置信息，我自己再转化的，现在给我的位置信息我不需要再转化了，所以是false。
-function resetCamera(position?: Vector3, change = false) {
+function resetCamera(position?: Vector3) {
   // console.log('288 vtkView.value :>> ', vtkView.value);
 
   if (!vtkView.value) return;
@@ -333,22 +333,19 @@ function resetCamera(position?: Vector3, change = false) {
     // console.log('309 position',position)
     // newCenter = getNormalizedCoordinates(worldBounds, position)
 
+    // 现在change都是false,，直接看这里
+    newCenter = position
 
-
-    if (change) {
-
-      const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
-      const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
-      const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
-      newCenter = [
-        (position[0]/xD) * xDis + minX ,
-        (position[1]/yD) * yDis + minY ,
-        (position[2]/zD) * zDis + minZ ,
-      ]
-
-    } else {
-      newCenter = position
-    }
+    // if (change) {
+    //   const [xD, yD, zD] = window.dimensions  // [256, 256, 256] 或 [192, 512, 512]
+    //   const [xDis, yDis, zDis] = window.distanceList  // [256, 256, 256] 或 [192, 512, 512]
+    //   const [minX, minY, minZ] = window.xyzMinList  // [256, 256, 256] 或 [192, 512, 512]
+    //   newCenter = [
+    //     (position[0]/xD) * xDis + minX ,
+    //     (position[1]/yD) * yDis + minY ,
+    //     (position[2]/zD) * zDis + minZ ,
+    //   ]
+    // }
 
 
     defaultPosition = newCenter
@@ -372,7 +369,7 @@ function resetCamera(position?: Vector3, change = false) {
 useResetViewsEvents().onClick(resetCamera);
 
 // 设置点坐标的事件
-useSetPositionEvents().onClick(([position,change]) => resetCamera(position, change));
+useSetPositionEvents().onClick(([position]) => resetCamera(position));
 
 // update the camera
 onVTKEvent(
