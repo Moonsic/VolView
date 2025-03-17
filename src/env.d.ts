@@ -17,6 +17,7 @@ interface Window {
   dimensions: vec3
   distanceList: number[]
   xyzMinList: number[]
+  worldToIndex: mat4
 }
 
 declare const __VERSIONS__: Record<string, string>;

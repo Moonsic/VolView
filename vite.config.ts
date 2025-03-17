@@ -214,6 +214,9 @@ export default defineConfig({
 			// 	rewrite: path1 => path1.replace(/^\/api/, '')
 			// }
     },
+    // headers: {
+    //   'Access-Control-Allow-Origin': 'http://localhost:3031' // 允许父项目访问
+    // }
   },
   optimizeDeps: {
     exclude: ['itk-wasm'],

@@ -141,8 +141,10 @@ function addPoints(positionList: Vector3[], radius: number) {
 //   })
 // }
 
-// 清空所有点位，但要设置一个远一点的店
+// 清空所有点位，但要设置一个远一f点的店
 function clearPoints() {
+  console.log('clear points');
+
   deleteSphereList() // 先清除旧的球体
   sphere.setCenter([1000, 1000, 1000]);
   sphere.setRadius(0.1); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
@@ -151,14 +153,21 @@ function clearPoints() {
   const sphereActor = vtkActor.newInstance();
   sphereActor.setMapper(sphereMapper);
   sphereActor.getProperty().setColor(1.0, 0.0, 0.0); // 红色
-  sphereActor.getProperty().setOpacity(0); // 0是不透明
+  sphereActor.getProperty().setOpacity(0.1); // 0是不透明
   view?.renderer.addActor(sphereActor);
   actors.push(sphereActor);
 }
 
 // 添加球体，带颜色，带箭头
 function addPointsColorArrow(obj: any, radius: number) {
+  console.log('add points');
+
   deleteSphereList() // 先清除旧的球体
+
+  if (!obj) {
+    console.log('points data = null');
+    return
+  }
 
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
@@ -240,6 +249,7 @@ function addPointsColorArrow(obj: any, radius: number) {
       actors.push(sphereActor);
     })
   })
+  // console.log('3d points end :>> ', new Date().getTime());
 
 }
 

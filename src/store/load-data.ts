@@ -69,6 +69,8 @@ export function useLoadingNotifications() {
       toast.dismiss(toastID);
       messageStore.addError(NotificationMessages.Error, error);
     } else {
+      // console.log('toast弹窗出现 :>> ', new Date().getTime(), toastID);
+
       toast.update(toastID, {
         content: NotificationMessages.Done,
         options: {

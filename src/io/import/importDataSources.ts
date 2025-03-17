@@ -127,6 +127,8 @@ const importDicomFiles = async (
 };
 
 export async function importDataSources(dataSources: DataSource[]) {
+  // console.log('2 :>> ', new Date().getTime());
+
   const importContext = {
     fetchFileCache: new Map<string, File>(),
     dicomDataSources: [] as DataSourceWithFile[],
@@ -154,9 +156,13 @@ export async function importDataSources(dataSources: DataSource[]) {
   const results = await Promise.all(
     dataSources.map((r) => loader.execute(r, importContext))
   );
+  // console.log('3 :>> ', new Date().getTime());
 
   const configResult = await importConfigs(results);
+  // console.log('4 :>> ', new Date().getTime(),configResult);
+
   const dicomResult = await importDicomFiles(importContext.dicomDataSources);
+  // console.log('5 :>> ', new Date().getTime(),dicomResult);
 
   return [
     ...results,

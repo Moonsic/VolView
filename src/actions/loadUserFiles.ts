@@ -242,14 +242,20 @@ function loadDataSources(sources: DataSource[]) {
       loadDataStore.setError(error as Error);
       return;
     }
-
+    // console.log('6 :>> ', new Date().getTime(),results);
     const [succeeded, errored] = partitionResults(results);
+    // console.log('7 :>> ', dataStore.primarySelection,succeeded,errored);
+    // console.log('7 1:>> ', !dataStore.primarySelection && succeeded.length);
 
+    // GGG 这里为什么是!dataStore.primarySelection啊？不应该有值才进来吗，为什么没值进来，我现在就进不去这个if。
+    // 如果成功了
     if (!dataStore.primarySelection && succeeded.length) {
+      // console.log('77 :>> ');
       const primaryDataSource = findBaseDataSource(
         succeeded,
         loadDataStore.segmentGroupExtension
       );
+      // console.log('8 :>> ', primaryDataSource,isVolumeResult(primaryDataSource));
 
       if (isVolumeResult(primaryDataSource)) {
         const selection = toDataSelection(primaryDataSource);
@@ -260,9 +266,12 @@ function loadDataSources(sources: DataSource[]) {
           succeeded,
           loadDataStore.segmentGroupExtension
         );
+        // console.log('9 :>> ', new Date().getTime(),selection,dataStore.primarySelection);
+
       } // then must be primaryDataSource.type === 'model'
     }
 
+    // 如果失败了
     if (errored.length) {
       const errorMessages = errored.map((errResult) => {
         // pick first error
@@ -279,6 +288,12 @@ function loadDataSources(sources: DataSource[]) {
 
       loadDataStore.setError(failedError);
     }
+
+
+    // console.log('10 :>> ', new Date().getTime());
+    // 将B项目结构像加载完成的信息发送回 A 项目
+    window.parent.postMessage({ type: 'volviewLoaded' }, '*');
+
   };
 
   const wrapWithLoading = <T extends (...args: any[]) => void>(fn: T) => {

@@ -160,6 +160,9 @@ function addPoints(positionList: Vector3[], radius: number) {
 
 // 清空所有点位，但要设置一个远一点的店
 function clearPoints() {
+  // if (id.value === 'ObliqueCoronal') {
+  //   console.log('第一 clearPoints :>> ', new Date().getTime());
+  // }
   objAll = null // 要清空所有的数据
   deleteSphereList() // 先清除旧的球体
   sphere.setCenter([1000, 1000, 1000]);
@@ -169,15 +172,77 @@ function clearPoints() {
   const sphereActor = vtkActor.newInstance();
   sphereActor.setMapper(sphereMapper);
   sphereActor.getProperty().setColor(1.0, 0.0, 0.0); // 红色
-  sphereActor.getProperty().setOpacity(0); // 0是不透明
+  sphereActor.getProperty().setOpacity(0.1); // 0是不透明
   view?.renderer.addActor(sphereActor);
   actors.push(sphereActor);
+}
+
+// worldToIndex:
+// {
+//     "0": -1,
+//     "1": 1.862645371275562e-9,
+//     "2": -3.503329101063416e-18,
+//     "3": 0,
+//     "4": -1.862645371275562e-9,
+//     "5": -1,
+//     "6": 1.8808352653110205e-9,
+//     "7": 0,
+//     "8": 2.6901773166029227e-18,
+//     "9": 1.8808352653110205e-9,
+//     "10": 1,
+//     "11": 0,
+//     "12": 128.83084102223668,
+//     "13": 105.33522798525541,
+//     "14": 138.89642338247245,
+//     "15": 1
+// }
+
+// planeOrigin.value
+
+// [
+//     1.3308410635218024,
+//     -22.1647720337005,
+//     -11.396423340784168
+// ]
+
+// new x:
+
+// -1*1.3308410635218024 +
+// -1.862645371275562e-9 * -22.1647720337005 +
+// 2.6901773166029227e-18 * -11.396423340784168 +
+// 128.83084102223668 * 1
+
+
+
+// 计算距离是要获取点和切片新的坐标，再计算距离，一个4维矩阵计算公式，万里教我的
+function getNewPosition(position: number[]) {
+
+  const worldToIndex = window.worldToIndex
+
+  const x = worldToIndex[0] * position[0] +
+    worldToIndex[4] * position[1] +
+    worldToIndex[8] * position[2] +
+    worldToIndex[12] * 1
+
+  const y = worldToIndex[1] * position[0] +
+    worldToIndex[5] * position[1] +
+    worldToIndex[9] * position[2] +
+    worldToIndex[13] * 1
+
+  const z = worldToIndex[2] * position[0] +
+    worldToIndex[6] * position[1] +
+    worldToIndex[10] * position[2] +
+    worldToIndex[14] * 1
+
+  return [x, y, z]
 }
 
 
 // 添加球体，带颜色，带箭头
 function addPointsColorArrow(obj: any, radius: number) {
-
+  // if (id.value === 'ObliqueCoronal') {
+  //   console.log('第一 points :>> ', new Date().getTime(), obj);
+  // }
   // if (id.value === 'ObliqueCoronal') {
   //   console.log('addPointsColorArrow :>> ', obj);
   // }
@@ -205,30 +270,32 @@ function addPointsColorArrow(obj: any, radius: number) {
         position = item as Vector3
       }
 
+      // 在计算距离前，要获取到另一个坐标系的位置，再计算距离，一个4维矩阵计算公式
+      const newPointPosition: number[] = getNewPosition(position)
+      const newplaneOrigin: number[] = getNewPosition(planeOrigin.value)
+
       // 在这里拦截一下，与当前十字线的距离的绝对值，大于nearValue的点就算远的点，远的点不显示。能显示的都是近的点
       // 第一个视图 Y轴
       if (id.value === 'ObliqueCoronal') {
-        const y = position[1]
-        if (Math.abs(y - planeOrigin.value[1]) > nearRadius) {
+        const distance = Math.abs(newPointPosition[1] - newplaneOrigin[1])
+        if (distance > nearRadius) {
           return
         }
       }
       // 第2个视图 X轴
       if (id.value === 'ObliqueSagittal') {
-        const x = position[0]
-        if (Math.abs(x - planeOrigin.value[0]) > nearRadius) {
+        const distance = Math.abs(newPointPosition[0] - newplaneOrigin[0])
+        if (distance > nearRadius) {
           return
         }
       }
       // 第3个视图 Z轴
       if (id.value === 'ObliqueAxial') {
-        const z = position[2]
-        if (Math.abs(z - planeOrigin.value[2]) > nearRadius) {
+        const distance = Math.abs(newPointPosition[2] - newplaneOrigin[2])
+        if (distance > nearRadius) {
           return
         }
       }
-
-      // planeOrigin
 
       const newPosition: Vector3 = position
 

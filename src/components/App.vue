@@ -117,6 +117,12 @@ export function useClearPointsEvents() {
   return { onClick: clickEventClearPoints.on };
 }
 
+// 20250317
+console.log('volview init')
+// console.log('VolView_V20250314', new Date().getTime())
+
+// 将B项目加载完成的信息发送回 A 项目，返回之后，再setUrl
+window.parent.postMessage({ type: 'volviewReady' }, '*');
 
 const DEFAULT_RADIUS = 2.6; // 默认半径是2.6
 
@@ -125,14 +131,19 @@ window.addEventListener('message', (event) => {
   // console.log('message :>> ', event)
 
   if (event.data.type === 'clear') {
+    console.log('clear file');
     const dataStore = useDatasetStore();
     dataStore.removeAll(); // 把结构像清除
-    clickEventSetPoints.trigger([[[1000, 1000, 1000]], DEFAULT_RADIUS]); // 把点清除
+    clickEventClearPoints.trigger(); // 把点清除
+    // clickEventSetPoints.trigger([[[1000, 1000, 1000]], DEFAULT_RADIUS]); // 把点清除
   }
 
   if (event.data.type === 'file') {
     let fileUrl = ''
     const filePath = event.data.filePath
+    console.log('get file');
+    // console.log('getting file');
+    // console.log('0 :>> ', new Date().getTime());
 
     // 大数据平台不加t，否则会报错
     if (event.data?.system === 'bigData') {
@@ -157,6 +168,9 @@ window.addEventListener('message', (event) => {
         const file = new File([blob], fileName, { type: mimeType });
         // console.log('B file :>> ', file);
         // 现在你可以像处理本地文件一样处理这个File对象
+        // console.log('1 :>> ', new Date().getTime());
+        console.log('load file');
+        // console.log('loading file');
         loadFiles([file])
       })
       .catch(error => console.error('Failed to load blob:', error))
@@ -208,9 +222,6 @@ window.addEventListener('message', (event) => {
 
 
 
-
-// console.log('VolView_V20250214')
-console.log('VolView_V20250313')
 
 // setTimeout(()=>{
 //   console.log('开始设置position');
