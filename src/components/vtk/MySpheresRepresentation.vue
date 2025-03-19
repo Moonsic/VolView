@@ -12,6 +12,7 @@ import {
   // useSetPointsColorEvents,
   useSetPointsColorArrowEvents,
   useClearPointsEvents,
+  useChangeNearValueEvents,
 } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 interface Props {
@@ -252,8 +253,9 @@ function addPointsColorArrow(obj: any, radius: number) {
 
   deleteSphereList() // 先清除旧的球体
 
-  const nearRadius = sphereRadius // 距离和球体半径一样，即正好碰到切片的就是附近的。
-
+  // const nearRadius = sphereRadius // 距离和球体半径一样，即正好碰到切片的就是附近的。
+  const nearRadius = window.nearValue // 距离和球体半径一样，即正好碰到切片的就是附近的。
+// console.log('nearRadius',nearRadius)
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
     const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
@@ -377,6 +379,15 @@ const debouncedGetMegData = debounce(() => {
 }, 200)
 
 
+
+function changeNearValue(){
+  // console.log('objAll :>> ', objAll);
+  if (!objAll) {
+    return
+  }
+  addPointsColorArrow(objAll, sphereRadius)
+}
+
 // 这里做一下防抖
 watch(() => planeOrigin.value, () => {
   // if (id.value === 'ObliqueCoronal') {
@@ -396,7 +407,7 @@ useSetPointsEvents().onClick(([positionList, radius]) => addPoints(positionList,
 // useSetPointsColorEvents().onClick(([obj, radius]) => addPointsColor(obj, radius));
 useSetPointsColorArrowEvents().onClick(([obj, radius]) => addPointsColorArrow(obj, radius));
 useClearPointsEvents().onClick(() => clearPoints());
-
+useChangeNearValueEvents().onClick(() => changeNearValue());
 </script>
 
 <template>

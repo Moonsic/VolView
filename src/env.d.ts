@@ -18,6 +18,7 @@ interface Window {
   distanceList: number[]
   xyzMinList: number[]
   worldToIndex: mat4
+  nearValue: number
 }
 
 declare const __VERSIONS__: Record<string, string>;

@@ -117,8 +117,15 @@ export function useClearPointsEvents() {
   return { onClick: clickEventClearPoints.on };
 }
 
+const clickEventChangeNearValue = createEventHook();
+export function useChangeNearValueEvents() {
+  return { onClick: clickEventChangeNearValue.on };
+}
+
+
 // 20250317
 console.log('volview init')
+window.nearValue = 2.6
 // console.log('VolView_V20250314', new Date().getTime())
 
 // 将B项目加载完成的信息发送回 A 项目，返回之后，再setUrl
@@ -129,6 +136,11 @@ const DEFAULT_RADIUS = 2.6; // 默认半径是2.6
 // B项目接收
 window.addEventListener('message', (event) => {
   // console.log('message :>> ', event)
+
+  if (event.data.type === 'setNearValue') {
+    window.nearValue = event.data.nearValue || 2.6
+    clickEventChangeNearValue.trigger(); // 重新画点
+  }
 
   if (event.data.type === 'clear') {
     console.log('clear file');
