@@ -167,6 +167,7 @@ const { saveDialog } = useSaveControls();
     </v-menu>
 
     <controls-strip-tools v-if="hasData" />
+
     <v-spacer />
     <control-button
       v-if="serverUrl"

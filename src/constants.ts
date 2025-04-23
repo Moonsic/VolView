@@ -112,7 +112,7 @@ export const WLPresetsCT = {
 };
 
 export const OBLIQUE_OUTLINE_COLORS: Record<string, RGBColor> = {
-  ObliqueAxial: [0, 128, 255], // Blue
+  ObliqueAxial: [0, 128, 255], // Blue（[0, 128, 255]其实是浅蓝色，如果真的是蓝色[0, 0, 255]的话，颜色太深了）
   ObliqueSagittal: [255, 255, 0], // Yellow
   ObliqueCoronal: [255, 51, 51], // Red
 };

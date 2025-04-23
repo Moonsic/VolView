@@ -88,6 +88,7 @@ useResizeObserver(vtkContainerRef, () => {
 });
 
 function resetCamera() {
+  // console.log('91 :>> ', viewDirection.value);
   autoFit.value = true;
   withoutAutoFitEffect(() => {
     resetCameraToImage(

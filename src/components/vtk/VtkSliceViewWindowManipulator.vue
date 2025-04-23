@@ -22,6 +22,8 @@ interface Props {
 const props = defineProps<Props>();
 const { viewId, imageId, manipulatorConfig } = toRefs(props);
 
+// console.log('manipulatorConfig :>> ', manipulatorConfig);
+
 const view = inject(VtkViewContext);
 if (!view) throw new Error('No VtkView');
 
@@ -34,8 +36,8 @@ if (!interactorStyle?.isA('vtkInteractorStyleManipulator')) {
 const config = computed(() => {
   return {
     button: 1,
-    dragEnabled: false, // 这里是控制是否可以拖拽改变亮度，之前默认是true，我现在改成false，不能拖拽。
-    scrollEnabled: false,
+    dragEnabled: false, // GGG 这里是控制是否可以按住左键拖拽改变亮度，之前默认是true，我现在改成false，不能拖拽。
+    scrollEnabled: false, // GGG 这里不不不是控制是否可以按住右键缩放的，目前不知道是什么意思
     ...manipulatorConfig?.value,
   };
 });

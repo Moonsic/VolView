@@ -39,36 +39,52 @@ onViewMounted(view.renderWindowView, () => {
   widget.value.setKeepOrthogonality(true);
   // reset mouse cursor styles
   widget.value.setCursorStyles({
-    translateCenter: 'default',
-    rotateLine: 'default',
-    translateAxis: 'default',
+    translateCenter: 'pointer',
+    rotateLine: 'pointer',
+    translateAxis: 'pointer',
   });
+  // console.log('viewId :>> ', props.viewId);
 
-  resliceCursorState.getStatesWithLabel('sphere').forEach((handle) => {
+  // if (props.viewId === 'ObliqueCoronal') {
+    // }
+
+    // 这是针对5个圆点
+  resliceCursorState.getStatesWithLabel('sphere').forEach((handle, index) => {
     const h = handle as ResliceCursorWidgetState;
-    // console.log('h :>> ', h, h.getCenter());
-    // console.log('h :>> ', h,h.getOffset());
 
-    h.setScale1(10); // 十字线的圆形大小，一共5个圆形，默认是10
-    h.setOpacity(80); // 圆形的透明度，默认128
+    // if (props.viewId === 'ObliqueCoronal') {
+    //   console.log('第一 h :>> ', h.getColor3());
+    // }
+
+    h.setScale1(12); // 十字线的圆形大小，一共5个圆形，默认是10
+    h.setOpacity(100); // 圆形的透明度，默认128
+
+    // 第一个就是中间的白色圆点
+    if (index === 0) {
+      h.setOpacity(40); // 圆形的透明度，默认128
+    }
   });
 
+  // 这是针对线
   resliceCursorState.getStatesWithLabel('line').forEach((handle) => {
     const h = handle as ResliceCursorWidgetState;
     // console.log('line h :>> ', h);
-    h.setScale3(1, 1, 1);
-    h.setOpacity(100); // 默认100
+    h.setScale3(1, 1, 1); // 线粗度，默认1
+    h.setOpacity(100); // 透明度，默认100
   });
 
+  // 1、3视图的黄色竖线
   const xLines = [
     ...resliceCursorState.getStatesWithLabel('XinZ'),
     ...resliceCursorState.getStatesWithLabel('XinY'),
   ];
+  // console.log('xLines :>> ', xLines);
   xLines.forEach((handle) => {
     const h = handle as ResliceCursorWidgetState;
     h.setColor3(OBLIQUE_OUTLINE_COLORS[InitViewIDs.ObliqueSagittal]);
   });
 
+  // 2视图的红色竖线、3视图的红色横线
   const yLines = [
     ...resliceCursorState.getStatesWithLabel('YinZ'),
     ...resliceCursorState.getStatesWithLabel('YinX'),
@@ -78,6 +94,7 @@ onViewMounted(view.renderWindowView, () => {
     h.setColor3(OBLIQUE_OUTLINE_COLORS[InitViewIDs.ObliqueCoronal]);
   });
 
+  // 1、2 视图的青色横线
   const zLines = [
     ...resliceCursorState.getStatesWithLabel('ZinX'),
     ...resliceCursorState.getStatesWithLabel('ZinY'),

@@ -39,6 +39,7 @@ export default defineComponent({
     });
 
     const selectItem = (item: unknown) => {
+      // console.log('selectItem :>> ', mandatory.value , item);
       if (mandatory.value && !item) {
         return;
       }

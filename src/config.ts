@@ -50,6 +50,9 @@ export const InitViewSpecs: Record<string, ViewSpec> = {
       viewUp: 'Anterior',
     },
   },
+
+
+
   [InitViewIDs.ObliqueCoronal]: {
     viewType: 'Oblique',
     props: {
@@ -60,7 +63,7 @@ export const InitViewSpecs: Record<string, ViewSpec> = {
   [InitViewIDs.ObliqueSagittal]: {
     viewType: 'Oblique',
     props: {
-      viewDirection: 'Right',
+      viewDirection: 'Right', // 默认Right
       viewUp: 'Superior',
     },
   },
@@ -71,6 +74,10 @@ export const InitViewSpecs: Record<string, ViewSpec> = {
       viewUp: 'Anterior',
     },
   },
+
+
+
+
   [InitViewIDs.Three]: {
     viewType: '3D',
     props: {

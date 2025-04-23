@@ -129,6 +129,8 @@ const obliqueSliceProps = computed(() => {
 // reset camera logic
 function resetCamera() {
   if (!vtkView.value) return;
+  // GGG 这里有旋转的API,要看看
+  // console.log('vtkView.value :>> ', vtkView.value);
   vtkView.value.resetCamera();
   vtkView.value.requestRender();
 }

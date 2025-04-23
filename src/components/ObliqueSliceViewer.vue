@@ -4,12 +4,15 @@
     <div class="vtk-container">
       <div class="vtk-sub-container">
 
-          <!-- id:{{ id }}- 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial -->
-          <!-- {{ currentImageID }}-
+        <!-- id:{{ id }}- 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial -->
+        <!-- {{ currentImageID }}- -->
+        <!-- id:{{ id }}--
           {{ viewDirection }}-
           {{ viewUp }}
-          {{ sliceDomain }} -->
-          <!-- {{ planeOrigin}} -->
+          {{ planeOrigin}} -->
+        <!-- {{ sliceDomain }} -->
+
+        <!-- {{ currentTool }} -->
 
         <vtk-slice-view
           class="vtk-view"
@@ -79,9 +82,9 @@
 
           <!-- 十字指示线 -->
           <reslice-cursor-tool
+            v-show="showResliceCursor"
             :view-id="id"
-            :view-direction="viewDirection"
-          ></reslice-cursor-tool>
+            :view-direction="viewDirection"></reslice-cursor-tool>
 
           <!-- 画球体 -->
           <!-- :sliceDomain="sliceDomain"没用到 -->
@@ -95,6 +98,9 @@
 </template>
 
 <script setup lang="ts">
+import {
+  ResliceCursorWidgetState,
+} from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
 import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
@@ -248,7 +254,7 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
   // console.log('planeOrigin.value :>> ', planeOrigin.value);
   // if (!vtkView.value || !resliceCursorState.getImage()) return;
 
- // GGG 注释，因为报错，官方也报错，等官方解决
+  // GGG 注释，因为报错，官方也报错，等官方解决
   // console.log('object 1:>> ', vtkView.value.renderer);
   // console.log('object 2:>> ',  widgetViewType.value);
   // console.log('object 3:>> ', resetFocalPoint);
@@ -356,7 +362,7 @@ function resetCamera(position?: Vector3) {
   }
   // console.log('322 newCenter',newCenter)
 
-  planeOrigin.value = newCenter // 我发现只要改变planeOrigin.value，就能马上改变位置
+  planeOrigin.value = newCenter // GGG 我发现只要改变planeOrigin.value，就能马上改变位置
   resliceCursorState.placeWidget(worldBounds);
 
 
@@ -371,12 +377,42 @@ useResetViewsEvents().onClick(resetCamera);
 // 设置点坐标的事件
 useSetPositionEvents().onClick(([position]) => resetCamera(position));
 
+
+// 防抖，防抖是指在一系列连续的操作中，只在最后一次操作后的一段时间内执行一次操作
+function debounce<T extends Function>(fn: T, delay: number): T {
+  let timer: number = null;
+  return function (this: any, ...args: any[]) {
+    clearTimeout(timer)
+    timer = window.setTimeout(() => {
+      fn.apply(this, args)
+    }, delay)
+  } as unknown as T;
+}
+
+
+let firstAngles: any = null // 一开始的数据
+
+let oldData: any = null
+
 // update the camera
 onVTKEvent(
   resliceCursorState,
   'onModified',
   batchForNextTask(() => {
-    // console.log('1 :>> ',);
+    // console.log('props.id :>> ', props.id);
+
+    // if (props.id === 'ObliqueCoronal') {
+    //   debouncedGetData()
+    // }
+
+
+
+    // if (props.id === 'ObliqueCoronal') {
+    // // console.log('viewDirection.value :>> ', viewDirection.value);
+
+    //   console.log('1 :>> ', resliceCursorState, resliceCursor);
+    //   // console.log('2 :>> ', resliceCursorState.invokeBoundsChange())
+    // }
     updateResliceCamera(false);
   })
 );
@@ -384,6 +420,236 @@ onVTKEvent(
 watchImmediate(currentImageID, () => {
   updateResliceCamera(true);
 });
+
+
+// 使用防抖包装，500毫秒内连续触发只执行最后一次
+const debouncedGetData = debounce(() => {
+  getData()
+}, 500)
+
+function getData() {
+  // console.log('resliceCursorState :>> ', resliceCursorState);
+  // console.log('getAxisXinY() :>> ', resliceCursorState.getAxisXinY());
+  // console.log('getAxisXinY() 1:>> ', resliceCursorState.getAxisXinY().getState());
+  // console.log('getAxisXinY() :>> ', resliceCursorState.getAxisXinY().getState().direction);
+  // console.log('getAxisXinZ() :>> ', resliceCursorState.getAxisXinZ().getState().direction);
+  // console.log('getAxisYinX() :>> ', resliceCursorState.getAxisYinX().getState().direction);
+  // console.log('getAxisYinZ() :>> ', resliceCursorState.getAxisYinZ().getState().direction);
+  // console.log('getAxisZinX() :>> ', resliceCursorState.getAxisZinX().getState().direction);
+  // console.log('getAxisZinY() :>> ', resliceCursorState.getAxisZinY().getState().direction);
+
+  const newData: any = {
+    getAxisXinY: resliceCursorState.getAxisXinY().getState().direction,
+    getAxisXinZ: resliceCursorState.getAxisXinZ().getState().direction,
+    getAxisYinX: resliceCursorState.getAxisYinX().getState().direction,
+    getAxisYinZ: resliceCursorState.getAxisYinZ().getState().direction,
+    getAxisZinX: resliceCursorState.getAxisZinX().getState().direction,
+    getAxisZinY: resliceCursorState.getAxisZinY().getState().direction,
+  }
+
+  // 是否相等，如果相等，说明没有旋转，只是误触或者平移。
+  const isEqual = twoObjEqual(newData, oldData)
+
+  // 如果是false，说明变换角度了
+  if (!isEqual) {
+    const xyzAngles = calculateEulerAngles(oldData, newData)
+    console.log('xyzAngles :>> ', xyzAngles);
+
+    // 没有老数据，说明就是第一次进来的数据
+    if (!oldData) {
+      firstAngles = JSON.parse(JSON.stringify(xyzAngles))
+    }
+    if (firstAngles) {
+      returnData(xyzAngles)
+    }
+
+  }
+
+  oldData = JSON.parse(JSON.stringify(newData))
+}
+
+function returnData(xyzAngles: any) {
+  const obj = {
+    x: parseFloat((xyzAngles.thetaX - firstAngles.thetaX).toFixed(2)),
+    y: parseFloat((xyzAngles.thetaY - firstAngles.thetaY).toFixed(2)),
+    z: parseFloat(-(xyzAngles.thetaZ - firstAngles.thetaZ).toFixed(2)),
+  }
+
+  if (obj.z < -180) {
+    obj.z = 360 + obj.z
+  }
+  console.log('returnData :>> ', obj);
+
+  window.parent.postMessage({ type: 'rotateAngles', value: obj }, '*');
+
+}
+
+function twoObjEqual(newObj: any, oldObj: any) {
+  // console.log('newObj,oldObj :>> ', newObj, oldObj);
+  if (!oldObj) {
+    return false
+  }
+  let flag = true;
+  Object.keys(newObj).forEach((key) => {
+    // if (JSON.stringify(newObj[key]) !== JSON.stringify(oldObj[key])) {
+    //   console.log(`属性 ${key} 的值不同`);
+    //   flag = false;
+    // }
+
+    let flag2 = true;
+    newObj[key].forEach((item, index) => {
+      if (item.toFixed(2) !== oldObj[key][index].toFixed(2)) {
+        flag2 = false;
+      }
+    })
+    if (!flag2) {
+      // console.log(`属性 ${key} 的值不同`);
+      flag = false;
+    }
+  });
+  return flag;
+}
+
+// function dengyu2(newObj: any, oldObj: any) {
+//   let flag = true;
+//   const keys = Object.keys(newObj);
+//   for (const key of keys) {
+//     if (JSON.stringify(newObj[key]) !== JSON.stringify(oldObj[key])) {
+//       console.log(`属性 ${key} 的值不同`);
+//       flag = false;
+//       break;
+//     }
+//   }
+//   return flag;
+// }
+
+
+function calculateEulerAngles(initialData, finalData) {
+  // 步骤1：从finalData中提取全局坐标系下的轴方向
+  // 假设：
+  // - Y视图的X轴对应全局Z方向
+  // - X视图的Z轴对应全局Y方向
+  // - Z视图的Y轴对应全局X方向
+  const globalX = finalData.getAxisZinY.map(v => -v); // 根据数据方向调整符号
+  const globalY = finalData.getAxisXinZ;
+  const globalZ = finalData.getAxisXinY;
+
+  // 构造旋转矩阵（列优先）
+  const R = [
+    [globalX[0], globalY[0], globalZ[0]],
+    [globalX[1], globalY[1], globalZ[1]],
+    [globalX[2], globalY[2], globalZ[2]]
+  ];
+
+  // 步骤2：按Y→X→Z顺序分解欧拉角
+  let thetaY, thetaX, thetaZ;
+
+  // 计算绕X轴的旋转角度（thetaX）
+  thetaX = Math.asin(-R[1][2]) * (180 / Math.PI);
+  const cosThetaX = Math.cos(thetaX * Math.PI / 180);
+
+  // 避免万向节锁（cosThetaX接近0时）
+  if (Math.abs(cosThetaX) > 1e-6) {
+    thetaY = Math.atan2(R[0][2] / cosThetaX, R[2][2] / cosThetaX) * (180 / Math.PI);
+    thetaZ = Math.atan2(R[1][0] / cosThetaX, R[1][1] / cosThetaX) * (180 / Math.PI);
+  } else {
+    // 万向节锁处理
+    thetaY = Math.atan2(-R[2][0], R[0][0]) * (180 / Math.PI);
+    thetaZ = 0;
+  }
+
+  // 步骤3：校正角度符号（根据右手定则）
+  thetaY = parseFloat(thetaY.toFixed(2));
+  thetaX = -parseFloat(thetaX.toFixed(2)); // 这里加上负号，就把负的转成正的了
+  thetaZ = parseFloat(thetaZ.toFixed(2));
+
+  return { thetaY, thetaX, thetaZ };
+}
+
+
+
+// 计算距离是要获取点和切片新的坐标，再计算距离，一个4维矩阵计算公式，万里教我的
+function getNewPosition(position: number[]) {
+
+  const worldToIndex = window.worldToIndex
+
+  const x = worldToIndex[0] * position[0] +
+    worldToIndex[4] * position[1] +
+    worldToIndex[8] * position[2] +
+    worldToIndex[12] * 1
+
+  const y = worldToIndex[1] * position[0] +
+    worldToIndex[5] * position[1] +
+    worldToIndex[9] * position[2] +
+    worldToIndex[13] * 1
+
+  const z = worldToIndex[2] * position[0] +
+    worldToIndex[6] * position[1] +
+    worldToIndex[10] * position[2] +
+    worldToIndex[14] * 1
+
+  return [x, y, z]
+}
+
+
+// function calculateRotationAngles(initial, afterFirst, afterSecond, afterThird) {
+//   // 第一次旋转：绕Y轴θ₁
+//   const getAxisXInYInitial = initial.getAxisXinY;
+//   const getAxisXInYFirst = afterFirst.getAxisXinY;
+//   const theta1 = Math.atan2(getAxisXInYFirst[0], getAxisXInYFirst[2]) * (180 / Math.PI);
+
+//   // 第二次旋转：绕X轴θ₂
+//   const getAxisXInZFirst = afterFirst.getAxisXinZ;
+//   const getAxisXInZSecond = afterSecond.getAxisXinZ;
+//   const dotXZ = getAxisXInZFirst[0] * getAxisXInZSecond[0] +
+//     getAxisXInZFirst[1] * getAxisXInZSecond[1] +
+//     getAxisXInZFirst[2] * getAxisXInZSecond[2];
+//   const theta2 = Math.acos(dotXZ) * (180 / Math.PI);
+
+//   // 第三次旋转：绕Z轴θ₃
+//   const getAxisZInYSecond = afterSecond.getAxisZinY;
+//   const getAxisZInYThird = afterThird.getAxisZinY;
+//   const dotZY = getAxisZInYSecond[0] * getAxisZInYThird[0] +
+//     getAxisZInYSecond[1] * getAxisZInYThird[1] +
+//     getAxisZInYSecond[2] * getAxisZInYThird[2];
+//   const theta3 = Math.acos(dotZY) * (180 / Math.PI);
+
+//   return {
+//     thetaY: theta1.toFixed(1),
+//     thetaX: theta2.toFixed(1),
+//     thetaZ: theta3.toFixed(1)
+//   };
+// }
+
+// // 输入数据（示例结构）
+// const initialData = {
+//     getAxisXinY: [-3.47e-18, -7.45e-9, 1],
+//     // 其他轴数据...
+// };
+// const afterFirstRot = {
+//     getAxisXinY: [0.7623, -5.18e-9, 0.6472],
+//     // 其他轴数据...
+// };
+// const afterSecondRot = {
+//     getAxisXinZ: [-0.1857, -0.9698, -0.1577],
+//     // 其他轴数据...
+// };
+// const afterThirdRot = {
+//     getAxisZinY: [-0.6732, -0.2504, 0.6957],
+//     // 其他轴数据...
+// };
+
+// const angles = calculateRotationAngles(initialData, afterFirstRot, afterSecondRot, afterThirdRot);
+// console.log(`Y轴旋转角度：${angles.thetaY}°, X轴旋转角度：${angles.thetaX}°, Z轴旋转角度：${angles.thetaZ}°`);
+
+
+
+
+
+
+
+
+
 
 // slicing plane colors
 const outlineColor = computed(
@@ -403,12 +669,12 @@ const outlineColor = computed(
 //     "ObliqueCoronal": [ 255, 51, 51 ]
 // }
 // console.log('outlineColor',outlineColor.value) // [1, 0.2, 0.2]
-
-
-
 // setTimeout(()=>{
 // console.log('390 view', vtkView.value)
 // },22000)
+
+// GGG 展示十字线
+const showResliceCursor = ref(true)
 
 // B项目接收
 window.addEventListener('message', (event: any) => {
@@ -432,7 +698,66 @@ window.addEventListener('message', (event: any) => {
 
   // 回到中心位置
   if (event.data.type === 'resetView') {
-    resetCamera()
+    resetCamera(window.xyzCenter)
+  }
+
+  // 展示十字线，value是true或者false
+  if (event.data.type === 'setShowResliceCursor') {
+    showResliceCursor.value = event.data.value
+    resliceCursor.setHandleVisibility(event.data.value)
+    resetCamera(planeOrigin.value)
+  }
+
+  // 展示十字线，value是true或者false
+  if (event.data.type === 'getCenter' && props.id === 'ObliqueCoronal') {
+    // 将截图发送回 A 项目
+    window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
+  }
+
+  if (event.data.type === 'setShowResliceCursorLine') {
+    // 展示十字线的线和点
+    if (event.data.value) {
+      // 这是针对5个圆点
+      resliceCursorState.getStatesWithLabel('sphere').forEach((handle, index) => {
+        const h = handle as ResliceCursorWidgetState;
+        h.setScale1(12); // 十字线的圆形大小，一共5个圆形，默认是10
+        h.setOpacity(100); // 圆形的透明度，默认128
+        // 第一个就是中间的白色圆点
+        if (index === 0) {
+          h.setOpacity(40); // 圆形的透明度，默认128
+          h.setColor3([255, 255, 255]);
+        }
+      });
+      // 这是针对线
+      resliceCursorState.getStatesWithLabel('line').forEach((handle) => {
+        const h = handle as ResliceCursorWidgetState;
+        h.setScale3(1, 1, 1); // 线粗度，默认1
+        h.setOpacity(100); // 透明度，默认100
+      });
+    } else {
+      // 不展示十字线的线和点
+      // 这是针对5个圆点
+      resliceCursorState.getStatesWithLabel('sphere').forEach((handle, index) => {
+        const h = handle as ResliceCursorWidgetState;
+        h.setScale1(0); // 十字线的圆形大小，一共5个圆形，默认是10
+        h.setOpacity(100); // 圆形的透明度，默认128
+
+        // 第一个就是中间的白色圆点
+        if (index === 0) {
+          h.setScale1(12); // 十字线的圆形大小，一共5个圆形，默认是10
+          h.setOpacity(100); // 圆形的透明度，默认128
+          h.setColor3([255, 10, 10]);
+        }
+      });
+      // 这是针对线
+      resliceCursorState.getStatesWithLabel('line').forEach((handle) => {
+        const h = handle as ResliceCursorWidgetState;
+        h.setScale3(0, 0, 0); // 线粗度，默认1
+        h.setOpacity(100); // 透明度，默认100
+      });
+    }
+    resetCamera(planeOrigin.value)
+
   }
 })
 

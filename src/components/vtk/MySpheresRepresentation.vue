@@ -219,6 +219,7 @@ function clearPoints() {
 function getNewPosition(position: number[]) {
 
   const worldToIndex = window.worldToIndex
+  const spacing = window.spacing
 
   const x = worldToIndex[0] * position[0] +
     worldToIndex[4] * position[1] +
@@ -235,7 +236,11 @@ function getNewPosition(position: number[]) {
     worldToIndex[10] * position[2] +
     worldToIndex[14] * 1
 
-  return [x, y, z]
+  return [
+    x * spacing[0],
+    y * spacing[1],
+    z * spacing[2],
+  ] // 万里说的新的写法，算距离的时候y和z对调，并乘上步长
 }
 
 
@@ -255,7 +260,7 @@ function addPointsColorArrow(obj: any, radius: number) {
 
   // const nearRadius = sphereRadius // 距离和球体半径一样，即正好碰到切片的就是附近的。
   const nearRadius = window.nearValue // 距离和球体半径一样，即正好碰到切片的就是附近的。
-// console.log('nearRadius',nearRadius)
+  // console.log('nearRadius',nearRadius)
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
     const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
@@ -279,7 +284,7 @@ function addPointsColorArrow(obj: any, radius: number) {
       // 在这里拦截一下，与当前十字线的距离的绝对值，大于nearValue的点就算远的点，远的点不显示。能显示的都是近的点
       // 第一个视图 Y轴
       if (id.value === 'ObliqueCoronal') {
-        const distance = Math.abs(newPointPosition[1] - newplaneOrigin[1])
+        const distance = Math.abs(newPointPosition[2] - newplaneOrigin[2]) // 万里说的新的写法，算距离的时候y和z对调，并乘上步长
         if (distance > nearRadius) {
           return
         }
@@ -293,7 +298,7 @@ function addPointsColorArrow(obj: any, radius: number) {
       }
       // 第3个视图 Z轴
       if (id.value === 'ObliqueAxial') {
-        const distance = Math.abs(newPointPosition[2] - newplaneOrigin[2])
+        const distance = Math.abs(newPointPosition[1] - newplaneOrigin[1]) // 万里说的新的写法，算距离的时候y和z对调，并乘上步长
         if (distance > nearRadius) {
           return
         }
@@ -380,7 +385,7 @@ const debouncedGetMegData = debounce(() => {
 
 
 
-function changeNearValue(){
+function changeNearValue() {
   // console.log('objAll :>> ', objAll);
   if (!objAll) {
     return

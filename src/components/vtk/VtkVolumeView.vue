@@ -93,9 +93,11 @@ useVtkInteractionManipulator(
 
 // set center of rotation
 watchEffect(() => {
-  const { dimensions, worldBounds, worldToIndex } = imageMetadata.value
+  const { dimensions, worldBounds, worldToIndex, spacing } = imageMetadata.value
   const center = vtkBoundingBox.getCenter(worldBounds);
+
   // console.log('96 imageMetadata :>> ', imageMetadata.value);
+
   // console.log('96 worldBounds :>> ', worldBounds);
   // console.log('96 dimensions :>> ', dimensions);
   // console.log('96 center :>> ', center);
@@ -111,11 +113,12 @@ watchEffect(() => {
   ]
   // console.log('distanceList :>> ', distanceList);
   // console.log('xyzMinList :>> ', xyzMinList);
-  // window.xyzCenter = center; // 中心点，即传[0,0,0]点位的位置 [-1.787, -18.709, -13.121] 或 [-0.8,-21.3,-28.5]
+  window.xyzCenter = center; // 中心点，即传[0,0,0]点位的位置[-1.787, -18.709, -13.121] 或 [-0.8,-21.3,-28.5]
   window.distanceList = distanceList; // xyz3个边的长度 [256, 256, 256] 或 [205.16, 262.25, 259.69]
   window.dimensions = dimensions; // xyz3个边的切片数量  [256, 256, 256] 或 [192, 512, 512]
   window.xyzMinList = xyzMinList; // xyz3个边的最小值的位置 [ -103.39893849770539, 101.76231732047313, -152.48823813918796, 109.76817979897362, -158.38814344608994, 101.30891490956176 ] 或 [192, 512, 512]
   window.worldToIndex = worldToIndex; // 这个在计算切片和点的距离是会用到
+  window.spacing = spacing; // 步长
 
   interactorStyle.setCenterOfRotation(...center);
 });
@@ -147,35 +150,6 @@ const api: VtkViewApi = markRaw({
 
 defineExpose(api);
 provide(VtkViewContext, api);
-
-
-// 画一些坐标点
-// const sphere = vtkSphereSource.newInstance();
-// const points: Vector3[] = [
-//   [0,0,0],
-//   [40,40,40],
-//   [133,77,57],
-//   [132,132,132],
-// ]
-// points.forEach(item=>{
-//   sphere.setCenter(item);
-//   sphere.setRadius(3); // 这是球体半径，实际开发中，这个太小会看不出来，要写大点
-//   const sphereMapper = vtkMapper.newInstance();
-//   sphereMapper.setInputData(sphere.getOutputData());
-//   const sphereActor = vtkActor.newInstance();
-//   sphereActor.setMapper(sphereMapper);
-//   sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
-//   view.renderer.addActor(sphereActor);
-// })
-
-
-
-// 下面3个不需要也能展示
-// view.renderWindow.render();
-// view.requestRender();
-// resetCamera();
-
-
 
 </script>
 

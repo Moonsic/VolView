@@ -65,12 +65,12 @@ function useResliceInit(
 const useResliceCursorStore = defineStore('resliceCursor', () => {
   const resliceCursor = vtkResliceCursorWidget.newInstance({
     scaleInPixels: true,
-    rotationHandlePosition: 0.75,
+    rotationHandlePosition: 0.9, // 默认值为 0.75，值越小，旋转点越靠近中间，值越大越靠近边缘
   }) as vtkResliceCursorWidget;
 
   const widgetState =
     resliceCursor.getWidgetState() as ResliceCursorWidgetState;
-
+// console.log('widgetState :>> ', widgetState);
   useResliceInit(resliceCursor, widgetState);
 
   return {

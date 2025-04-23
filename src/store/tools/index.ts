@@ -70,11 +70,16 @@ export const useToolStore = defineStore('tool', {
   }),
   actions: {
     setCurrentTool(tool: Tools) {
+      // GGG console.log('tool',tool)
       if (!setupTool(tool)) {
         return;
       }
+      // console.log('this.currentTool',this.currentTool)
+
       teardownTool(this.currentTool);
       this.currentTool = tool;
+      // console.log('this.currentTool 2',this.currentTool)
+
     },
     serialize(state: StateFile) {
       const { tools } = state.manifest;
