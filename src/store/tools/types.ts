@@ -8,6 +8,7 @@ export enum AnnotationToolType {
 }
 
 export enum Tools {
+  Close = 'Close',  // GGG 新加的，代表关闭拖拽功能
   WindowLevel = 'WindowLevel',
   Pan = 'Pan',
   Zoom = 'Zoom',

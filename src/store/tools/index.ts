@@ -66,7 +66,9 @@ function teardownTool(tool: Tools) {
 
 export const useToolStore = defineStore('tool', {
   state: (): State => ({
-    currentTool: Tools.WindowLevel,
+    currentTool: Tools.Close,
+    // currentTool: Tools.WindowLevel,
+    // currentTool: Tools.Pan,
   }),
   actions: {
     setCurrentTool(tool: Tools) {
@@ -74,7 +76,7 @@ export const useToolStore = defineStore('tool', {
       if (!setupTool(tool)) {
         return;
       }
-      // console.log('this.currentTool',this.currentTool)
+      // console.log('this.currentTool 1',this.currentTool)
 
       teardownTool(this.currentTool);
       this.currentTool = tool;

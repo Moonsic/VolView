@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { inject, toRefs } from 'vue';
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
-import { useSliceConfig } from '@/src/composables/useSliceConfig';
+// import { useSliceConfig } from '@/src/composables/useSliceConfig';
 import { Maybe } from '@/src/types';
 import { VtkViewContext } from '@/src/components/vtk/context';
-// import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
+import { useWindowingConfig } from '@/src/composables/useWindowingConfig';
 import { useOrientationLabels } from '@/src/composables/useOrientationLabels';
 import DicomQuickInfoButton from '@/src/components/DicomQuickInfoButton.vue';
+import { storeToRefs } from 'pinia';
+import { useToolStore } from '@/src/store/tools';
+import { Tools } from '@/src/store/tools/types';
 
 interface Props {
   viewId: string;
@@ -28,18 +31,23 @@ const {
   right: rightLabel
  } = useOrientationLabels(view);
 
-const {
-  config: sliceConfig,
-  slice,
-  range: sliceRange,
-} = useSliceConfig(viewId, imageId);
+// const {
+//   config: sliceConfig,
+//   slice,
+//   range: sliceRange,
+// } = useSliceConfig(viewId, imageId);
 
 // 注释了亮度的信息
-// const {
-//   config: wlConfig,
-//   width: windowWidth,
-//   level: windowLevel,
-// } = useWindowingConfig(viewId, imageId);
+const {
+  config: wlConfig,
+  width: windowWidth,
+  level: windowLevel,
+} = useWindowingConfig(viewId, imageId);
+
+
+// GGG，但处于调整明暗时，才出现
+const { currentTool } = storeToRefs(useToolStore());
+
 
 </script>
 
@@ -72,9 +80,9 @@ const {
           Slice: {{ slice + 1 }}/{{ sliceRange[1] + 1 }}
         </div> -->
         <!-- 把左下角的亮度信息注释了 -->
-        <!-- <div v-if="wlConfig">
+        <div v-if="wlConfig && currentTool === Tools.WindowLevel">
           W/L: {{ windowWidth.toFixed(2) }} / {{ windowLevel.toFixed(2) }}
-        </div> -->
+        </div>
       </div>
     </template>
     <template v-slot:top-right>

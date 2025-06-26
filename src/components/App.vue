@@ -59,7 +59,7 @@
 
 <script lang="ts">
 import type { Vector3 } from '@kitware/vtk.js/types';
-import { computed, defineComponent, onMounted, ref } from 'vue';
+import { computed, defineComponent, nextTick, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { UrlParams, createEventHook } from '@vueuse/core';
 import vtkURLExtract from '@kitware/vtk.js/Common/Core/URLExtract';
@@ -90,7 +90,8 @@ import {
   stripTokenFromUrl,
 } from '@/src/utils/token';
 import { useDatasetStore } from '@/src/store/datasets';
-
+import { useToolStore } from '@/src/store/tools';
+import { Tools } from '@/src/store/tools/types';
 
 const clickEventSetPosition = createEventHook<[Vector3]>();
 export function useSetPositionEvents() {
@@ -228,6 +229,14 @@ window.addEventListener('message', (event) => {
 
   if (event.data.type === 'clearPoints') {
     clickEventClearPoints.trigger();
+  }
+
+  if (event.data.type === 'dragFunction') {
+    nextTick(() => {
+      const value: Tools = event.data.value
+      const toolStore = useToolStore()
+      toolStore.setCurrentTool(Tools[value])
+    })
   }
 
 })
