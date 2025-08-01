@@ -65,6 +65,7 @@ watchImmediate([planeNormal, planeOrigin], ([normal, origin]) => {
 
 // sync windowing
 watchEffect(() => {
+  // console.log('GGG 68 wlConfig',wlConfig)
   sliceRep.property.setColorLevel(wlConfig.level.value);
   sliceRep.property.setColorWindow(wlConfig.width.value);
 });

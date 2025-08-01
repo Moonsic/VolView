@@ -16,6 +16,7 @@ export function useSliceConfig(
   const slice = computed({
     get: () => config.value?.slice ?? configDefaults.slice,
     set: (val) => {
+      console.log('set slice :>> ',val);
       const imageIdVal = unref(imageID);
       if (!imageIdVal || val == null) return;
       store.updateConfig(unref(viewID), imageIdVal, { slice: val });

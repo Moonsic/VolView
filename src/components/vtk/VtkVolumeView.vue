@@ -94,9 +94,10 @@ useVtkInteractionManipulator(
 // set center of rotation
 watchEffect(() => {
   const { dimensions, worldBounds, worldToIndex, spacing } = imageMetadata.value
+
   const center = vtkBoundingBox.getCenter(worldBounds);
 
-  // console.log('96 imageMetadata :>> ', imageMetadata.value);
+  // console.log('GGG imageMetadata :>> ', imageMetadata.value);
 
   // console.log('96 worldBounds :>> ', worldBounds);
   // console.log('96 dimensions :>> ', dimensions);
@@ -115,12 +116,20 @@ watchEffect(() => {
   // console.log('xyzMinList :>> ', xyzMinList);
   window.xyzCenter = center; // 中心点，即传[0,0,0]点位的位置[-1.787, -18.709, -13.121] 或 [-0.8,-21.3,-28.5]
   window.distanceList = distanceList; // xyz3个边的长度 [256, 256, 256] 或 [205.16, 262.25, 259.69]
-  window.dimensions = dimensions; // xyz3个边的切片数量  [256, 256, 256] 或 [192, 512, 512]
+  window.dimensions = dimensions; // xyz3个边的[切片数量]  [256, 256, 256] 或 [192, 512, 512]
   window.xyzMinList = xyzMinList; // xyz3个边的最小值的位置 [ -103.39893849770539, 101.76231732047313, -152.48823813918796, 109.76817979897362, -158.38814344608994, 101.30891490956176 ] 或 [192, 512, 512]
   window.worldToIndex = worldToIndex; // 这个在计算切片和点的距离是会用到
   window.spacing = spacing; // 步长
 
   interactorStyle.setCenterOfRotation(...center);
+
+
+  // 将B项目加载完成的结构像的信息发送回 A 项目
+  window.parent.postMessage({
+    type: 'getImageMetadata',
+    value:  JSON.stringify(imageMetadata.value)
+  }, '*');
+
 });
 
 function resetCamera() {

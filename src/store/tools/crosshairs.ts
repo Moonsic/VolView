@@ -70,6 +70,7 @@ export const useCrosshairsToolStore = defineStore('crosshairs', () => {
         const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
         const index = lpsOrientation[axis];
         const slice = Math.round(indexPos[index]);
+        // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
         viewSliceStore.updateConfig(viewID, imageID, { slice });
       });
     }

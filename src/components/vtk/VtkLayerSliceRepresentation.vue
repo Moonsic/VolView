@@ -62,6 +62,7 @@ watchEffect(() => {
 // sync slicing
 const slice = vtkFieldRef(sliceRep.mapper, 'slice');
 const { slice: storedSlice } = useSliceConfig(viewId, parentId);
+console.log('storedSlice :>> ', storedSlice);
 syncRef(storedSlice, slice, { immediate: true });
 
 // initialize layer coloring

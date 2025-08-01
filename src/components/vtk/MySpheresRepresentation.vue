@@ -261,6 +261,13 @@ function addPointsColorArrow(obj: any, radius: number) {
   // const nearRadius = sphereRadius // 距离和球体半径一样，即正好碰到切片的就是附近的。
   const nearRadius = window.nearValue // 距离和球体半径一样，即正好碰到切片的就是附近的。
   // console.log('nearRadius',nearRadius)
+
+  const newplaneOrigin: number[] = getNewPosition(planeOrigin.value) // 提到外面来
+
+  // if (id.value === 'ObliqueAxial') {
+  //   console.log('坐标:',planeOrigin.value, newplaneOrigin)
+  // }
+
   Object.keys(obj).forEach((key: string) => {
     const positionList = obj[key]
     const color: number[] = normalizeColor(key) // 0-1之间的数 [1,0,0]
@@ -279,7 +286,6 @@ function addPointsColorArrow(obj: any, radius: number) {
 
       // 在计算距离前，要获取到另一个坐标系的位置，再计算距离，一个4维矩阵计算公式
       const newPointPosition: number[] = getNewPosition(position)
-      const newplaneOrigin: number[] = getNewPosition(planeOrigin.value)
 
       // 在这里拦截一下，与当前十字线的距离的绝对值，大于nearValue的点就算远的点，远的点不显示。能显示的都是近的点
       // 第一个视图 Y轴
@@ -298,6 +304,7 @@ function addPointsColorArrow(obj: any, radius: number) {
       }
       // 第3个视图 Z轴
       if (id.value === 'ObliqueAxial') {
+        // console.log('点:',position, newPointPosition)
         const distance = Math.abs(newPointPosition[1] - newplaneOrigin[1]) // 万里说的新的写法，算距离的时候y和z对调，并乘上步长
         if (distance > nearRadius) {
           return
@@ -319,11 +326,22 @@ function addPointsColorArrow(obj: any, radius: number) {
       if (direction && direction.length) {
 
         // 画一个箭头
+        // （arrowLength = 4时）
+        // arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
+        // arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
+        // arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
+        // arrowSource.setTipLength(0.4); // 箭头部长度 0.35
+        // arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
+
+
+        // （arrowLength = 10时）
         arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
         arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
-        arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
-        arrowSource.setTipLength(0.4); // 箭头部长度 0.35
-        arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
+        arrowSource.setTipRadius(0.06); // 箭头部大小 0.1
+        arrowSource.setTipLength(0.2); // 箭头部长度 0.35
+        arrowSource.setShaftRadius(0.02); // 柱状体粗度 0.03
+
+
         arrowSource.set({ direction })
 
         const arrowMapper = vtkMapper.newInstance();
@@ -334,7 +352,7 @@ function addPointsColorArrow(obj: any, radius: number) {
         // arrowActor.getProperty().setOpacity(0.7); // 箭头不加透明度比较好，所以注释了这行
 
         // 设置箭头长度
-        const arrowLength = 4;
+        const arrowLength = 10;
         // 将箭头设置为正确的长度
         arrowActor.setScale(arrowLength, arrowLength, arrowLength);
 
@@ -345,7 +363,9 @@ function addPointsColorArrow(obj: any, radius: number) {
         // 半径是2.8的情况下才是/1，箭头起点正好在球表面上；
         // 半径是2.6的情况下才是/1.05，箭头起点正好在球表面上；
         // const offset = arrowLength / 1.05;
-        const offset = (6 * radius * radius) / (6 * radius - 5) // 让deepseek推理出来的算法
+
+        // const offset = (6 * radius * radius) / (6 * radius - 5) // 让deepseek推理出来的算法（arrowLength = 4时）
+        const offset = (6 * radius * radius) / (6 * radius - 5) + 2.7 // 让deepseek推理出来的算法（arrowLength = 10时）
 
         const adjustedPosition: [number, number, number] = [
           newPosition[0] + direction[0] * offset,

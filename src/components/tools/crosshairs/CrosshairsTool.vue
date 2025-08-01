@@ -56,7 +56,7 @@ export default defineComponent({
     const isVisible = computed(() => {
       if (!sliceInfo.value) return false;
 
-      const { lpsOrientation, dimensions } = currentImageMetadata.value;
+      const { lpsOrientation, dimensions } = currentImageMetadata.value; // GGG TODO dimensions 这里是获取当前图片的坐标轴信息
       const axis = getLPSAxisFromDir(viewDirection.value);
       const index = lpsOrientation[axis];
       // Since the image rectangle is inflated by 0.5,

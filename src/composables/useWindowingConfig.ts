@@ -14,9 +14,15 @@ export function useWindowingConfig(
     return computed({
       get: () => config.value?.[prop] ?? 0,
       set: (val) => {
+        // console.log('generateComputed val 2:>> ', prop,val);
+
         const imageIdVal = unref(imageID);
         if (!imageIdVal || val == null) return;
         store.updateConfig(unref(viewID), imageIdVal, { [prop]: val });
+
+        // GGG 发送明暗度
+        window.parent.postMessage({ type: 'getWindowLevel', value: JSON.stringify(config.value)}, '*');
+
       },
     });
   };

@@ -200,11 +200,23 @@ function addPointsColorArrow(obj: any, radius: number) {
       if (direction && direction.length) {
 
         // 画一个箭头
+
+        // （arrowLength = 4时）
+        // arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
+        // arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
+        // arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
+        // arrowSource.setTipLength(0.4); // 箭头部长度 0.35
+        // arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
+
+
+        // （arrowLength = 10时）
         arrowSource.setTipResolution(50);// 箭头部精细粗糙程度，10不变 6
         arrowSource.setShaftResolution(50);// 柱状体精细粗糙程度，10不变 6
-        arrowSource.setTipRadius(0.2); // 箭头部大小 0.1
-        arrowSource.setTipLength(0.4); // 箭头部长度 0.35
-        arrowSource.setShaftRadius(0.05); // 柱状体粗度 0.03
+        arrowSource.setTipRadius(0.06); // 箭头部大小 0.1
+        arrowSource.setTipLength(0.2); // 箭头部长度 0.35
+        arrowSource.setShaftRadius(0.02); // 柱状体粗度 0.03
+
+
         arrowSource.set({ direction })
 
         const arrowMapper = vtkMapper.newInstance();
@@ -215,7 +227,7 @@ function addPointsColorArrow(obj: any, radius: number) {
         // arrowActor.getProperty().setOpacity(0.7); // 箭头不加透明度比较好
 
         // 设置箭头长度
-        const arrowLength = 4;
+        const arrowLength = 10;
         // 将箭头设置为正确的长度
         arrowActor.setScale(arrowLength, arrowLength, arrowLength);
 
@@ -231,7 +243,9 @@ function addPointsColorArrow(obj: any, radius: number) {
         // const offset = arrowLength / 0.78; // 4 = 5.13
         // const offset = arrowLength / 0.64; // 5 = 6.25
         // const offset = getOffset(radius)
-        const offset = (6 * radius * radius) / (6 * radius - 5) // 让deepseek推理出来的算法
+
+        // const offset = (6 * radius * radius) / (6 * radius - 5) // 让deepseek推理出来的算法（arrowLength = 4时）
+        const offset = (6 * radius * radius) / (6 * radius - 5) + 2.7 // 让deepseek推理出来的算法（arrowLength = 10时）
 
         const adjustedPosition: [number, number, number] = [
           newPosition[0] + direction[0] * offset,

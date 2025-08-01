@@ -43,8 +43,14 @@ const changeSlice = (offset: number) => () => {
   const { currentImageID } = useCurrentImage();
   const { activeViewID } = useViewStore();
 
+// console.log('changeSlice 1', activeViewID, currentImageID.value);
+
   const { slice: currentSlice } = useSliceConfig(activeViewID, currentImageID);
+
   currentSlice.value += offset;
+
+// console.log('changeSlice 2', currentSlice.value);
+
 };
 
 export const ACTION_TO_FUNC = {

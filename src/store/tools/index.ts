@@ -76,7 +76,7 @@ export const useToolStore = defineStore('tool', {
       if (!setupTool(tool)) {
         return;
       }
-      // console.log('this.currentTool 1',this.currentTool)
+      // console.log('this.currentTool 旧->新',this.currentTool,tool)
 
       teardownTool(this.currentTool);
       this.currentTool = tool;

@@ -6,13 +6,41 @@
 
         <!-- id:{{ id }}- 这个id区分3个视图，第一个是ObliqueCoronal，第二个是ObliqueSagittal，第三个是ObliqueAxial -->
         <!-- {{ currentImageID }}- -->
-        <!-- id:{{ id }}--
-          {{ viewDirection }}-
-          {{ viewUp }}
-          {{ planeOrigin}} -->
-        <!-- {{ sliceDomain }} -->
 
-        <!-- {{ currentTool }} -->
+          <!-- {{ viewDirection }}-
+          {{ viewUp }}-
+        {{ currentTool }}- -->
+
+
+        <!-- <div class="info-box"> -->
+          <!-- <div> id:{{ id }}</div> -->
+          <!-- <div> planeOrigin:{{ planeOrigin }}</div>
+          <div> sliceDomain:{{ sliceDomain }}</div> -->
+          <!-- <div> currentSlice:{{ currentSlice + 1 }}</div> -->
+          <!-- <div> sliceRange:{{ sliceRange }}</div>
+
+          <slice-slider
+            v-model="currentSlice"
+            class="slice-slider"
+            :min="sliceRange[0]"
+            :max="sliceRange[1]"
+            :step="1"
+            :handle-height="20"
+          /> -->
+
+        <!-- </div> -->
+
+
+        <div class="info-box">
+          <slice-slider
+          v-model="currentSlice"
+          class="slice-slider"
+          :min="sliceRange[0]"
+          :max="sliceRange[1]"
+          :step="1"
+          :handle-height="20"
+          />
+        </div>
 
         <vtk-slice-view
           class="vtk-view"
@@ -47,6 +75,13 @@
             :manipulator-props="{ button: 3 }"
           ></vtk-mouse-interaction-manipulator>
 
+
+          <!-- <vtk-slice-view-slicing-manipulator
+            :view-id="id"
+            :image-id="currentImageID"
+            :view-direction="viewDirection"
+          ></vtk-slice-view-slicing-manipulator> -->
+
           <!-- 鼠标按住左右滑、上下滑，改变亮度的。不能删，否则已进入页面就是全黑的，只能在内部改 -->
           <vtk-slice-view-window-manipulator
             :view-id="id"
@@ -67,6 +102,27 @@
             :plane-normal="planeNormal"
             :plane-origin="planeOrigin"
           ></vtk-base-oblique-slice-representation>
+
+<!--
+          <vtk-segmentation-slice-representation
+            v-for="segId in segmentations"
+            :key="`seg-${segId}`"
+            :view-id="id"
+            :segmentation-id="segId"
+            :axis="viewAxis"
+          ></vtk-segmentation-slice-representation> -->
+
+
+          <!-- <template v-if="currentImageID">
+            <vtk-layer-slice-representation
+              v-for="layer in currentLayers"
+              :key="`layer-${layer.id}`"
+              :view-id="id"
+              :layer-id="layer.id"
+              :parent-id="currentImageID"
+              :axis="viewAxis"
+            ></vtk-layer-slice-representation>
+          </template> -->
 
           <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
            <!-- 添加了透明度为0，意味着边框不显示了 -->
@@ -110,6 +166,18 @@ import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineR
 
 import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
 
+import SliceSlider from '@/src/components/SliceSlider.vue';
+import { useSliceConfig } from '@/src/composables/useSliceConfig';
+
+
+// import VtkBaseSliceRepresentation from '@/src/components/vtk/VtkBaseSliceRepresentation.vue';
+// import VtkLayerSliceRepresentation from '@/src/components/vtk/VtkLayerSliceRepresentation.vue';
+// import VtkSliceViewSlicingManipulator from '@/src/components/vtk/VtkSliceViewSlicingManipulator.vue';
+// import VtkSegmentationSliceRepresentation from '@/src/components/vtk/VtkSegmentationSliceRepresentation.vue';
+// import { useSegmentGroupStore } from '@/src/store/segmentGroups';
+// import { useViewStore } from '@/src/store/views';
+import useViewSliceStore from '@/src/store/view-configs/slicing';
+
 
 import VtkSliceView from '@/src/components/vtk/VtkSliceView.vue';
 import { onVTKEvent } from '@/src/composables/onVTKEvent';
@@ -131,7 +199,7 @@ import vtkBoundingBox from '@kitware/vtk.js/Common/DataModel/BoundingBox';
 import type { RGBColor, Vector3 } from '@kitware/vtk.js/types';
 import { watchImmediate } from '@vueuse/core';
 import { vec3 } from 'gl-matrix';
-import { computed, ref, toRefs, watchEffect } from 'vue';
+import { computed, ref, toRefs, watchEffect,unref,watch } from 'vue';
 import SliceViewerOverlay from '@/src/components/SliceViewerOverlay.vue';
 import VtkSliceViewWindowManipulator from '@/src/components/vtk/VtkSliceViewWindowManipulator.vue';
 import VtkMouseInteractionManipulator from '@/src/components/vtk/VtkMouseInteractionManipulator.vue';
@@ -163,7 +231,7 @@ const windowingManipulatorProps = computed(() =>
 );
 
 // base image
-const { currentImageID, currentImageData, currentImageMetadata } =
+const { currentImageID, currentLayers, currentImageData, currentImageMetadata } =
   useCurrentImage();
 
 // reslice cursor
@@ -252,19 +320,20 @@ const sliceDomain = computed(() => {
 // the core update camera function
 const updateResliceCamera = (resetFocalPoint: boolean) => {
   // console.log('planeOrigin.value :>> ', planeOrigin.value);
-  // if (!vtkView.value || !resliceCursorState.getImage()) return;
+  if (!vtkView.value || !resliceCursorState.getImage()) return;
 
   // GGG 注释，因为报错，官方也报错，等官方解决
   // console.log('object 1:>> ', vtkView.value.renderer);
   // console.log('object 2:>> ',  widgetViewType.value);
   // console.log('object 3:>> ', resetFocalPoint);
-  // resliceCursor.updateCameraPoints(
-  //   vtkView.value.renderer,
-  //   widgetViewType.value,
-  //   resetFocalPoint,
-  //   false,
-  //   true
-  // );
+  // console.log('resliceCursor:>> ', resliceCursor);
+  resliceCursor.updateCameraPoints(
+    vtkView.value.renderer,
+    widgetViewType.value,
+    resetFocalPoint,
+    // false, // 我发现把这个false去掉就不会报错，首先updateCameraPoints只有4个参数，所以官方写的5个参数不对，其实false会报错，true不会报错
+    true
+  );
 };
 
 
@@ -407,12 +476,78 @@ onVTKEvent(
 
 
 
-    // if (props.id === 'ObliqueCoronal') {
-    // // console.log('viewDirection.value :>> ', viewDirection.value);
+    // TODO
+    if (props.id === 'ObliqueCoronal') {
 
-    //   console.log('1 :>> ', resliceCursorState, resliceCursor);
-    //   // console.log('2 :>> ', resliceCursorState.invokeBoundsChange())
-    // }
+      // console.log('---- :>> ', resliceCursorState);
+
+
+      const out = vec3.create();
+      vec3.transformMat4(
+        out,
+        planeOrigin.value,
+        currentImageMetadata.value.worldToIndex
+      );
+      const imagePosition = out
+      // console.log('imagePosition :>> ', imagePosition);
+
+
+      const viewSliceStore = useViewSliceStore();
+      // const viewStore = useViewStore();
+
+      const imageID = unref(currentImageID) as string;
+      // const currentViewIDs = viewStore.viewIDs.filter(
+      //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
+      // );
+      // const currentViewIDs = viewStore.viewIDs.filter(
+      //   (viewID) => viewID.includes('Oblique')
+      // );
+
+      const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+
+      const { lpsOrientation } = unref(currentImageMetadata);
+
+      // console.log('currentViewIDs :>> ', currentViewIDs);
+
+
+      const list: any = {}
+
+      currentViewIDs.forEach((viewID) => {
+        const sliceConfig = viewSliceStore.getConfig(viewID, imageID);
+        const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
+        const index = lpsOrientation[axis];
+        let slice = Math.round(imagePosition[index]);
+        // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
+        viewSliceStore.updateConfig(viewID, imageID, { slice });
+
+        if (slice < 0) {
+          slice = 0
+        }
+        list[viewID] = slice + 1
+        // list.push({ viewID, imageID, slice })
+      });
+
+      // console.log('list :>> ', list);
+
+      // 发送给A项目
+      // window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
+      window.parent.postMessage({
+        type: 'getSliceCenter',
+        value: JSON.stringify({
+        planeOrigin: planeOrigin.value,
+        sliceDomain: sliceDomain.value,
+        sliceList: list,
+      })}, '*');
+    // console.log('viewDirection.value :>> ', viewDirection.value);
+      // console.log('---2 :>> ', resliceCursorState.invokeBoundsChange());
+      // console.log('1 :>> ', resliceCursorState, resliceCursor);
+      // console.log('2 :>> ', resliceCursorState.invokeBoundsChange())
+    }
+
+
+
+
+
     updateResliceCamera(false);
   })
 );
@@ -708,9 +843,9 @@ window.addEventListener('message', (event: any) => {
     resetCamera(planeOrigin.value)
   }
 
-  // 展示十字线，value是true或者false
+  // 获得中心位置
   if (event.data.type === 'getCenter' && props.id === 'ObliqueCoronal') {
-    // 将截图发送回 A 项目
+    // 发送给A项目
     window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
   }
 
@@ -762,7 +897,108 @@ window.addEventListener('message', (event: any) => {
 })
 
 
+
+const { slice: currentSlice, range: sliceRange } = useSliceConfig(
+  viewId,
+  currentImageID
+);
+
+watch(
+  [currentSlice],
+  ([sliceNew]) => {
+    console.log('slice, range :>> ', sliceNew);
+
+    // syncRef(sliceNew, slice, { immediate: true });
+
+    // if (slice && range) {
+    //   resliceCursorWidget.setSlice(slice);
+    //   resliceCursorWidget.setRange(range);
+    // }
+
+
+
+    // const out = vec3.create();
+    //   vec3.transformMat4(
+    //     out,
+    //     planeOrigin.value,
+    //     currentImageMetadata.value.worldToIndex
+    //   );
+    //   const imagePosition = out
+    //   // console.log('imagePosition :>> ', imagePosition);
+
+
+    //   const viewSliceStore = useViewSliceStore();
+    //   // const viewStore = useViewStore();
+
+    //   const imageID = unref(currentImageID) as string;
+    //   // const currentViewIDs = viewStore.viewIDs.filter(
+    //   //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
+    //   // );
+    //   // const currentViewIDs = viewStore.viewIDs.filter(
+    //   //   (viewID) => viewID.includes('Oblique')
+    //   // );
+
+    //   const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+
+    //   const { lpsOrientation } = unref(currentImageMetadata);
+
+    //   // console.log('currentViewIDs :>> ', currentViewIDs);
+
+
+    //   const list: any = {}
+
+    //   currentViewIDs.forEach((viewID) => {
+    //     const sliceConfig = viewSliceStore.getConfig(viewID, imageID);
+    //     const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
+    //     const index = lpsOrientation[axis];
+    //     let slice = Math.round(imagePosition[index]);
+    //     // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
+    //     viewSliceStore.updateConfig(viewID, imageID, { slice });
+
+    //     if (slice < 0) {
+    //       slice = 0
+    //     }
+    //     list[viewID] = slice + 1
+    //     // list.push({ viewID, imageID, slice })
+    //   });
+
+    //   console.log('list :>> ', list);
+
+    //   // 发送给A项目
+    //   // window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
+    //   window.parent.postMessage({
+    //     type: 'getSliceCenter',
+    //     value: JSON.stringify({
+    //     planeOrigin: planeOrigin.value,
+    //     sliceDomain: sliceDomain.value,
+    //     sliceList: list,
+    //   })}, '*');
+  },
+  {
+    immediate: true,
+  }
+);
+
 </script>
 
 <style scoped src="@/src/components/styles/vtk-view.css"></style>
 <style scoped src="@/src/components/styles/utils.css"></style>
+
+<style scoped>
+.info-box {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+}
+
+
+.slice-slider {
+  height: 400px;
+  position: relative;
+  flex: 1 1;
+  width: 100%;
+  width: 20px;
+  padding: 0 3px;
+}
+</style>
