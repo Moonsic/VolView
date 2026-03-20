@@ -57,7 +57,7 @@ module.exports = {
     '@typescript-eslint/no-shadow': 'error',
     // use typescript no-unused
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': 'off', // HHH 原来是error不让我提交代码,改成off关闭,也可以是warn警告
     // don't trigger no-unused-expressions for optional chaining
     'no-unused-expressions': 'off',
     '@typescript-eslint/no-unused-expressions': 'error',

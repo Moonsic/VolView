@@ -55,6 +55,7 @@ function useResliceInit(
 
   watchEffect(() => {
     const image = currentImageData.value;
+    // console.log('watchEffect image :>> ', image);
     if (!image) return;
     resliceCursor.setImage(image);
     // Reset to default plane values before transforming based on current image-data.

@@ -18,6 +18,8 @@
       }"
     />
   </div>
+  <!-- 值:{{modelValue }} -->
+
 </template>
 
 <script>
@@ -58,6 +60,7 @@ export default {
   },
 
   emits: ['update:modelValue'],
+  // emits: ['update:modelValue', 'setNewSlice'],
 
   data() {
     return {
@@ -121,6 +124,8 @@ export default {
         );
         const newSlice = this.getNearestSlice(this.initialHandlePos);
         this.$emit('update:modelValue', newSlice);
+        // console.log('onDragStart :>> ', newSlice);
+        // this.$emit('setNewSlice', newSlice);
       }
 
       this.yOffset = 0;
@@ -128,6 +133,9 @@ export default {
       this.$refs.handleContainer.setPointerCapture(ev.pointerId);
     },
 
+    // 只点击一次的时候，触发onDragStart和onDragEnd
+    // 拖动时，触发onDragMove和onDragEnd
+    // 所以我先注释onDragStart
     onDragMove(ev) {
       if (!this.$refs.handleContainer.hasPointerCapture(ev.pointerId)) return;
       ev.preventDefault();
@@ -135,6 +143,8 @@ export default {
       this.yOffset = ev.pageY - this.initialMousePosY;
       const slice = this.getNearestSlice(this.handlePosition);
       this.$emit('update:modelValue', slice);
+      // console.log('onDragMove :>> ', slice);
+      // this.$emit('setNewSlice', slice);
     },
 
     onDragEnd(ev) {
@@ -145,6 +155,8 @@ export default {
       this.dragging = false;
       const slice = this.getNearestSlice(this.handlePosition);
       this.$emit('update:modelValue', slice);
+      // console.log('onDragEnd :>> ', slice);
+      // this.$emit('setNewSlice', slice);
     },
 
     getNearestSlice(pos) {

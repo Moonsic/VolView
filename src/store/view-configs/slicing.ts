@@ -34,6 +34,7 @@ export const useViewSliceStore = defineStore('viewSlice', () => {
     dataID: string,
     patch: Partial<SliceConfig>
   ) => {
+    // console.log('updateConfig :>> ', viewID,dataID,patch);
     const config = {
       ...defaultSliceConfig(),
       ...getConfig(viewID, dataID),
@@ -42,6 +43,7 @@ export const useViewSliceStore = defineStore('viewSlice', () => {
     // console.log('config2 :>> ', config);
 
     config.slice = clampValue(config.slice, config.min, config.max);
+    // console.log('config.slice :>> ', config.slice);
     patchDoubleKeyRecord(configs, viewID, dataID, config);
   };
 
@@ -91,14 +93,25 @@ export const useViewSliceStore = defineStore('viewSlice', () => {
   };
 
   const updateSyncConfigs = () => {
+    // console.log('updateSyncConfigs :>> ', configs);
     Object.keys(configs).forEach((viewID) => {
+    // console.log('viewID :>> ', viewID);
+
       const { currentImageID } = useCurrentImage();
+    // console.log('currentImageID :>> ', currentImageID);
+
       const config = getConfig(viewID, currentImageID.value);
+    // console.log('config 105 :>> ', config);
+    // console.log('imageStore.idList :>> ', imageStore.idList);
+
       imageStore.idList.forEach((imageID) => {
+    // console.log('imageID :>> ', imageID);
+
         const { syncState } = {
           ...defaultSliceConfig(),
           ...getConfig(viewID, imageID),
         };
+    // console.log('syncState :>> ', syncState);
 
         if (syncState) {
           updateConfig(viewID, imageID, { slice: config?.slice });

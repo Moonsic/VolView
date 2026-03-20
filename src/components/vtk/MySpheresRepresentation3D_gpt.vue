@@ -211,17 +211,8 @@ function updateGlyphs() {
   const arrowColors: number[] = [];
   const arrowVectors: number[] = [];
 
-  // 这里不要再按“箭头居中”去猜了，应该按 arrowSource 自己的局部边界来算
-  // 目的是：让箭头的“尾端”刚好落在球面上
-  const arrowScaleFactor = 10; // 要和 arrowMapper.setScaleFactor(10) 保持一致
-
-  // 取箭头源的本地 bounds： [xmin, xmax, ymin, ymax, zmin, zmax]
-  const arrowBounds = arrowSource.getOutputData().getBounds();
-
-  // 箭头尾端相对局部原点的偏移
-  // 如果源本身就是从 x=0 开始，这里就是 0
-  // 如果源是以中心为原点，比如 [-0.5, 0.5]，这里就是 0.5 * scaleFactor
-  const arrowTailOffset = Math.max(0, -arrowBounds[0]) * arrowScaleFactor;
+  // 保留你原来的箭头偏移逻辑，外观尽量不变
+  const offset = (6 * currentRadius * currentRadius) / (6 * currentRadius - 5) + 2.7;
 
   for (const item of cachedItems) {
     spherePositions.push(item.position[0], item.position[1], item.position[2]);
@@ -235,9 +226,6 @@ function updateGlyphs() {
 
       const dir: Vector3 = len > 0 ? [dx / len, dy / len, dz / len] : [1, 0, 0];
 
-      // 球心 -> 球面 -> 再补上箭头尾端的局部偏移
-      const offset = currentRadius + arrowTailOffset - 0.03;// 减的0.03是往里面一点点,否则感觉箭头还是在外面一点点
-
       const adjustedPosition: [number, number, number] = [
         item.position[0] + dir[0] * offset,
         item.position[1] + dir[1] * offset,
@@ -249,7 +237,6 @@ function updateGlyphs() {
       arrowVectors.push(dir[0], dir[1], dir[2]);
     }
   }
-
 
   spherePolyData.getPoints().setData(Float32Array.from(spherePositions), 3);
   spherePolyData.getPointData().setScalars(createColorArray(sphereColors));

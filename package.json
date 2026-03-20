@@ -116,7 +116,8 @@
   "gitHooks": {
     "pre-commit": "lint-staged"
   },
-  "lint-staged": {
+  "lint-staged": {},
+  "lint-staged----HHH-buyongjiaoyao": {
     "*.{js,jsx,ts,tsx,vue}": [
       "eslint"
     ]

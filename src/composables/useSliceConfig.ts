@@ -13,11 +13,15 @@ export function useSliceConfig(
   const configDefaults = defaultSliceConfig();
   const config = computed(() => store.getConfig(unref(viewID), unref(imageID)));
 // console.log('config :>> ', config);
+
   const slice = computed({
     get: () => config.value?.slice ?? configDefaults.slice,
     set: (val) => {
-      console.log('set slice :>> ',val);
+
+      // HHH set里的代码在测滑动条时要考虑注释掉
       const imageIdVal = unref(imageID);
+      // console.log('set slice:>> ',viewID,val);
+
       if (!imageIdVal || val == null) return;
       store.updateConfig(unref(viewID), imageIdVal, { slice: val });
 

@@ -1,6 +1,6 @@
 import { config as baseConfig } from './wdio.chrome.conf';
 
-const DEV_SERVER_PORT = '8080';
+const DEV_SERVER_PORT = '8088';
 
 export const config = {
   ...baseConfig,

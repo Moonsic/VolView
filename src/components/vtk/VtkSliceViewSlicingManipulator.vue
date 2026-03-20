@@ -60,7 +60,11 @@ const scroll = useMouseRangeManipulatorListener(
 );
 
 watch(scroll, () => {
+  // console.log('scroll :>> ', scroll.value);
   const viewStore = useViewStore();
+  // console.log('viewId, viewStore :>> ',viewId.value,viewStore.activeViewID, viewStore);
+  // console.log('相等吗 :>> ',unref(viewId),viewStore.activeViewID);
+
   if (unref(viewId) !== viewStore.activeViewID) {
     viewStore.setActiveViewID(unref(viewId));
   }

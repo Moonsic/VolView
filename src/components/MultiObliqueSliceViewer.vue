@@ -114,6 +114,12 @@ const obliqueSliceProps = computed(() => {
       OBLIQUE_OUTLINE_COLORS[sliceSpec.viewID],
       1 / 255
     ) as RGBColor;
+    // console.log('117 :>> ', {
+    //   viewId: sliceSpec.viewID,
+    //   planeNormal,
+    //   planeOrigin: resliceCenter.value,
+    //   outlineColor,
+    // });
     return {
       viewId: sliceSpec.viewID,
       planeNormal,

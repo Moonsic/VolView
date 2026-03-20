@@ -291,6 +291,7 @@ export default defineComponent({
                       </div>
                     </template>
                     <template v-else>
+                      <!-- GZC -->
                       <span v-if="image.isLayer">Remove as layer</span>
                       <span v-else>Add as layer</span>
                     </template>

@@ -49,7 +49,7 @@ const changeSlice = (offset: number) => () => {
 
   currentSlice.value += offset;
 
-// console.log('changeSlice 2', currentSlice.value);
+// console.log('changeSlice52', currentSlice.value);
 
 };
 

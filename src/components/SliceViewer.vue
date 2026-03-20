@@ -65,25 +65,34 @@
             "
             :manipulator-props="{ button: 3 }"
           ></vtk-mouse-interaction-manipulator>
+
+          <!-- 滚动图像的，没个这个图像无法滚动 -->
           <vtk-slice-view-slicing-manipulator
             :view-id="id"
             :image-id="currentImageID"
             :view-direction="viewDirection"
           ></vtk-slice-view-slicing-manipulator>
+
+          <!--VtkSliceViewWindowManipulator  没有这个，图像不出来，全黑 -->
           <vtk-slice-view-window-manipulator
             :view-id="id"
             :image-id="currentImageID"
             :manipulator-config="windowingManipulatorProps"
           ></vtk-slice-view-window-manipulator>
+          <!-- 文字信息 -->
           <slice-viewer-overlay
             :view-id="id"
             :image-id="currentImageID"
           ></slice-viewer-overlay>
+          <!-- 一个切片 -->
           <vtk-base-slice-representation
             :view-id="id"
             :image-id="currentImageID"
             :axis="viewAxis"
           ></vtk-base-slice-representation>
+
+
+          <!-- 这2个删了也没影响 -->
           <vtk-segmentation-slice-representation
             v-for="segId in segmentations"
             :key="`seg-${segId}`"
@@ -101,6 +110,8 @@
               :axis="viewAxis"
             ></vtk-layer-slice-representation>
           </template>
+
+
           <crop-tool :view-id="viewId" :image-id="currentImageID" />
           <crosshairs-tool
             :view-id="viewId"

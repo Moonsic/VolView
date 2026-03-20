@@ -31,6 +31,8 @@ const widget = ref<vtkResliceCursorViewWidget>();
 const vtkViewType = computed(() => getVTKViewTypeFromLPSAxis(viewAxis.value));
 
 onViewMounted(view.renderWindowView, () => {
+  // HHH
+  // console.log('onViewMounted :>> ', view.renderWindowView);
   widget.value = view.widgetManager.addWidget(
     resliceCursor,
     vtkViewType.value

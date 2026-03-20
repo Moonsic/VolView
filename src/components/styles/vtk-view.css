@@ -3,6 +3,10 @@
   display: grid;
   /* grid-template-columns: 20px auto; */
   grid-template-columns: 0px auto;  /* 隐藏左侧20px宽的竖条 */
+
+  /* HHH 测试的时候显示出来 */
+  /* grid-template-columns: 120px auto;   */
+
   grid-template-rows: auto;
   z-index: 0; /* avoids partial obscuring of focus outline */
 }

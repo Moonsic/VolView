@@ -30,7 +30,6 @@
                 v-if="!hasData"
                 :loading="showLoading"
                 class="clickable"
-                @click="loadUserPromptedFiles"
                 >
                 <!-- @click="loadUserPromptedFiles" -->
                 <!-- 把这个点击事件放上去就可以本地打开文件了，我mac的chrome浏览器不能打开本地文件，不知道为什么，只能用Chrome Canary测试 -->

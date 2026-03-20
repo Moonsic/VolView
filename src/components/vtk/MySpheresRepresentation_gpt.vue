@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted } from 'vue';
+import { inject, nextTick, onMounted, onUnmounted, toRefs, watch } from 'vue';
 import { VtkViewContext } from '@/src/components/vtk/context';
 import type { Vector3 } from '@kitware/vtk.js/types';
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
@@ -14,16 +14,26 @@ import {
   useSetPointsEvents,
   useSetPointsColorArrowEvents,
   useClearPointsEvents,
+  useChangeNearValueEvents,
 } from '@/src/components/App.vue';
+
+interface Props {
+  id: string; // ObliqueCoronal / ObliqueSagittal / ObliqueAxial
+  planeOrigin: number[]; // 十字线中心点
+}
 
 type PointWithDirection = Vector3 | [Vector3, Vector3];
 type PointsByColor = Record<string, PointWithDirection[]>;
 
 interface CachedGlyphItem {
   position: Vector3;
+  transformed: [number, number, number]; // 预先转到另一个坐标系，后续只做距离判断
   color255: [number, number, number];
   direction?: Vector3;
 }
+
+const props = defineProps<Props>();
+const { id, planeOrigin } = toRefs(props);
 
 const view = inject(VtkViewContext);
 if (!view) throw new Error('No VtkView');
@@ -43,6 +53,7 @@ let arrowSource!: vtkArrowSource;
 let sphereMapper!: vtkGlyph3DMapper;
 let arrowMapper!: vtkGlyph3DMapper;
 
+// 缓存所有输入点：数据进入时就把坐标系转换好
 let cachedItems: CachedGlyphItem[] = [];
 let currentRadius = 2.8;
 
@@ -96,6 +107,17 @@ function pushRGBA(dst: number[], rgb255: [number, number, number], alpha = 255) 
   dst.push(rgb255[0], rgb255[1], rgb255[2], alpha);
 }
 
+function isClearPlaceholder(positionList: Vector3[]) {
+  return (
+    Array.isArray(positionList) &&
+    positionList.length === 1 &&
+    Array.isArray(positionList[0]) &&
+    positionList[0][0] === 1000 &&
+    positionList[0][1] === 1000 &&
+    positionList[0][2] === 1000
+  );
+}
+
 function parsePointItem(item: PointWithDirection): {
   position: Vector3;
   direction?: Vector3;
@@ -117,15 +139,62 @@ function parsePointItem(item: PointWithDirection): {
   };
 }
 
-function isClearPlaceholder(positionList: Vector3[]) {
-  return (
-    Array.isArray(positionList) &&
-    positionList.length === 1 &&
-    Array.isArray(positionList[0]) &&
-    positionList[0][0] === 1000 &&
-    positionList[0][1] === 1000 &&
-    positionList[0][2] === 1000
-  );
+// 你原来的矩阵变换逻辑保留：先把世界坐标转成另一个坐标系，再去判断和切片距离
+function getNewPosition(position: number[]): [number, number, number] {
+  const worldToIndex = (window as any).worldToIndex as number[] | undefined;
+  const spacing = (window as any).spacing as number[] | undefined;
+
+  if (!worldToIndex || !spacing || worldToIndex.length < 16 || spacing.length < 3) {
+    return [position[0], position[1], position[2]];
+  }
+
+  const x =
+    worldToIndex[0] * position[0] +
+    worldToIndex[4] * position[1] +
+    worldToIndex[8] * position[2] +
+    worldToIndex[12] * 1;
+
+  const y =
+    worldToIndex[1] * position[0] +
+    worldToIndex[5] * position[1] +
+    worldToIndex[9] * position[2] +
+    worldToIndex[13] * 1;
+
+  const z =
+    worldToIndex[2] * position[0] +
+    worldToIndex[6] * position[1] +
+    worldToIndex[10] * position[2] +
+    worldToIndex[14] * 1;
+
+  return [x * spacing[0], y * spacing[1], z * spacing[2]];
+}
+
+function getNearRadius() {
+  return Number((window as any).nearValue ?? 0);
+}
+
+function getPlaneOriginInIndexSpace(): [number, number, number] {
+  return getNewPosition(planeOrigin.value);
+}
+
+function isVisibleInCurrentView(
+  transformedPoint: [number, number, number],
+  transformedPlaneOrigin: [number, number, number],
+  nearRadius: number
+) {
+  if (id.value === 'ObliqueCoronal') {
+    return Math.abs(transformedPoint[2] - transformedPlaneOrigin[2]) <= nearRadius;
+  }
+
+  if (id.value === 'ObliqueSagittal') {
+    return Math.abs(transformedPoint[0] - transformedPlaneOrigin[0]) <= nearRadius;
+  }
+
+  if (id.value === 'ObliqueAxial') {
+    return Math.abs(transformedPoint[1] - transformedPlaneOrigin[1]) <= nearRadius;
+  }
+
+  return true;
 }
 
 function buildCachedItemsFromObj(obj: PointsByColor): CachedGlyphItem[] {
@@ -137,9 +206,11 @@ function buildCachedItemsFromObj(obj: PointsByColor): CachedGlyphItem[] {
 
     positionList.forEach((item) => {
       const { position, direction } = parsePointItem(item);
+      const transformed = getNewPosition(position);
 
       items.push({
         position: [position[0], position[1], position[2]],
+        transformed,
         color255,
         direction: direction ? [direction[0], direction[1], direction[2]] : undefined,
       });
@@ -153,8 +224,10 @@ function buildCachedItemsFromPlainList(positionList: Vector3[]): CachedGlyphItem
   const items: CachedGlyphItem[] = [];
 
   positionList.forEach((position) => {
+    const transformed = getNewPosition(position);
     items.push({
       position: [position[0], position[1], position[2]],
+      transformed,
       color255: [255, 0, 0],
     });
   });
@@ -181,8 +254,12 @@ function createVectorArray(values: number[]) {
 }
 
 function clearPolyData() {
+  if (!spherePolyData || !arrowPolyData) return;
+
   spherePolyData.getPoints().setData(new Float32Array(), 3);
-  spherePolyData.getPointData().setScalars(createColorArray([]));
+  spherePolyData.getPointData().setScalars(
+    createColorArray([])
+  );
 
   arrowPolyData.getPoints().setData(new Float32Array(), 3);
   const arrowPD = arrowPolyData.getPointData();
@@ -202,6 +279,9 @@ function updateGlyphs() {
     return;
   }
 
+  const nearRadius = getNearRadius();
+  const transformedPlaneOrigin = getPlaneOriginInIndexSpace();
+
   sphereSource.setRadius(currentRadius);
 
   const spherePositions: number[] = [];
@@ -211,19 +291,14 @@ function updateGlyphs() {
   const arrowColors: number[] = [];
   const arrowVectors: number[] = [];
 
-  // 这里不要再按“箭头居中”去猜了，应该按 arrowSource 自己的局部边界来算
-  // 目的是：让箭头的“尾端”刚好落在球面上
-  const arrowScaleFactor = 10; // 要和 arrowMapper.setScaleFactor(10) 保持一致
-
-  // 取箭头源的本地 bounds： [xmin, xmax, ymin, ymax, zmin, zmax]
-  const arrowBounds = arrowSource.getOutputData().getBounds();
-
-  // 箭头尾端相对局部原点的偏移
-  // 如果源本身就是从 x=0 开始，这里就是 0
-  // 如果源是以中心为原点，比如 [-0.5, 0.5]，这里就是 0.5 * scaleFactor
-  const arrowTailOffset = Math.max(0, -arrowBounds[0]) * arrowScaleFactor;
+  // 保留你原来的偏移算法，外观不会变
+  const offset = (6 * currentRadius * currentRadius) / (6 * currentRadius - 5) + 2.7;
 
   for (const item of cachedItems) {
+    if (!isVisibleInCurrentView(item.transformed, transformedPlaneOrigin, nearRadius)) {
+      continue;
+    }
+
     spherePositions.push(item.position[0], item.position[1], item.position[2]);
     pushRGBA(sphereColors, item.color255, 255);
 
@@ -234,9 +309,6 @@ function updateGlyphs() {
       const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
       const dir: Vector3 = len > 0 ? [dx / len, dy / len, dz / len] : [1, 0, 0];
-
-      // 球心 -> 球面 -> 再补上箭头尾端的局部偏移
-      const offset = currentRadius + arrowTailOffset - 0.03;// 减的0.03是往里面一点点,否则感觉箭头还是在外面一点点
 
       const adjustedPosition: [number, number, number] = [
         item.position[0] + dir[0] * offset,
@@ -249,7 +321,6 @@ function updateGlyphs() {
       arrowVectors.push(dir[0], dir[1], dir[2]);
     }
   }
-
 
   spherePolyData.getPoints().setData(Float32Array.from(spherePositions), 3);
   spherePolyData.getPointData().setScalars(createColorArray(sphereColors));
@@ -267,6 +338,7 @@ function updateGlyphs() {
 function addPoints(positionList: Vector3[], radius: number) {
   currentRadius = radius;
 
+  // 保留你原来的“清空占位点”写法
   if (isClearPlaceholder(positionList)) {
     cachedItems = buildCachedItemsFromPlainList(positionList);
   } else {
@@ -290,11 +362,30 @@ function addPointsColorArrow(obj: PointsByColor, radius: number) {
 }
 
 function clearPoints() {
-  // 保留你原来的“清空后放一个远点”的行为
+  // 保留你原来“清空后放一个远点”的行为
   cachedItems = buildCachedItemsFromPlainList([[1000, 1000, 1000]]);
   currentRadius = 0.1;
   updateGlyphs();
 }
+
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
+  let timer: number | null = null;
+
+  return function (this: any, ...args: any[]) {
+    if (timer !== null) {
+      clearTimeout(timer);
+    }
+
+    timer = window.setTimeout(() => {
+      fn.apply(this, args);
+      timer = null;
+    }, delay);
+  } as T;
+}
+
+const debouncedUpdateGlyphs = debounce(() => {
+  updateGlyphs();
+}, 80);
 
 onMounted(() => {
   isMounted = true;
@@ -373,9 +464,23 @@ onUnmounted(() => {
   arrowMapper?.delete();
 });
 
+watch(
+  () => planeOrigin.value,
+  () => {
+    if (!cachedItems.length) return;
+    nextTick(() => {
+      debouncedUpdateGlyphs();
+    });
+  },
+  { deep: true }
+);
+
 useSetPointsEvents().onClick(([positionList, radius]) => addPoints(positionList, radius));
 useSetPointsColorArrowEvents().onClick(([obj, radius]) => addPointsColorArrow(obj, radius));
 useClearPointsEvents().onClick(() => clearPoints());
+useChangeNearValueEvents().onClick(() => {
+  updateGlyphs();
+});
 </script>
 
 <template>

@@ -12,35 +12,27 @@
         {{ currentTool }}- -->
 
 
-        <!-- <div class="info-box"> -->
-          <!-- <div> id:{{ id }}</div> -->
-          <!-- <div> planeOrigin:{{ planeOrigin }}</div>
-          <div> sliceDomain:{{ sliceDomain }}</div> -->
-          <!-- <div> currentSlice:{{ currentSlice + 1 }}</div> -->
-          <!-- <div> sliceRange:{{ sliceRange }}</div>
-
-          <slice-slider
-            v-model="currentSlice"
-            class="slice-slider"
-            :min="sliceRange[0]"
-            :max="sliceRange[1]"
-            :step="1"
-            :handle-height="20"
-          /> -->
-
-        <!-- </div> -->
 
 
-        <div class="info-box">
-          <slice-slider
+    <!-- <div class="info-box">
+          id:{{ id }}-
+          <div> currentSlice:{{ currentSlice + 1 }}-</div>
+          <div> planeOrigin:</div>
+          <div> 0:{{ planeOrigin[0] }}-</div>setNewSlice
+          <div> 1:{{ planeOrigin[1] }}-</div>
+          <div> 2:{{ planeOrigin[2] }}-</div>
+          <div> sliceDomain:</div>
+          <div> {{ sliceDomain }}</div>
+        <slice-slider
           v-model="currentSlice"
           class="slice-slider"
           :min="sliceRange[0]"
           :max="sliceRange[1]"
           :step="1"
           :handle-height="20"
+          @setNewSlice="setNewSlice"
           />
-        </div>
+        </div> -->
 
         <vtk-slice-view
           class="vtk-view"
@@ -75,7 +67,7 @@
             :manipulator-props="{ button: 3 }"
           ></vtk-mouse-interaction-manipulator>
 
-
+          <!-- VtkSliceViewSlicingManipulator，oblique似乎不需要这个组件 -->
           <!-- <vtk-slice-view-slicing-manipulator
             :view-id="id"
             :image-id="currentImageID"
@@ -161,6 +153,7 @@ import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
 import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue过来的设置点坐标的事件
 
 import ResliceCursorTool from '@/src/components/tools/ResliceCursorTool.vue';
+// import VtkBaseSliceRepresentation from '@/src/components/vtk/VtkBaseSliceRepresentation.vue';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
 
@@ -175,6 +168,7 @@ import { useSliceConfig } from '@/src/composables/useSliceConfig';
 // import VtkSliceViewSlicingManipulator from '@/src/components/vtk/VtkSliceViewSlicingManipulator.vue';
 // import VtkSegmentationSliceRepresentation from '@/src/components/vtk/VtkSegmentationSliceRepresentation.vue';
 // import { useSegmentGroupStore } from '@/src/store/segmentGroups';
+
 // import { useViewStore } from '@/src/store/views';
 import useViewSliceStore from '@/src/store/view-configs/slicing';
 
@@ -208,7 +202,9 @@ import vtkMouseCameraTrackballZoomToMouseManipulator from '@kitware/vtk.js/Inter
 import { storeToRefs } from 'pinia';
 import { useToolStore } from '@/src/store/tools';
 import { Tools } from '@/src/store/tools/types';
-
+// import { updatePlaneManipulatorFor2DView } from '@/src/utils/manipulators';
+// import vtkPlaneManipulator from '@kitware/vtk.js/Widgets/Manipulators/PlaneManipulator';
+// import { nextTick } from 'process';
 interface Props extends LayoutViewProps {
   viewDirection: LPSAxisDir;
   viewUp: LPSAxisDir;
@@ -231,7 +227,7 @@ const windowingManipulatorProps = computed(() =>
 );
 
 // base image
-const { currentImageID, currentLayers, currentImageData, currentImageMetadata } =
+const { currentImageID, currentLayers, currentImageData, currentImageMetadata,isImageLoading } =
   useCurrentImage();
 
 // reslice cursor
@@ -309,6 +305,7 @@ const imageCorners = computed(() => {
 });
 
 const sliceDomain = computed(() => {
+
   const [...sliceNormal] = planeNormal.value;
   const range = slicePlaneRange(imageCorners?.value, sliceNormal);
   return {
@@ -463,23 +460,198 @@ let firstAngles: any = null // 一开始的数据
 
 let oldData: any = null
 
+
+// const { slice: currentSlice, range: sliceRange } = useSliceConfig(
+//   viewId,
+//   currentImageID
+// )
+
+// let newSliceValue: number
+
+// // const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+// function setSlice(viewID:string,slice: any) {
+//   const viewSliceStore = useViewSliceStore();
+//   const imageID = unref(currentImageID) as string
+//   viewSliceStore.updateConfig(viewID, imageID, { slice });
+// }
+
+
+// let dragging = false
+// function setNewSlice(newSlice: number) {
+//   currentSlice.value = newSlice
+//   console.log('!!! :>> ',props.id, newSlice, planeOrigin.value );
+
+//   const dimensions = window.dimensions
+//   const {min,max} = sliceDomain.value
+
+//   const oldList = [...planeOrigin.value]
+
+//   const slice = newSlice + 1
+
+//   if (props.id === 'ObliqueCoronal') {
+//     const newValue = min + (slice / dimensions[1]) * (max - min)
+//     console.log('ObliqueCoronal :>> ', newValue);
+
+//     // const newValue2 = min + (slice / dimensions[1]) * (max - min)
+//     // console.log('ObliqueCoronal2 :>> ', newValue2);
+//       // const out = vec3.create();
+//       // vec3.transformMat4(out, planeOrigin.value, currentImageMetadata.value.worldToIndex)
+//       // const imagePosition = out
+//       // console.log('imagePosition :>> ', imagePosition);
+
+
+
+//     planeOrigin.value = [oldList[0],newValue,oldList[2]]
+//   }
+//    if (props.id === 'ObliqueSagittal') {
+//     const newValue = min + (slice / dimensions[0]) * (max - min)
+//     console.log('ObliqueSagittal :>> ', newValue);
+//     planeOrigin.value = [newValue,oldList[1], oldList[2]]
+//   }
+//   if (props.id === 'ObliqueAxial') {
+//     const newValue = min + (slice / dimensions[2]) * (max - min)
+//     console.log('ObliqueAxial :>> ', newValue);
+//     planeOrigin.value = [oldList[0], oldList[1],newValue]
+//   }
+
+
+//   newSliceValue = newSlice
+//   setSlice(props.id,newSlice)
+//   console.log('newSliceValue,新planeOrigin :>> ',newSliceValue, planeOrigin.value);
+
+
+//   // 不行啊，滑动结构像是新的slice 和当前的就差得很远了。
+//   // 所以说，滑动滚动条，根本就没有设置对正确的planeOrigin.value !!!!!!!!
+//   // 先放弃了。
+//   dragging = true
+//   setTimeout(()=>{
+//     dragging = false
+//   },1000)
+// }
+
+
+// // 不行啊，获取slice，不能用dimensions，还是需要vec3.transformMat4
+// watch(
+//   planeOrigin,
+//   (newValue, oldValue) => {
+//     if (dragging) return
+
+//     const newVal = newValue.map(item => parseFloat(item.toFixed(2)));
+//     const oldVal = oldValue.map(item => parseFloat(item.toFixed(2)));
+//     if (JSON.stringify(newVal) === JSON.stringify(oldVal)) {
+//       console.log('watch planeOrigin newVal 一样 :>> ', props.id,newVal,oldVal);
+//       return
+//     }
+//     console.log('watch planeOrigin newVal 不一样 :>> ', props.id,newVal,oldVal);
+
+//     // planeOrigin01相反
+//     // const dimensions = window.dimensions
+//     const [min,max] = sliceRange.value
+
+//     let slice:number
+//     let changeId = ''
+//     if (newVal[0] !== oldVal[0]) {
+//       changeId = 'ObliqueSagittal'
+//       // slice = dimensions[1] * (planeOrigin.value[0] - min) / (max - min)
+//     } else if (newVal[1] !== oldVal[1]) {
+//       changeId = 'ObliqueCoronal'
+//       // slice = dimensions[0] * (planeOrigin.value[1] - min) / (max - min)
+//     } else if (newVal[2] !== oldVal[2]) {
+//       changeId = 'ObliqueAxial'
+//       // slice = dimensions[2] * (planeOrigin.value[2] - min) / (max - min)
+//     }
+
+//     if (props.id === changeId) {
+//       console.log('changeId11 :>> ', changeId);
+
+//       const out = vec3.create();
+//       vec3.transformMat4(out, planeOrigin.value, currentImageMetadata.value.worldToIndex)
+//       const imagePosition = out
+//       console.log('imagePosition :>> ', imagePosition);
+
+//       if(changeId === 'ObliqueCoronal') {
+//         slice = imagePosition[2]
+//         // slice = max+1 - imagePosition[2]
+//         console.log('max :>> ', max);
+//       } else if(changeId === 'ObliqueSagittal') {
+//         slice = imagePosition[0]
+//       } else if(changeId === 'ObliqueAxial') {
+//         slice = imagePosition[1]
+//         // slice = max+1 - imagePosition[1]
+//       }
+//       slice = Math.round(slice)
+//       console.log('changeId22 :>> ', changeId,slice);
+//       setSlice(changeId,slice)
+//       currentSlice.value = slice
+
+
+
+//       // const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+//       // const { lpsOrientation } = unref(currentImageMetadata);
+//       // const viewSliceStore = useViewSliceStore()
+//       // const imageID = unref(currentImageID) as string
+//       // const list: any = {}
+
+//       // currentViewIDs.forEach((viewID) => {
+//       //   const sliceConfig = viewSliceStore.getConfig(viewID, imageID);
+//       //   const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
+//       //   const index = lpsOrientation[axis];
+//       //   let slice = Math.round(imagePosition[index]);
+//       //   console.log('object :>> ', viewID,axis,index,sliceConfig, slice);
+//       //   viewSliceStore.updateConfig(viewID, imageID, { slice });
+//       //   if (slice < 0) {
+//       //     slice = 0
+//       //   }
+//       //   list[viewID] = slice + 1
+//       // });
+//     }
+//   })
+
+
+
+// watch(
+//   [currentSlice],
+//   ([sliceNew]) => {
+//     console.log('################################## :>> ', sliceNew);
+//     // planeOrigin.value = randomPosition()
+//   })
+
+
 // update the camera
 onVTKEvent(
   resliceCursorState,
   'onModified',
   batchForNextTask(() => {
-    // console.log('props.id :>> ', props.id);
+
+    // return
+    // console.log('onModified :>> ', props.id, planeOrigin.value)
+
 
     // if (props.id === 'ObliqueCoronal') {
-    //   debouncedGetData()
+    // console.log('onModified :>> ', props.id);
+
+    // //   debouncedGetData()
     // }
+// return
+
+
 
 
 
     // TODO
     if (props.id === 'ObliqueCoronal') {
+    // if (props.id !== '888') {
+      // sliceRange.value: [0,255]
 
-      // console.log('---- :>> ', resliceCursorState);
+      // console.log('------ :>> ', planeOrigin.value);
+
+// const slice0 = currentImageMetadata.value.dimensions[2] * (planeOrigin.value[1] - sliceDomain.value.min) / (sliceDomain.value.max - sliceDomain.value.min)
+// console.log('slice0 :>> ', slice0);
+
+      // setSlice(slice0)
+
+        // viewSliceStore.updateConfig(viewID, imageID, { slice: slice0 });
+
 
 
       const out = vec3.create();
@@ -492,22 +664,52 @@ onVTKEvent(
       // console.log('imagePosition :>> ', imagePosition);
 
 
+      // const max = sliceRange.value[1];
       const viewSliceStore = useViewSliceStore();
-      // const viewStore = useViewStore();
+      // const list: any = {}
+      // const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+      // const imageID = unref(currentImageID) as string
+      // currentViewIDs.forEach((viewID) => {
+
+      //   let slice: number;
+      //   if (viewID === 'ObliqueCoronal') {
+      //     slice = max+1 - Math.round(imagePosition[2])
+      //   } else if (viewID === 'ObliqueSagittal') {
+      //     slice = Math.round(imagePosition[0])
+      //   } else if (viewID === 'ObliqueAxial') {
+      //     slice = max+1 - Math.round(imagePosition[1])
+      //   }
+      //   // currentSlice.value = slice
+      //   // console.log('currentSlice.value :>> ', currentSlice.value);
+      //   console.log('slice :>> ', slice);
+      //   viewSliceStore.updateConfig(viewID, imageID, { slice: slice });
+
+      //   // if (slice < 0) {
+      //   //   slice = 0
+      //   // }
+      //   // list[viewID] = slice + 1
+      //   // list.push({ viewID, imageID, slice })
+      // });
+
+
+
+
+      // const viewSliceStore = useViewSliceStore();
+      // // const viewStore = useViewStore();
 
       const imageID = unref(currentImageID) as string;
-      // const currentViewIDs = viewStore.viewIDs.filter(
-      //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
-      // );
-      // const currentViewIDs = viewStore.viewIDs.filter(
-      //   (viewID) => viewID.includes('Oblique')
-      // );
+      // // const currentViewIDs = viewStore.viewIDs.filter(
+      // //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
+      // // );
+      // // const currentViewIDs = viewStore.viewIDs.filter(
+      // //   (viewID) => viewID.includes('Oblique')
+      // // );
 
       const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
 
       const { lpsOrientation } = unref(currentImageMetadata);
 
-      // console.log('currentViewIDs :>> ', currentViewIDs);
+      // // console.log('currentViewIDs :>> ', currentViewIDs);
 
 
       const list: any = {}
@@ -517,7 +719,7 @@ onVTKEvent(
         const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
         const index = lpsOrientation[axis];
         let slice = Math.round(imagePosition[index]);
-        // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
+        // console.log('object :>> ', viewID,axis,index,sliceConfig, slice);
         viewSliceStore.updateConfig(viewID, imageID, { slice });
 
         if (slice < 0) {
@@ -542,6 +744,11 @@ onVTKEvent(
       // console.log('---2 :>> ', resliceCursorState.invokeBoundsChange());
       // console.log('1 :>> ', resliceCursorState, resliceCursor);
       // console.log('2 :>> ', resliceCursorState.invokeBoundsChange())
+
+
+
+      // console.log('planeOrigin.value :>> ', planeOrigin.value);
+      // planeOrigin.value = randomPosition()
     }
 
 
@@ -831,6 +1038,23 @@ window.addEventListener('message', (event: any) => {
     }
   }
 
+    // 单个截图，传来的view是coronal  sagittal axial，index是下标。匹配上['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']的视图，返回一个base64图片
+  if (event.data.type === 'screenshotSingle') {
+    const view = event.data.view
+    const index = event.data.index
+    // 匹配上['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']的视图
+    if (props.id.toLowerCase().includes(view)) {
+      const getViewsList = vtkView.value?.renderWindow.getViews()
+      if (getViewsList && getViewsList.length) {
+        getViewsList[0]?.captureNextImage().then((imageData: string) => {
+        // 将截图发送回 A 项目
+        window.parent.postMessage({ type: 'screenshotSingle', view, index, screenshot: imageData }, '*');
+      })
+      vtkView.value?.renderWindow.render()
+      }
+    }
+  }
+
   // 回到中心位置
   if (event.data.type === 'resetView') {
     resetCamera(window.xyzCenter)
@@ -898,86 +1122,183 @@ window.addEventListener('message', (event: any) => {
 
 
 
-const { slice: currentSlice, range: sliceRange } = useSliceConfig(
-  viewId,
-  currentImageID
-);
-
-watch(
-  [currentSlice],
-  ([sliceNew]) => {
-    console.log('slice, range :>> ', sliceNew);
-
-    // syncRef(sliceNew, slice, { immediate: true });
-
-    // if (slice && range) {
-    //   resliceCursorWidget.setSlice(slice);
-    //   resliceCursorWidget.setRange(range);
-    // }
 
 
+// // 生成一个随机数
+// function randomNum(min: number, max: number)  {
+//   return Math.floor(Math.random() * (max - min) + min)
+// }
+// const randomPosition = () => {
+//   const position: Vector3 = [
+//     randomNum(50,200),
+//     randomNum(50,200),
+//     randomNum(50,200)
+//   ]
+//   return position
+// }
 
-    // const out = vec3.create();
-    //   vec3.transformMat4(
-    //     out,
-    //     planeOrigin.value,
-    //     currentImageMetadata.value.worldToIndex
-    //   );
-    //   const imagePosition = out
-    //   // console.log('imagePosition :>> ', imagePosition);
+// watch(
+//   [currentSlice],
+//   ([sliceNew]) => {
+//     console.log('################################## :>> ', sliceNew);
 
-
-    //   const viewSliceStore = useViewSliceStore();
-    //   // const viewStore = useViewStore();
-
-    //   const imageID = unref(currentImageID) as string;
-    //   // const currentViewIDs = viewStore.viewIDs.filter(
-    //   //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
-    //   // );
-    //   // const currentViewIDs = viewStore.viewIDs.filter(
-    //   //   (viewID) => viewID.includes('Oblique')
-    //   // );
-
-    //   const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
-
-    //   const { lpsOrientation } = unref(currentImageMetadata);
-
-    //   // console.log('currentViewIDs :>> ', currentViewIDs);
+//     planeOrigin.value = randomPosition()
 
 
-    //   const list: any = {}
+//     // currentSlice.value  = sliceNew;
+//     // console.log('changeSlice927', currentSlice.value);
 
-    //   currentViewIDs.forEach((viewID) => {
-    //     const sliceConfig = viewSliceStore.getConfig(viewID, imageID);
-    //     const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
-    //     const index = lpsOrientation[axis];
-    //     let slice = Math.round(imagePosition[index]);
-    //     // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
-    //     viewSliceStore.updateConfig(viewID, imageID, { slice });
+//     // console.log('938',resliceCursor, resliceCursorState)
+//     // console.log('9381',resliceCursor.getPlaneExtremities('ObliqueSagittal'))
+//     // console.log('9382',resliceCursor.getPlaneNormalFromViewType('ObliqueSagittal'))
+//     // console.log('9383',resliceCursor.getPlaneSource('ObliqueSagittal'))
+//     // console.log('9384',resliceCursor.getPlaneSourceFromViewType('ObliqueSagittal'))
+//     // console.log('9385',resliceCursor.getResliceAxes('ObliqueSagittal'))
+//     // console.log('9386',resliceCursor.getResliceMatrix())
 
-    //     if (slice < 0) {
-    //       slice = 0
-    //     }
-    //     list[viewID] = slice + 1
-    //     // list.push({ viewID, imageID, slice })
-    //   });
 
-    //   console.log('list :>> ', list);
+//     // console.log('9381',resliceCursor.getPlaneExtremities(4))
+//     // console.log('9382',resliceCursor.getPlaneNormalFromViewType(4))
+//     // console.log('9383',resliceCursor.getPlaneSource(4))
+//     // console.log('9384',resliceCursor.getPlaneSourceFromViewType(4))
+//     // console.log('9385',resliceCursor.getResliceAxes(4))
+//     // console.log('9386',resliceCursor.getResliceMatrix())
 
-    //   // 发送给A项目
-    //   // window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
-    //   window.parent.postMessage({
-    //     type: 'getSliceCenter',
-    //     value: JSON.stringify({
-    //     planeOrigin: planeOrigin.value,
-    //     sliceDomain: sliceDomain.value,
-    //     sliceList: list,
-    //   })}, '*');
-  },
-  {
-    immediate: true,
-  }
-);
+//     // console.log('0000',resliceCursorState.getCenter())
+//     // console.log('0000',resliceCursorState.getImage())
+//     // console.log('0000',resliceCursorState.getPlanes())
+//     // console.log('0000',resliceCursorState.setPlanes())
+
+
+//     // console.log('0000 planes',planes)
+//     // console.log('0000 planeNormal',planeNormal)
+
+
+// //      console.log('planeOrigin.value :>> ', planeOrigin.value);
+// // if (props.id === 'ObliqueCoronal') {
+// //   planeOrigin.value = randomPosition()
+// // }
+
+
+// // const planes = vtkFieldRef(resliceCursorState, 'planes');
+// // const planeNormal = computed(() => planes.value[widgetViewType.value].normal);
+
+
+//     // return
+
+//     // const { metadata: imageMetadata } = useImage(imageId);
+
+
+//     // const manipulator = vtkPlaneManipulator.newInstance();
+
+
+//     //   updatePlaneManipulatorFor2DView(
+//     //     manipulator,
+//     //     viewDirection.value,
+//     //     sliceNew,
+//     //    currentImageMetadata.value
+//     //   );
+
+//     // const viewSliceStore = useViewSliceStore();
+
+//     // const imageID = unref(currentImageID) as string;
+
+//     // const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+
+//     // currentViewIDs.forEach((viewID) => {
+//     //   const sliceConfig: any = viewSliceStore.getConfig(viewID, imageID);
+//     //   console.log('sliceConfig :>> ', sliceConfig);
+//     //   viewSliceStore.updateConfig(viewID, imageID, { slice: sliceConfig.slice });
+
+//     //   // const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
+//     //   // const index = lpsOrientation[axis];
+//     //   // let slice = Math.round(imagePosition[index]);
+//     //   // // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
+//     //   // viewSliceStore.updateConfig(viewID, imageID, { slice });
+
+//     //   // if (slice < 0) {
+//     //   //   slice = 0
+//     //   // }
+//     //   // list[viewID] = slice + 1
+//     //   // list.push({ viewID, imageID, slice })
+//     // });
+
+
+//     //  const viewSliceStore = useViewSliceStore();
+//     // const a = viewSliceStore.getConfig(viewID, imageID)
+//     // console.log('a :>> ', a);
+
+//     // syncRef(sliceNew, slice, { immediate: true });
+
+//     // if (slice && range) {
+//     //   resliceCursorWidget.setSlice(slice);
+//     //   resliceCursorWidget.setRange(range);
+//     // }
+
+
+
+//     // const out = vec3.create();
+//     //   vec3.transformMat4(
+//     //     out,
+//     //     planeOrigin.value,
+//     //     currentImageMetadata.value.worldToIndex
+//     //   );
+//     //   const imagePosition = out
+//     //   // console.log('imagePosition :>> ', imagePosition);
+
+
+//     //   const viewSliceStore = useViewSliceStore();
+//     //   // const viewStore = useViewStore();
+
+//     //   const imageID = unref(currentImageID) as string;
+
+//     //   // const currentViewIDs = viewStore.viewIDs.filter(
+//     //   //   (viewID) => !!viewSliceStore.getConfig(viewID, imageID)
+//     //   // );
+//     //   // const currentViewIDs = viewStore.viewIDs.filter(
+//     //   //   (viewID) => viewID.includes('Oblique')
+//     //   // );
+
+//     //   const currentViewIDs = ['ObliqueCoronal', 'ObliqueSagittal', 'ObliqueAxial']
+
+//     //   const { lpsOrientation } = unref(currentImageMetadata);
+
+//     //   // console.log('currentViewIDs :>> ', currentViewIDs);
+
+
+//     //   const list: any = {}
+
+//     //   currentViewIDs.forEach((viewID) => {
+//     //     const sliceConfig = viewSliceStore.getConfig(viewID, imageID);
+//     //     const axis = getLPSAxisFromDir(sliceConfig!.axisDirection);
+//     //     const index = lpsOrientation[axis];
+//     //     let slice = Math.round(imagePosition[index]);
+//     //     // console.log('object :>> ', viewID,sliceConfig,axis,index,slice);
+//     //     viewSliceStore.updateConfig(viewID, imageID, { slice });
+
+//     //     if (slice < 0) {
+//     //       slice = 0
+//     //     }
+//     //     list[viewID] = slice + 1
+//     //     // list.push({ viewID, imageID, slice })
+//     //   });
+
+//     //   console.log('list :>> ', list);
+
+//     //   // 发送给A项目
+//     //   // window.parent.postMessage({ type: 'getCenter', value: planeOrigin.value }, '*');
+//     //   window.parent.postMessage({
+//     //     type: 'getSliceCenter',
+//     //     value: JSON.stringify({
+//     //     planeOrigin: planeOrigin.value,
+//     //     sliceDomain: sliceDomain.value,
+//     //     sliceList: list,
+//     //   })}, '*');
+//   },
+//   {
+//     immediate: true,
+//   }
+// );
 
 </script>
 
@@ -986,6 +1307,7 @@ watch(
 
 <style scoped>
 .info-box {
+  width: 300px;
   position: absolute;
   top: 10px;
   left: 10px;
@@ -994,7 +1316,7 @@ watch(
 
 
 .slice-slider {
-  height: 400px;
+  height: 300px;
   position: relative;
   flex: 1 1;
   width: 100%;

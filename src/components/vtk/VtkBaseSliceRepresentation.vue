@@ -31,6 +31,7 @@ const wlConfig = useWindowingConfig(viewID, imageID);
 
 // setup base image
 const sliceRep = useSliceRepresentation(view, imageData);
+// console.log('base liceRep',sliceRep)
 
 // set slice ordering to be in the back
 sliceRep.mapper.setResolveCoincidentTopologyToPolygonOffset();
@@ -41,6 +42,7 @@ watchEffect(() => {
   const { lpsOrientation } = imageMetadata.value;
   const ijkIndex = lpsOrientation[axis.value];
   const mode = [SlicingMode.I, SlicingMode.J, SlicingMode.K][ijkIndex];
+  // console.log('mode :>> ', mode);
   sliceRep.mapper.setSlicingMode(mode);
 });
 
@@ -48,6 +50,7 @@ watchEffect(() => {
 const slice = vtkFieldRef(sliceRep.mapper, 'slice');
 syncRefs(sliceConfig.slice, slice, { immediate: true });
 
+// console.log('slice :>> ', slice);
 // sync windowing
 const colorLevel = vtkFieldRef(sliceRep.property, 'colorLevel');
 const colorWindow = vtkFieldRef(sliceRep.property, 'colorWindow');

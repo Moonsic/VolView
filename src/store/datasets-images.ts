@@ -83,7 +83,7 @@ export const useImageStore = defineStore('images', {
       }
       this.dataIndex[id] = imageData;
 
-      //
+      // GGG
       // GGG 在这里让布局改成默认为Oblique View布局
       const viewStore = useViewStore();
       // console.log('viewStore',viewStore)

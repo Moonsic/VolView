@@ -159,7 +159,7 @@ export const Layouts: Record<string, Layout> = [
   // items 表示位置
   // 新的位置，3D在右下角
 
-  // GGG: 我觉得3D很占内存，一开始默认的时候应该可以全部清空，之前没想到。
+  // GGG: 我觉得3D很占内存，一开始默认的时候应该可以全部清空，之前没想到。GGG
   // 去掉之后DefaultLayoutName改成 'Oblique View'，也没报错。
   {
     name: 'Quad View',
