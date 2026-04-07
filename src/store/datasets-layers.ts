@@ -19,6 +19,7 @@ export const useLayersStore = defineStore('layer', () => {
   const parentToLayers = ref<Record<string, Layer[]>>({});
   const layerImages = ref<Record<string, vtkImageData>>({});
 
+  // GZC
   async function _addLayer(
     this: _This,
     parent: DataSelection,
@@ -54,6 +55,7 @@ export const useLayersStore = defineStore('layer', () => {
     }
 
     const image = await ensureSameSpace(parentImage, sourceImage);
+    console.log('image :>> ', image);
 
     this.layerImages[id] = image;
   }

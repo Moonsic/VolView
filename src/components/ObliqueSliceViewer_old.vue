@@ -11,25 +11,28 @@
           {{ viewUp }}-
         {{ currentTool }}- -->
 
-      <div class="info-box" v-show="showResliceCursor">
-          <!-- id:{{ id }}-
+
+
+
+    <!-- <div class="info-box">
+          id:{{ id }}-
           <div> currentSlice:{{ currentSlice + 1 }}-</div>
           <div> planeOrigin:</div>
           <div> 0:{{ planeOrigin[0] }}-</div>setNewSlice
           <div> 1:{{ planeOrigin[1] }}-</div>
           <div> 2:{{ planeOrigin[2] }}-</div>
           <div> sliceDomain:</div>
-          <div> {{ sliceDomain }}</div> -->
+          <div> {{ sliceDomain }}</div>
         <slice-slider
           v-model="currentSlice"
           class="slice-slider"
-          :min="sliceDomain.min"
-          :max="sliceDomain.max"
+          :min="sliceRange[0]"
+          :max="sliceRange[1]"
           :step="1"
           :handle-height="20"
+          @setNewSlice="setNewSlice"
           />
-          <!-- @setNewSlice="setNewSlice" -->
-        </div>
+        </div> -->
 
         <vtk-slice-view
           class="vtk-view"
@@ -331,54 +334,6 @@ const updateResliceCamera = (resetFocalPoint: boolean) => {
 };
 
 
-
-function toSliceScalar(origin: Vector3, normal: Vector3) {
-  const n = vec3.normalize(vec3.create(), vec3.fromValues(...normal));
-  const p = vec3.fromValues(...origin);
-  return vec3.dot(p, n);
-}
-
-function fromSliceScalar(slice: number, normal: Vector3): Vector3 {
-  const n = vec3.normalize(vec3.create(), vec3.fromValues(...normal));
-  const p = vec3.scale(vec3.create(), n, slice);
-  return [p[0], p[1], p[2]];
-}
-
-const currentSlice = computed<number>({
-  get() {
-    if (!planeOrigin.value || !planeNormal.value) return 0;
-    return toSliceScalar(planeOrigin.value, planeNormal.value);
-  },
-
-  set(slice) {
-    if (!planeNormal.value || !planeOrigin.value) return;
-
-    // 当前法线方向上的投影
-    const currentProjected = fromSliceScalar(
-      toSliceScalar(planeOrigin.value, planeNormal.value),
-      planeNormal.value
-    );
-
-    // 当前平面“偏移”（非常关键！）
-    const offset = vec3.subtract(
-      vec3.create(),
-      vec3.fromValues(...planeOrigin.value),
-      vec3.fromValues(...currentProjected)
-    );
-
-    // 新位置（沿法线移动 + 保持平移）
-    const newProjected = fromSliceScalar(slice, planeNormal.value);
-
-    const final = vec3.add(
-      vec3.create(),
-      vec3.fromValues(...newProjected),
-      offset
-    );
-
-    planeOrigin.value = [final[0], final[1], final[2]];
-  },
-});
-
 // 最新：这个方法没用了。
 // 已知又有一个数组boundsArray=[-130.0814828891307, 125.91851997189224, -123.50813484017272, 132.49186808045488, -119.1382771413773, 136.86167994327843 ]，
 // 它代表一个3维的坐标，是一个256256256的正方体，
@@ -505,10 +460,6 @@ let firstAngles: any = null // 一开始的数据
 
 let oldData: any = null
 
-// function setNewSlice(newSlice: number) {
-//   // currentSlice.value = newSlice
-//   // console.log('!!! :>> ',props.id, newSlice, planeOrigin.value );
-// }
 
 // const { slice: currentSlice, range: sliceRange } = useSliceConfig(
 //   viewId,
@@ -1170,6 +1121,9 @@ window.addEventListener('message', (event: any) => {
 })
 
 
+
+
+
 // // 生成一个随机数
 // function randomNum(min: number, max: number)  {
 //   return Math.floor(Math.random() * (max - min) + min)
@@ -1353,22 +1307,20 @@ window.addEventListener('message', (event: any) => {
 
 <style scoped>
 .info-box {
-  /* width: 300px; */
-  max-width: 12px;
-  width: 3%;
-  height: calc(100% - 50px);
+  width: 300px;
   position: absolute;
-  top: 24px;
-  left: 5px;
+  top: 10px;
+  left: 10px;
   z-index: 1;
 }
 
 
-.info-box .slice-slider {
-  height: 100%;
+.slice-slider {
+  height: 300px;
   position: relative;
   flex: 1 1;
   width: 100%;
-  padding: 0;
+  width: 20px;
+  padding: 0 3px;
 }
 </style>

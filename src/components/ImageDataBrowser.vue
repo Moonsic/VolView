@@ -75,7 +75,14 @@ export default defineComponent({
           layerLoading,
           isLayer,
           layerHandler: () => {
+            // GZC
             if (!layerLoading && layerable) {
+              console.log('id :>> ', id);
+              console.log('metadata[id].name :>> ', metadata[id].name);
+              console.log('metadata :>> ', metadata);
+              console.log('isLayer :>> ', isLayer);
+              console.log('primarySelection.value :>> ', primarySelection.value);
+              console.log('selectionKey :>> ', selectionKey);
               if (isLayer)
                 layersStore.deleteLayer(primarySelection.value, selectionKey);
               else layersStore.addLayer(primarySelection.value, selectionKey);

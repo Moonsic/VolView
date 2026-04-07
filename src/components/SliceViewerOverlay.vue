@@ -75,12 +75,13 @@ window.addEventListener('message', (event: any) => {
       </div>
     </template>
     <template v-slot:middle-left>
-      <div class="annotation-cell">
+      <!-- HHH 因为左边有滑动条，所以要25px的margin-left -->
+      <div class="annotation-cell annotation-cell-left">
         <span>{{ leftLabel }}</span>
       </div>
     </template>
     <template v-slot:middle-right>
-      <div class="annotation-cell">
+      <div class="annotation-cell annotation-cell-right">
         <span>{{ rightLabel }}</span>
       </div>
     </template>
@@ -113,3 +114,14 @@ window.addEventListener('message', (event: any) => {
 </template>
 
 <style scoped src="@/src/components/styles/vtk-view.css"></style>
+
+<style scoped>
+
+.annotation-cell-left {
+  margin-left: 25px;
+}
+
+.annotation-cell-right {
+  margin-right: 15px;
+}
+</style>
