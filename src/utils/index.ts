@@ -13,7 +13,7 @@ export const isFulfilled = <T>(
 ): input is PromiseFulfilledResult<T> => input.status === 'fulfilled';
 
 type PromiseResolveFunction<T> = (value: T) => void;
-type PromiseRejectFunction = (reason?: Error) => void;
+type PromiseRejectFunction = (reason?: any) => void;
 export interface Deferred<T> {
   promise: Promise<T>;
   resolve: PromiseResolveFunction<T>;
@@ -110,7 +110,7 @@ export const chunk = <T>(arr: T[], size: number) =>
   );
 
 export function plural(n: number, word: string, pluralWord?: string) {
-  return n > 1 ? pluralWord ?? `${word}s` : word;
+  return n > 1 ? (pluralWord ?? `${word}s`) : word;
 }
 
 export const ensureDefault = <T>(
@@ -119,7 +119,6 @@ export const ensureDefault = <T>(
   default_: T
 ) => {
   if (!(key in records)) {
-    // eslint-disable-next-line no-param-reassign
     records[key] = default_;
   }
 
@@ -234,10 +233,7 @@ export function standardizeColor(color: Maybe<string>) {
   return ctx.fillStyle;
 }
 
-// https://github.com/colinhacks/zod/discussions/839#discussioncomment-4335236
-export function zodEnumFromObjKeys<K extends string>(
-  obj: Record<K, any>
-): z.ZodEnum<[K, ...K[]]> {
+export function zodEnumFromObjKeys<K extends string>(obj: Record<K, any>) {
   const [firstKey, ...otherKeys] = Object.keys(obj) as K[];
   return z.enum([firstKey, ...otherKeys]);
 }
@@ -257,6 +253,23 @@ export const TypedArrayConstructorNames = [
   'Float32Array',
   'Float64Array',
 ];
+
+/**
+ * Creates a new typed array of the same type as the source array.
+ * This utility handles the TypeScript typing issues when using array.constructor.
+ *
+ * @param sourceArray The source array to match the type of
+ * @param arrayLength The length of the new array
+ * @returns A new array of the same type as sourceArray
+ */
+export function createTypedArrayLike<T extends TypedArray | number[]>(
+  sourceArray: T,
+  arrayLength: number
+): T {
+  return new (sourceArray.constructor as new (length: number) => T)(
+    arrayLength
+  );
+}
 
 // https://stackoverflow.com/a/74823834
 type Entries<T> = {
@@ -282,4 +295,65 @@ export function normalizeForStore<T, K extends keyof T>(objects: T[], key: K) {
   );
 
   return { order, byKey };
+}
+
+export function shortenNumber(value: number) {
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+  const abs = Math.abs(value);
+  if (abs > 0 && abs < 1) {
+    return value.toExponential(2);
+  }
+  return value.toFixed(2);
+}
+
+/**
+ * Listens for an event once.
+ * @param target
+ * @param event
+ * @param callback
+ */
+export function addEventListenerOnce<T extends EventTarget>(
+  target: T,
+  event: string,
+  callback: (...args: any[]) => any
+) {
+  const handler = () => {
+    target.removeEventListener(event, handler);
+    return callback();
+  };
+  target.addEventListener(event, handler);
+}
+
+/**
+ * Converts a byte sequence to ASCII.
+ * @param bytes
+ * @param param1
+ * @returns
+ */
+export function toAscii(
+  bytes: Uint8Array | Uint8ClampedArray,
+  { ignoreNulls = false } = {}
+) {
+  const chars = [];
+  for (let i = 0; i < bytes.length; i++) {
+    if (!(ignoreNulls && bytes[i] === 0)) {
+      chars.push(String.fromCharCode(bytes[i]));
+    }
+  }
+  return chars.join('');
+}
+
+/**
+ * Wraps a generator as a coroutine.
+ * @param generator
+ * @param args
+ * @returns
+ */
+export function asCoroutine<T, R, N>(gen: Generator<T, R, N>) {
+  // run initial code
+  const result = gen.next();
+  if (result.done) return () => result;
+  return (value: N): IteratorResult<T, R> => gen.next(value);
 }

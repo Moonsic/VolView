@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { VtkViewContext } from '@/src/components/vtk/context';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
-import { useSliceConfigInitializer } from '@/src/composables/useSliceConfigInitializer';
 import { useMouseRangeManipulatorListener } from '@/src/core/vtk/useMouseRangeManipulatorListener';
 import { useVtkInteractionManipulator } from '@/src/core/vtk/useVtkInteractionManipulator';
 import { Maybe } from '@/src/types';
@@ -22,7 +21,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { viewId, imageId, viewDirection, manipulatorConfig } = toRefs(props);
+const { viewId, imageId, manipulatorConfig } = toRefs(props);
 
 const view = inject(VtkViewContext);
 if (!view) throw new Error('No VtkView');
@@ -49,25 +48,20 @@ const { instance: rangeManipulator } = useVtkInteractionManipulator(
 );
 
 const sliceConfig = useSliceConfig(viewId, imageId);
-useSliceConfigInitializer(viewId, imageId, viewDirection);
 
 const scroll = useMouseRangeManipulatorListener(
   rangeManipulator,
   'scroll',
   sliceConfig.range,
   1,
-  sliceConfig.slice.value
+  sliceConfig.slice.value,
+  -1 // Invert scroll: scroll down = decrease slice for anatomical consistency
 );
 
 watch(scroll, () => {
   // console.log('scroll :>> ', scroll.value);
   const viewStore = useViewStore();
-  // console.log('viewId, viewStore :>> ',viewId.value,viewStore.activeViewID, viewStore);
-  // console.log('相等吗 :>> ',unref(viewId),viewStore.activeViewID);
-
-  if (unref(viewId) !== viewStore.activeViewID) {
-    viewStore.setActiveViewID(unref(viewId));
-  }
+  viewStore.setActiveView(unref(viewId));
 });
 
 syncRef(scroll, sliceConfig.slice, { immediate: true });

@@ -10,6 +10,8 @@ import DicomQuickInfoButton from '@/src/components/DicomQuickInfoButton.vue';
 import { storeToRefs } from 'pinia';
 import { useToolStore } from '@/src/store/tools';
 import { Tools } from '@/src/store/tools/types';
+import ViewTypeSwitcher from '@/src/components/ViewTypeSwitcher.vue';
+import { useImage } from '@/src/composables/useCurrentImage';
 
 interface Props {
   viewId: string;
@@ -49,9 +51,6 @@ const {
 // GGG，但处于调整明暗时，才出现
 const { currentTool } = storeToRefs(useToolStore());
 
-
-
-
 // B项目接收
 window.addEventListener('message', (event: any) => {
   if (event.data.type === 'changeWindow') {
@@ -65,10 +64,16 @@ window.addEventListener('message', (event: any) => {
 })
 
 
+const { metadata } = useImage(imageId);
 </script>
 
 <template>
   <view-overlay-grid class="overlay-no-events view-annotations">
+    <template v-slot:top-left>
+      <div class="annotation-cell">
+        <span>{{ metadata.name }}</span>
+      </div>
+    </template>
     <template v-slot:top-center>
       <div class="annotation-cell">
         <span>{{ topLabel }}</span>
@@ -108,6 +113,20 @@ window.addEventListener('message', (event: any) => {
     <template v-slot:top-right>
       <div class="annotation-cell">
         <dicom-quick-info-button :image-id="imageId"></dicom-quick-info-button>
+      </div>
+    </template>
+    <template #bottom-right>
+      <div
+        v-if="
+          !viewId.includes('-coronal') &&
+          !viewId.includes('-sagittal') &&
+          !viewId.includes('-axial') &&
+          !viewId.includes('-multi-oblique')
+        "
+        class="annotation-cell"
+        @click.stop
+      >
+        <ViewTypeSwitcher :view-id="viewId" :image-id="imageId" />
       </div>
     </template>
   </view-overlay-grid>

@@ -1,14 +1,11 @@
 <script lang="ts">
 import { computed, defineComponent, PropType, toRefs } from 'vue';
-import { InitViewSpecs } from '../config';
-import { useImageStore } from '../store/datasets-images';
-import { BlendConfig } from '../types/views';
-import { Layer } from '../store/datasets-layers';
-import useLayerColoringStore from '../store/view-configs/layers';
-
-const VIEWS_2D = Object.entries(InitViewSpecs)
-  .filter(([, { viewType }]) => viewType === '2D')
-  .map(([viewID]) => viewID);
+import { useImageCacheStore } from '@/src/store/image-cache';
+import { NO_NAME } from '@/src/constants';
+import { BlendConfig } from '@/src/types/views';
+import { Layer } from '@/src/store/datasets-layers';
+import useLayerColoringStore from '@/src/store/view-configs/layers';
+import { useViewStore } from '@/src/store/views';
 
 export default defineComponent({
   name: 'LayerProperties',
@@ -20,11 +17,12 @@ export default defineComponent({
   },
   setup(props) {
     const { layer } = toRefs(props);
-    const imageStore = useImageStore();
+    const imageCacheStore = useImageCacheStore();
+    const viewStore = useViewStore();
 
     const imageName = computed(() => {
       const { selection } = props.layer;
-      return imageStore.metadata[selection].name;
+      return imageCacheStore.getImageMetadata(selection)?.name ?? NO_NAME;
     });
 
     const layerColoringStore = useLayerColoringStore();
@@ -32,10 +30,13 @@ export default defineComponent({
     const layerID = computed(() => layer.value.id);
 
     const layerConfigs = computed(() =>
-      VIEWS_2D.map((viewID) => ({
-        config: layerColoringStore.getConfig(viewID, layerID.value),
-        viewID,
-      }))
+      viewStore
+        .getAllViews()
+        .filter((view) => view.type === '2D')
+        .map((view) => ({
+          config: layerColoringStore.getConfig(view.id, layerID.value),
+          viewID: view.id,
+        }))
     );
 
     const blendConfig = computed(

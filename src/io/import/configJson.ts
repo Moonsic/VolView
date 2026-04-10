@@ -1,12 +1,9 @@
 import { z } from 'zod';
 import { zodEnumFromObjKeys } from '@/src/utils';
 import { ACTIONS } from '@/src/constants';
-import { Layouts } from '@/src/config';
 
-// for applyConfig
 import { useRectangleStore } from '@/src/store/tools/rectangles';
 import { useRulerStore } from '@/src/store/tools/rulers';
-import { useDataBrowserStore } from '@/src/store/data-browser';
 import { usePolygonStore } from '@/src/store/tools/polygons';
 import { useViewStore } from '@/src/store/views';
 import { useWindowingStore } from '@/src/store/view-configs/windowing';
@@ -14,23 +11,19 @@ import { actionToKey } from '@/src/composables/useKeyboardShortcuts';
 import { useSegmentGroupStore } from '@/src/store/segmentGroups';
 import { AnnotationToolStore } from '@/src/store/tools/useAnnotationTool';
 import useLoadDataStore from '@/src/store/load-data';
+import { layoutConfig } from '@/src/utils/layoutParsing';
 
 // --------------------------------------------------------------------------
-// Interface
+// Layout
 
-const layout = z
-  .object({
-    activeLayout: zodEnumFromObjKeys(Layouts).optional(),
-  })
+const layouts = z.record(z.string(), layoutConfig).optional();
+
+// --------------------------------------------------------------------------
+// Keyboard shortcuts
+
+const shortcuts = z
+  .partialRecord(zodEnumFromObjKeys(ACTIONS), z.string())
   .optional();
-
-const dataBrowser = z
-  .object({
-    hideSampleData: z.boolean().optional(),
-  })
-  .optional();
-
-const shortcuts = z.record(zodEnumFromObjKeys(ACTIONS), z.string()).optional();
 
 // --------------------------------------------------------------------------
 // Labels
@@ -54,10 +47,13 @@ const rectangleLabel = z.intersection(
 
 const labels = z
   .object({
-    defaultLabels: z.record(label).or(z.null()).optional(),
-    rulerLabels: z.record(rulerLabel).or(z.null()).optional(),
-    rectangleLabels: z.record(rectangleLabel).or(z.null()).optional(),
-    polygonLabels: z.record(polygonLabel).or(z.null()).optional(),
+    defaultLabels: z.record(z.string(), label).or(z.null()).optional(),
+    rulerLabels: z.record(z.string(), rulerLabel).or(z.null()).optional(),
+    rectangleLabels: z
+      .record(z.string(), rectangleLabel)
+      .or(z.null())
+      .optional(),
+    polygonLabels: z.record(z.string(), polygonLabel).or(z.null()).optional(),
   })
   .optional();
 
@@ -68,6 +64,7 @@ const io = z
   .object({
     segmentGroupSaveFormat: z.string().optional(),
     segmentGroupExtension: z.string().default(''),
+    layerExtension: z.string().default(''),
   })
   .optional();
 
@@ -81,13 +78,15 @@ const windowing = z
   })
   .optional();
 
+const disabledViewTypes = z.array(z.enum(['2D', '3D', 'Oblique'])).optional();
+
 export const config = z.object({
-  layout,
-  dataBrowser,
+  layouts,
   labels,
   shortcuts,
   io,
   windowing,
+  disabledViewTypes,
 });
 
 export type Config = z.infer<typeof config>;
@@ -124,15 +123,18 @@ const applyLabels = (manifest: Config) => {
   applyLabelsToStore(usePolygonStore(), polygonLabels);
 };
 
-const applySampleData = (manifest: Config) => {
-  useDataBrowserStore().hideSampleData = !!manifest.dataBrowser?.hideSampleData;
-};
-
 const applyLayout = (manifest: Config) => {
-  if (manifest.layout?.activeLayout) {
-    const startingLayout = Layouts[manifest.layout.activeLayout];
-    useViewStore().setLayout(startingLayout);
-  }
+  if (!manifest.layouts) return;
+
+  const viewStore = useViewStore();
+  const layoutEntries = Object.entries(manifest.layouts);
+
+  if (layoutEntries.length === 0) return;
+
+  viewStore.setNamedLayoutsFromConfig(manifest.layouts);
+
+  const firstLayoutName = layoutEntries[0][0];
+  viewStore.switchToNamedLayout(firstLayoutName);
 };
 
 const applyShortcuts = (manifest: Config) => {
@@ -149,7 +151,9 @@ const applyIo = (manifest: Config) => {
 
   if (manifest.io.segmentGroupSaveFormat)
     useSegmentGroupStore().saveFormat = manifest.io.segmentGroupSaveFormat;
-  useLoadDataStore().segmentGroupExtension = manifest.io.segmentGroupExtension;
+  const loadDataStore = useLoadDataStore();
+  loadDataStore.segmentGroupExtension = manifest.io.segmentGroupExtension;
+  loadDataStore.layerExtension = manifest.io.layerExtension;
 };
 
 const applyWindowing = (manifest: Config) => {
@@ -158,11 +162,20 @@ const applyWindowing = (manifest: Config) => {
   useWindowingStore().runtimeConfigWindowLevel = manifest.windowing;
 };
 
-export const applyConfig = (manifest: Config) => {
+const applyDisabledViewTypes = (manifest: Config) => {
+  if (!manifest.disabledViewTypes) return;
+
+  useViewStore().disabledViewTypes = manifest.disabledViewTypes;
+};
+
+export const applyPreStateConfig = (manifest: Config) => {
+  applyDisabledViewTypes(manifest);
   applyLayout(manifest);
-  applyLabels(manifest);
-  applySampleData(manifest);
   applyShortcuts(manifest);
   applyIo(manifest);
   applyWindowing(manifest);
+};
+
+export const applyPostStateConfig = (manifest: Config) => {
+  applyLabels(manifest);
 };

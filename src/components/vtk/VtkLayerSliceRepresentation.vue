@@ -10,10 +10,9 @@ import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunc
 import { vtkFieldRef } from '@/src/core/vtk/vtkFieldRef';
 import { syncRef } from '@vueuse/core';
 import { useSliceConfig } from '@/src/composables/useSliceConfig';
-import { useLayersStore } from '@/src/store/datasets-layers';
 import useLayerColoringStore from '@/src/store/view-configs/layers';
-import { useLayerConfigInitializer } from '@/src/composables/useLayerConfigInitializer';
 import { applyColoring } from '@/src/composables/useColoringEffect';
+import { useImageCacheStore } from '@/src/store/image-cache';
 
 interface Props {
   viewId: string;
@@ -34,8 +33,10 @@ const coloringConfig = computed(() =>
 );
 
 // setup slice rep
-const layerStore = useLayersStore();
-const imageData = computed(() => layerStore.layerImages[layerId.value]);
+const imageCacheStore = useImageCacheStore();
+const imageData = computed(() =>
+  imageCacheStore.getVtkImageData(layerId.value)
+);
 const sliceRep = useSliceRepresentation(view, imageData);
 
 sliceRep.property.setRGBTransferFunction(
@@ -47,7 +48,7 @@ sliceRep.property.setUseLookupTableScalarRange(false);
 
 // set slice ordering to be in front of the segmentations
 sliceRep.mapper.setResolveCoincidentTopologyToPolygonOffset();
-sliceRep.mapper.setResolveCoincidentTopologyPolygonOffsetParameters(-4, -4);
+sliceRep.mapper.setRelativeCoincidentTopologyPolygonOffsetParameters(-2, -2);
 
 // set slicing mode
 const { metadata: parentMetadata } = useImage(parentId);
@@ -64,9 +65,6 @@ const slice = vtkFieldRef(sliceRep.mapper, 'slice');
 const { slice: storedSlice } = useSliceConfig(viewId, parentId);
 console.log('storedSlice :>> ', storedSlice);
 syncRef(storedSlice, slice, { immediate: true });
-
-// initialize layer coloring
-useLayerConfigInitializer(viewId, layerId);
 
 // apply layer coloring
 const applyLayerColoring = () => {
@@ -96,6 +94,7 @@ const applyLayerColoring = () => {
   sliceRep.property.setColorWindow(width);
   sliceRep.property.setColorLevel(center);
   sliceRep.property.setOpacity(config.blendConfig.opacity);
+  sliceRep.actor.setVisibility(config.blendConfig.visibility);
 };
 
 watchEffect(applyLayerColoring);

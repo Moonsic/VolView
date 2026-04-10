@@ -50,11 +50,9 @@ const hideToolFromContextMenu = () => {
   <v-menu
     v-if="tool"
     v-model="contextMenu.show"
-    class="position-absolute"
-    :style="{
-      top: `${contextMenu.y}px`,
-      left: `${contextMenu.x}px`,
-    }"
+    :target="[contextMenu.x, contextMenu.y]"
+    location="bottom start"
+    origin="auto"
     close-on-click
     close-on-content-click
   >
@@ -89,7 +87,7 @@ const hideToolFromContextMenu = () => {
       </v-list-item>
 
       <!-- Optional items below stable items for muscle memory  -->
-      <slot></slot>
+      <slot :context="contextMenu"></slot>
       <v-list-item
         v-for="action in contextMenu.widgetActions"
         @click="action.func"

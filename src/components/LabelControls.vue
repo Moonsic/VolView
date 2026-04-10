@@ -7,6 +7,7 @@ import { Maybe } from '@/src/types';
 import ToolLabelEditor from '@/src/components/ToolLabelEditor.vue';
 import IsolatedDialog from '@/src/components/IsolatedDialog.vue';
 import { nonNullable } from '@/src/utils';
+import { NO_NAME } from '@/src/constants';
 
 const props = defineProps<{
   labelsStore: LabelsStore<Pick<AnnotationTool, 'strokeWidth'>>;
@@ -15,21 +16,21 @@ const props = defineProps<{
 const labels = computed(() =>
   Object.entries(props.labelsStore.labels).map(([id, label]) => ({
     id,
-    name: label.labelName ?? '(no name)',
+    name: label.labelName ?? NO_NAME,
     color: label.color,
   }))
 );
 
 const selectedLabel = computed({
   get: () => props.labelsStore.activeLabel,
-  set: (id) => {
+  set: (id: string | undefined) => {
     if (id != null) props.labelsStore.setActiveLabel(id);
   },
 });
 
 // --- editing state --- //
 
-type LabelID = keyof typeof props.labelsStore.labels;
+type LabelID = string;
 const editingLabelID = ref<Maybe<LabelID>>(undefined);
 const editDialog = ref(false);
 const editState = reactive({

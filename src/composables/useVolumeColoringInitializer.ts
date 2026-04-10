@@ -5,7 +5,7 @@ import { watchImmediate } from '@vueuse/core';
 import { MaybeRef, computed, unref } from 'vue';
 
 export function useVolumeColoringInitializer(
-  viewId: MaybeRef<string>,
+  viewId: MaybeRef<Maybe<string>>,
   imageId: MaybeRef<Maybe<string>>
 ) {
   const store = useVolumeColoringStore();
@@ -13,14 +13,16 @@ export function useVolumeColoringInitializer(
     store.getConfig(unref(viewId), unref(imageId))
   );
 
-  const { imageData, isLoading } = useImage(imageId);
+  const { imageData } = useImage(imageId);
 
-  watchImmediate([coloringConfig, viewId, imageId, isLoading], () => {
-    if (coloringConfig.value || isLoading.value) return;
+  const viewIdRef = computed(() => unref(viewId));
+  const imageIdRef = computed(() => unref(imageId));
+  watchImmediate([coloringConfig, viewIdRef, imageIdRef], () => {
+    if (coloringConfig.value) return;
 
     const viewIdVal = unref(viewId);
     const imageIdVal = unref(imageId);
-    if (!imageIdVal || !imageData.value) return;
+    if (!viewIdVal || !imageIdVal || !imageData.value) return;
 
     store.resetToDefaultColoring(viewIdVal, imageIdVal, imageData.value);
   });

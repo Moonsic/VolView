@@ -6,27 +6,28 @@ import {
   getDataSourceName,
 } from '@/src/io/import/dataSource';
 import useLoadDataStore from '@/src/store/load-data';
-import { useDatasetStore } from '@/src/store/datasets';
 import { useDICOMStore } from '@/src/store/datasets-dicom';
 import { useLayersStore } from '@/src/store/datasets-layers';
 import { useSegmentGroupStore } from '@/src/store/segmentGroups';
-import { wrapInArray, nonNullable } from '@/src/utils';
+import { wrapInArray, nonNullable, partition } from '@/src/utils';
 import { basename } from '@/src/utils/path';
 import { parseUrl } from '@/src/utils/url';
 import { logError } from '@/src/utils/loggers';
-import { PipelineResultSuccess, partitionResults } from '@/src/core/pipeline';
 import {
-  ImportDataSourcesResult,
   importDataSources,
   toDataSelection,
 } from '@/src/io/import/importDataSources';
 import {
+  ErrorResult,
   ImportResult,
   LoadableResult,
-  VolumeResult,
+  LoadableVolumeResult,
   isLoadableResult,
   isVolumeResult,
+  ImportDataSourcesResult,
 } from '@/src/io/import/common';
+import { isDicomImage } from '@/src/utils/dataSelection';
+import { useViewStore } from '@/src/store/views';
 
 // higher value priority is preferred for picking a primary selection
 const BASE_MODALITY_TYPES = {
@@ -38,8 +39,8 @@ const BASE_MODALITY_TYPES = {
 
 function findBaseDicom(loadableDataSources: Array<LoadableResult>) {
   // find dicom dataset for primary selection if available
-  const dicoms = loadableDataSources.filter(
-    ({ dataType }) => dataType === 'dicom'
+  const dicoms = loadableDataSources.filter(({ dataID }) =>
+    isDicomImage(dataID)
   );
   // prefer some modalities as base
   const dicomStore = useDICOMStore();
@@ -79,17 +80,27 @@ function isSegmentation(extension: string, name: string) {
   return extensions.includes(extension);
 }
 
-// does not pick segmentation images
+function sortByDataSourceName(a: LoadableResult, b: LoadableResult) {
+  const nameA = getDataSourceName(a.dataSource) ?? '';
+  const nameB = getDataSourceName(b.dataSource) ?? '';
+  return nameA.localeCompare(nameB);
+}
+
+// does not pick segmentation or layer images
 function findBaseImage(
   loadableDataSources: Array<LoadableResult>,
-  segmentGroupExtension: string
+  segmentGroupExtension: string,
+  layerExtension: string
 ) {
   const baseImages = loadableDataSources
     .filter(({ dataType }) => dataType === 'image')
     .filter((importResult) => {
       const name = getDataSourceName(importResult.dataSource);
       if (!name) return false;
-      return !isSegmentation(segmentGroupExtension, name);
+      return (
+        !isSegmentation(segmentGroupExtension, name) &&
+        !isSegmentation(layerExtension, name)
+      );
     });
 
   if (baseImages.length) return baseImages[0];
@@ -97,26 +108,21 @@ function findBaseImage(
 }
 
 // returns image and dicom sources, no config files
-function filterLoadableDataSources(
-  succeeded: Array<PipelineResultSuccess<ImportResult>>
-) {
-  return succeeded.flatMap((result) => {
-    return result.data.filter(isLoadableResult);
-  });
+function filterLoadableDataSources(succeeded: Array<ImportResult>) {
+  return succeeded.filter(isLoadableResult);
 }
 
 // Returns list of dataSources with file names where the name has the extension argument
 // and the start of the file name matches the primary file name.
 function filterMatchingNames(
-  primaryDataSource: VolumeResult,
-  succeeded: Array<PipelineResultSuccess<ImportResult>>,
+  primaryDataSource: LoadableVolumeResult,
+  succeeded: Array<ImportResult>,
   extension: string
 ) {
   const dicomStore = useDICOMStore();
-  const primaryName =
-    primaryDataSource.dataType === 'dicom'
-      ? dicomStore.volumeInfo[primaryDataSource.dataID].SeriesNumber
-      : getDataSourceName(primaryDataSource.dataSource);
+  const primaryName = isDicomImage(primaryDataSource.dataID)
+    ? dicomStore.volumeInfo[primaryDataSource.dataID].SeriesNumber
+    : getDataSourceName(primaryDataSource.dataSource);
   if (!primaryName) return [];
   const primaryNamePrefix = primaryName.split('.').slice(0, 1).join();
   return filterLoadableDataSources(succeeded)
@@ -141,38 +147,43 @@ function getStudyUID(volumeID: string) {
 }
 
 function findBaseDataSource(
-  succeeded: Array<PipelineResultSuccess<ImportResult>>,
-  segmentGroupExtension: string
+  succeeded: Array<ImportResult>,
+  segmentGroupExtension: string,
+  layerExtension: string
 ) {
   const loadableDataSources = filterLoadableDataSources(succeeded);
   const baseDicom = findBaseDicom(loadableDataSources);
   if (baseDicom) return baseDicom;
 
-  const baseImage = findBaseImage(loadableDataSources, segmentGroupExtension);
+  const baseImage = findBaseImage(
+    loadableDataSources,
+    segmentGroupExtension,
+    layerExtension
+  );
   if (baseImage) return baseImage;
   return loadableDataSources[0];
 }
 
 function filterOtherVolumesInStudy(
   volumeID: string,
-  succeeded: Array<PipelineResultSuccess<ImportResult>>
+  succeeded: Array<ImportResult>
 ) {
   const targetStudyUID = getStudyUID(volumeID);
   const dicomDataSources = filterLoadableDataSources(succeeded).filter(
-    ({ dataType }) => dataType === 'dicom'
+    ({ dataID }) => isDicomImage(dataID)
   );
   return dicomDataSources.filter((ds) => {
     const sourceStudyUID = getStudyUID(ds.dataID);
     return sourceStudyUID === targetStudyUID && ds.dataID !== volumeID;
-  }) as Array<VolumeResult>;
+  }) as Array<LoadableVolumeResult>;
 }
 
 // Layers a DICOM PET on a CT if found
-function loadLayers(
-  primaryDataSource: VolumeResult,
-  succeeded: Array<PipelineResultSuccess<ImportResult>>
+function autoLayerDicoms(
+  primaryDataSource: LoadableVolumeResult,
+  succeeded: Array<ImportResult>
 ) {
-  if (primaryDataSource.dataType !== 'dicom') return;
+  if (!isDicomImage(primaryDataSource.dataID)) return;
   const otherVolumesInStudy = filterOtherVolumesInStudy(
     primaryDataSource.dataID,
     succeeded
@@ -194,21 +205,45 @@ function loadLayers(
   layersStore.addLayer(primarySelection, layerSelection);
 }
 
+function autoLayerByName(
+  primaryDataSource: LoadableVolumeResult,
+  succeeded: Array<ImportResult>,
+  layerExtension: string
+) {
+  if (isDicomImage(primaryDataSource.dataID)) return;
+  const matchingLayers = filterMatchingNames(
+    primaryDataSource,
+    succeeded,
+    layerExtension
+  )
+    .filter(isVolumeResult)
+    .sort(sortByDataSourceName);
+
+  const primarySelection = toDataSelection(primaryDataSource);
+  const layersStore = useLayersStore();
+  matchingLayers.forEach((ds) => {
+    const layerSelection = toDataSelection(ds);
+    layersStore.addLayer(primarySelection, layerSelection);
+  });
+}
+
 // Loads other DataSources as Segment Groups:
 // - DICOM SEG modalities with matching StudyUIDs.
 // - DataSources that have a name like foo.segmentation.bar and the primary DataSource is named foo.baz
 function loadSegmentations(
-  primaryDataSource: VolumeResult,
-  succeeded: Array<PipelineResultSuccess<ImportResult>>,
+  primaryDataSource: LoadableVolumeResult,
+  succeeded: Array<ImportResult>,
   segmentGroupExtension: string
 ) {
   const matchingNames = filterMatchingNames(
     primaryDataSource,
     succeeded,
     segmentGroupExtension
-  ).filter(
-    isVolumeResult // filter out models
-  );
+  )
+    .filter(
+      isVolumeResult // filter out models
+    )
+    .sort(sortByDataSourceName);
 
   const dicomStore = useDICOMStore();
   const otherSegVolumesInStudy = filterOtherVolumesInStudy(
@@ -231,56 +266,63 @@ function loadSegmentations(
 }
 
 function loadDataSources(sources: DataSource[]) {
-  const load = async () => {
-    const loadDataStore = useLoadDataStore();
-    const dataStore = useDatasetStore();
+  const loadDataStore = useLoadDataStore();
+  const viewStore = useViewStore();
 
+  const load = async () => {
     let results: ImportDataSourcesResult[];
     try {
-      results = await importDataSources(sources);
+      results = (await importDataSources(sources)).filter((result) =>
+        // only look at data and error results
+        ['data', 'error'].includes(result.type)
+      );
     } catch (error) {
       loadDataStore.setError(error as Error);
       return;
     }
-    // console.log('6 :>> ', new Date().getTime(),results);
-    const [succeeded, errored] = partitionResults(results);
-    // console.log('7 :>> ', dataStore.primarySelection,succeeded,errored);
-    // console.log('7 1:>> ', !dataStore.primarySelection && succeeded.length);
 
-    // GGG 这里为什么是!dataStore.primarySelection啊？不应该有值才进来吗，为什么没值进来，我现在就进不去这个if。
-    // 如果成功了
-    if (!dataStore.primarySelection && succeeded.length) {
-      // console.log('77 :>> ');
+    const [succeeded, errored] = partition(
+      (result) => result.type !== 'error',
+      results
+    );
+
+    const shouldShowData = viewStore
+      .getAllViews()
+      .every((view) => !view.dataID);
+
+    if (succeeded.length && shouldShowData) {
       const primaryDataSource = findBaseDataSource(
         succeeded,
-        loadDataStore.segmentGroupExtension
+        loadDataStore.segmentGroupExtension,
+        loadDataStore.layerExtension
       );
       // console.log('8 :>> ', primaryDataSource,isVolumeResult(primaryDataSource));
 
       if (isVolumeResult(primaryDataSource)) {
         const selection = toDataSelection(primaryDataSource);
-        dataStore.setPrimarySelection(selection);
-        loadLayers(primaryDataSource, succeeded);
+        viewStore.setDataForAllViews(selection);
+        autoLayerDicoms(primaryDataSource, succeeded);
+        autoLayerByName(
+          primaryDataSource,
+          succeeded,
+          loadDataStore.layerExtension
+        );
         loadSegmentations(
           primaryDataSource,
           succeeded,
           loadDataStore.segmentGroupExtension
         );
         // console.log('9 :>> ', new Date().getTime(),selection,dataStore.primarySelection);
-
-      } // then must be primaryDataSource.type === 'model'
+      } // else must be primaryDataSource.type === 'model', which are not dealt with here yet
     }
 
     // 如果失败了
     if (errored.length) {
-      const errorMessages = errored.map((errResult) => {
-        // pick first error
-        const [firstError] = errResult.errors;
-        // pick innermost dataset that errored
-        const name = getDataSourceName(firstError.inputDataStackTrace[0]);
-        // log error for debugging
-        logError(firstError.cause);
-        return `- ${name}: ${firstError.message}`;
+      const errorMessages = (errored as ErrorResult[]).map((errResult) => {
+        const { dataSource, error } = errResult;
+        const name = getDataSourceName(dataSource);
+        logError(error);
+        return error.message ? `- ${name}: ${error.message}` : `- ${name}`;
       });
       const failedError = new Error(
         `These files failed to load:\n${errorMessages.join('\n')}`
@@ -338,17 +380,31 @@ export async function loadUserPromptedFiles() {
   return loadFiles(files);
 }
 
-export async function loadUrls(params: UrlParams) {
-  const urls = wrapInArray(params.urls);
-  const names = wrapInArray(params.names ?? []); // optional names should resolve to [] if params.names === undefined
-  const sources = urls.map((url, idx) =>
-    uriToDataSource(
-      url,
-      names[idx] ||
-        basename(parseUrl(url, window.location.href).pathname) ||
-        url
-    )
-  );
+function urlsToDataSources(urls: string[], names: string[] = []): DataSource[] {
+  return urls.map((url, idx) => {
+    const defaultName =
+      basename(parseUrl(url, window.location.href).pathname) || url;
+    return uriToDataSource(url, names[idx] || defaultName);
+  });
+}
 
-  return loadDataSources(sources);
+type LoadUrlsParams = {
+  urls?: string[];
+  names?: string[];
+  config?: string[];
+};
+
+export async function loadUrls(params: UrlParams | LoadUrlsParams) {
+  if (params.config) {
+    const configUrls = wrapInArray(params.config);
+    const configSources = urlsToDataSources(configUrls);
+    await loadDataSources(configSources);
+  }
+
+  if (params.urls) {
+    const urls = wrapInArray(params.urls);
+    const names = wrapInArray(params.names ?? []);
+    const sources = urlsToDataSources(urls, names);
+    await loadDataSources(sources);
+  }
 }

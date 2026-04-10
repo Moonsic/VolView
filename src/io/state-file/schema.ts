@@ -7,14 +7,13 @@ import type {
   PiecewiseNode,
 } from '@kitware/vtk.js/Proxy/Core/PiecewiseFunctionProxy';
 
-import type { AnnotationTool, ToolID } from '@/src/types/annotation-tool';
+import type { ToolID } from '@/src/types/annotation-tool';
 import { Tools as ToolsEnum } from '@/src/store/tools/types';
 import type { Ruler } from '@/src/types/ruler';
 import type { Rectangle } from '@/src/types/rectangle';
 import type { Polygon } from '@/src/types/polygon';
 import type { LPSCroppingPlanes } from '@/src/types/crop';
 import type { FrameOfReference } from '@/src/utils/frameOfReference';
-import type { Optional } from '@/src/types';
 
 import type {
   CameraConfig,
@@ -23,9 +22,8 @@ import type {
   LayersConfig,
   SegmentGroupConfig,
   VolumeColorConfig,
-} from '../../store/view-configs/types';
-import type { LPSAxisDir, LPSAxis } from '../../types/lps';
-import { LayoutDirection } from '../../types/layout';
+} from '@/src/store/view-configs/types';
+import type { LPSAxis } from '@/src/types/lps';
 import type {
   ColorBy,
   ColorTransferFunction,
@@ -36,31 +34,58 @@ import type {
   ColoringConfig,
   CVRConfig,
   BlendConfig,
-} from '../../types/views';
-import { WLAutoRanges } from '../../constants';
+} from '@/src/types/views';
+import { WLAutoRanges } from '@/src/constants';
+import {
+  type Layout,
+  type LayoutDirection,
+  type LayoutItem,
+} from '@/src/types/layout';
 
-export enum DatasetType {
-  DICOM = 'dicom',
-  IMAGE = 'image',
-}
+const FileSource = z.object({
+  id: z.number(),
+  type: z.literal('file'),
+  fileId: z.number(),
+  fileType: z.string(),
+  parent: z.number().optional(),
+});
 
-const DatasetTypeNative = z.nativeEnum(DatasetType);
+const UriSource = z.object({
+  id: z.number(),
+  type: z.literal('uri'),
+  uri: z.string(),
+  name: z.string().optional(),
+  mime: z.string().optional(),
+  parent: z.number().optional(),
+});
 
-const LPSAxisDir = z.union([
-  z.literal('Left'),
-  z.literal('Right'),
-  z.literal('Posterior'),
-  z.literal('Anterior'),
-  z.literal('Superior'),
-  z.literal('Inferior'),
+const ArchiveSource = z.object({
+  id: z.number(),
+  type: z.literal('archive'),
+  path: z.string(),
+  parent: z.number(),
+});
+
+const CollectionSource = z.object({
+  id: z.number(),
+  type: z.literal('collection'),
+  sources: z.number().array(),
+  parent: z.number().optional(),
+});
+
+const DataSource = z.union([
+  FileSource,
+  UriSource,
+  ArchiveSource,
+  CollectionSource,
 ]);
+
+export type DataSourceType = z.infer<typeof DataSource>;
 
 const Dataset = z.object({
   id: z.string(),
-  path: z.string(),
-  type: DatasetTypeNative,
+  dataSourceId: z.number(),
 });
-export type Dataset = z.infer<typeof Dataset>;
 
 const baseRemoteFileSchema = z.object({
   archiveSrc: z.object({ path: z.string() }).optional(),
@@ -77,19 +102,29 @@ const RemoteFile: z.ZodType<RemoteFileType> = baseRemoteFileSchema.extend({
 });
 export type RemoteFile = z.infer<typeof RemoteFile>;
 
-const LayoutDirectionNative = z.nativeEnum(LayoutDirection);
+const LayoutDirectionNative = z.enum([
+  'row',
+  'column',
+] as const satisfies readonly LayoutDirection[]);
 
-export interface Layout {
-  name?: string;
-  direction: LayoutDirection;
-  items: Array<Layout | string>;
-}
+const LayoutItem: z.ZodType<LayoutItem> = z.lazy(() =>
+  z.union([
+    z.object({
+      type: z.literal('slot'),
+      slotIndex: z.number(),
+    }),
+    z.object({
+      type: z.literal('layout'),
+      direction: LayoutDirectionNative,
+      items: z.array(LayoutItem),
+    }),
+  ])
+);
 
 const Layout: z.ZodType<Layout> = z.lazy(() =>
   z.object({
-    name: z.string().optional(),
     direction: LayoutDirectionNative,
-    items: z.array(z.union([Layout, z.string()])),
+    items: z.array(LayoutItem),
   })
 );
 
@@ -100,20 +135,34 @@ const Vector3 = z.tuple([
 ]) satisfies z.ZodType<Vector3>;
 
 type AutoRangeKeys = keyof typeof WLAutoRanges;
-const WindowLevelConfig = z.object({
-  width: z.number(),
-  level: z.number(),
-  min: z.number(),
-  max: z.number(),
-  auto: z.string() as z.ZodType<AutoRangeKeys>,
-  preset: z.object({ width: z.number(), level: z.number() }),
-}) satisfies z.ZodType<WindowLevelConfig>;
+const WindowLevelConfig = z
+  .object({
+    width: z.number().optional(),
+    level: z.number().optional(),
+    auto: z.string() as z.ZodType<AutoRangeKeys>,
+    useAuto: z.boolean().optional(),
+    userTriggered: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      // If useAuto is false, width and level must be present
+      if (
+        data.useAuto === false &&
+        (data.width === undefined || data.level === undefined)
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'width and level are required when useAuto is false',
+    }
+  ) satisfies z.ZodType<WindowLevelConfig>;
 
 const SliceConfig = z.object({
   slice: z.number(),
   min: z.number(),
   max: z.number(),
-  axisDirection: LPSAxisDir,
   syncState: z.boolean(),
 }) satisfies z.ZodType<SliceConfig>;
 
@@ -234,9 +283,11 @@ export type ViewConfig = z.infer<typeof ViewConfig>;
 
 const View = z.object({
   id: z.string(),
-  type: z.string(),
-  props: z.record(z.any()),
-  config: z.record(ViewConfig),
+  name: z.string(),
+  type: z.union([z.literal('2D'), z.literal('3D'), z.literal('Oblique')]),
+  dataID: z.string().optional().nullable(),
+  options: z.record(z.string(), z.string()).optional(),
+  config: z.record(z.string(), ViewConfig).optional(),
 });
 
 export type View = z.infer<typeof View>;
@@ -259,13 +310,21 @@ export const SegmentGroupMetadata = z.object({
   }),
 });
 
-export const LabelMap = z.object({
-  id: z.string(),
-  path: z.string(),
-  metadata: SegmentGroupMetadata,
-});
+export const SegmentGroup = z
+  .object({
+    id: z.string(),
+    path: z.string().optional(),
+    dataSourceId: z.number().optional(),
+    metadata: SegmentGroupMetadata,
+  })
+  .refine(
+    (data) => data.path !== undefined || data.dataSourceId !== undefined,
+    {
+      message: 'Either path or dataSourceId is required',
+    }
+  );
 
-export type LabelMap = z.infer<typeof LabelMap>;
+export type SegmentGroup = z.infer<typeof SegmentGroup>;
 
 const LPSAxis = z.union([
   z.literal('Axial'),
@@ -282,39 +341,42 @@ const annotationTool = z.object({
   imageID: z.string(),
   frameOfReference: FrameOfReference,
   slice: z.number(),
-  id: z.string() as unknown as z.ZodType<ToolID>,
-  name: z.string(),
-  color: z.string(),
+  id: z.string().optional() as unknown as z.ZodType<ToolID | undefined>,
+  name: z.string().optional(),
+  color: z.string().optional(),
   strokeWidth: z.number().optional(),
   label: z.string().optional(),
   labelName: z.string().optional(),
-}) satisfies z.ZodType<AnnotationTool>;
+  metadata: z.record(z.string(), z.string()).optional(),
+});
 
 const makeToolEntry = <T extends z.ZodRawShape>(tool: z.ZodObject<T>) =>
-  z.object({ tools: z.array(tool), labels: z.record(tool.partial()) });
+  z.object({
+    tools: z.array(tool),
+    labels: z.record(z.string(), tool.partial()),
+  });
 
 const Ruler = annotationTool.extend({
   firstPoint: Vector3,
   secondPoint: Vector3,
-}) satisfies z.ZodType<Ruler>;
+});
 
 const Rulers = makeToolEntry(Ruler);
 
 const Rectangle = Ruler.extend({
   fillColor: z.string().optional(),
-}) satisfies z.ZodType<Optional<Rectangle, 'fillColor'>>;
+});
 
 const Rectangles = makeToolEntry(Rectangle);
 
 const Polygon = annotationTool.extend({
-  id: z.string() as unknown as z.ZodType<ToolID>,
   points: z.array(Vector3),
-}) satisfies z.ZodType<Omit<Polygon, 'movePoint'>>;
+});
 
 const Polygons = makeToolEntry(Polygon);
 
 const Crosshairs = z.object({
-  position: Vector3,
+  position: Vector3.optional(),
 });
 
 export type Crosshairs = z.infer<typeof Crosshairs>;
@@ -322,10 +384,11 @@ export type Crosshairs = z.infer<typeof Crosshairs>;
 const ToolsEnumNative = z.nativeEnum(ToolsEnum);
 
 const Paint = z.object({
-  activeSegmentGroupID: z.string().nullable(),
+  activeSegmentGroupID: z.string().nullable().optional(),
   activeSegment: z.number().nullish(),
-  brushSize: z.number(),
-  labelmapOpacity: z.number().optional(), // labelmapOpacity now ignored.  Opacity per segment group via layerColoring store.
+  brushSize: z.number().optional(),
+  crossPlaneSync: z.boolean().optional(),
+  labelmapOpacity: z.number().optional(),
 });
 
 const LPSCroppingPlanes = z.object({
@@ -334,16 +397,16 @@ const LPSCroppingPlanes = z.object({
   Axial: z.tuple([z.number(), z.number()]),
 }) satisfies z.ZodType<LPSCroppingPlanes>;
 
-const Cropping = z.record(LPSCroppingPlanes);
+const Cropping = z.record(z.string(), LPSCroppingPlanes);
 
 const Tools = z.object({
   rulers: Rulers.optional(),
   rectangles: Rectangles.optional(),
   polygons: Polygons.optional(),
-  crosshairs: Crosshairs,
-  paint: Paint,
-  crop: Cropping,
-  current: ToolsEnumNative,
+  crosshairs: Crosshairs.optional(),
+  paint: Paint.optional(),
+  crop: Cropping.optional(),
+  current: ToolsEnumNative.optional(),
 });
 
 export type Tools = z.infer<typeof Tools>;
@@ -359,14 +422,18 @@ export type ParentToLayers = z.infer<typeof ParentToLayers>;
 
 export const ManifestSchema = z.object({
   version: z.string(),
-  datasets: Dataset.array(),
-  remoteFiles: z.record(RemoteFile.array()),
-  labelMaps: LabelMap.array(),
-  tools: Tools,
-  views: View.array(),
+  datasets: Dataset.array().optional(),
+  dataSources: DataSource.array(),
+  datasetFilePath: z.record(z.string(), z.string()).optional(),
+  segmentGroups: SegmentGroup.array().optional(),
+  tools: Tools.optional(),
+  activeView: z.string().optional().nullable(),
+  isActiveViewMaximized: z.boolean().optional(),
+  viewByID: z.record(z.string(), View).optional(),
   primarySelection: z.string().optional(),
-  layout: Layout,
-  parentToLayers: ParentToLayers,
+  layout: Layout.optional(),
+  layoutSlots: z.array(z.string()).optional(),
+  parentToLayers: ParentToLayers.optional(),
 });
 
 export type Manifest = z.infer<typeof ManifestSchema>;

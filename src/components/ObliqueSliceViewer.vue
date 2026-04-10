@@ -35,7 +35,7 @@
           class="vtk-view"
           ref="vtkView"
           data-testid="vtk-view"
-          :view-id="id"
+          :view-id="viewId"
           :image-id="currentImageID"
           :view-direction="viewDirection"
           :view-up="viewUp"
@@ -73,20 +73,20 @@
 
           <!-- 鼠标按住左右滑、上下滑，改变亮度的。不能删，否则已进入页面就是全黑的，只能在内部改 -->
           <vtk-slice-view-window-manipulator
-            :view-id="id"
+            :view-id="viewId"
             :image-id="currentImageID"
             :manipulator-config="windowingManipulatorProps"
           ></vtk-slice-view-window-manipulator>
 
           <!--文字信息，比如上下左右的 LR 方向信息，以及左下角的亮度信息。亮度信息现在注释掉，方向要保留。 -->
           <slice-viewer-overlay
-            :view-id="id"
+            :view-id="viewId"
             :image-id="currentImageID"
           ></slice-viewer-overlay>
 
           <!-- VtkBaseObliqueSliceRepresentation 1个切片 -->
           <vtk-base-oblique-slice-representation
-            :view-id="id"
+            :view-id="viewId"
             :image-id="currentImageID"
             :plane-normal="planeNormal"
             :plane-origin="planeOrigin"
@@ -116,7 +116,7 @@
           <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
            <!-- 添加了透明度为0，意味着边框不显示了 -->
           <vtk-image-outline-representation
-            :view-id="id"
+            :view-id="viewId"
             :image-id="currentImageID"
             :plane-normal="planeNormal"
             :plane-origin="planeOrigin"
@@ -128,12 +128,12 @@
           <!-- 十字指示线 -->
           <reslice-cursor-tool
             v-show="showResliceCursor"
-            :view-id="id"
+            :view-id="viewId"
             :view-direction="viewDirection"></reslice-cursor-tool>
 
           <!-- 画球体 -->
           <!-- :sliceDomain="sliceDomain"没用到 -->
-          <MySpheresRepresentation :id="id" :planeOrigin="planeOrigin"></MySpheresRepresentation>
+          <MySpheresRepresentation :id="viewId" :planeOrigin="planeOrigin"></MySpheresRepresentation>
 
           <slot></slot>
         </vtk-slice-view>
@@ -180,7 +180,6 @@ import { vtkFieldRef } from '@/src/core/vtk/vtkFieldRef';
 import useResliceCursorStore, {
   mapAxisToViewType,
 } from '@/src/store/reslice-cursor';
-import { LayoutViewProps } from '@/src/types';
 import { LPSAxisDir } from '@/src/types/lps';
 import { VtkViewApi } from '@/src/types/vtk-types';
 import { batchForNextTask } from '@/src/utils/batchForNextTask';
@@ -202,7 +201,10 @@ import { Tools } from '@/src/store/tools/types';
 // import { updatePlaneManipulatorFor2DView } from '@/src/utils/manipulators';
 // import vtkPlaneManipulator from '@kitware/vtk.js/Widgets/Manipulators/PlaneManipulator';
 // import { nextTick } from 'process';
-interface Props extends LayoutViewProps {
+
+interface Props {
+  viewId: string;
+  outlineType: string;
   viewDirection: LPSAxisDir;
   viewUp: LPSAxisDir;
 }
@@ -211,11 +213,11 @@ const vtkView = ref<VtkViewApi>();
 
 const props = defineProps<Props>();
 
-const { id: viewId, type: viewType, viewDirection, viewUp } = toRefs(props);
+const { viewId, outlineType, viewDirection, viewUp } = toRefs(props);
 const viewAxis = computed(() => getLPSAxisFromDir(viewDirection.value));
 
 useWebGLWatchdog(vtkView);
-useViewAnimationListener(vtkView, viewId, viewType);
+useViewAnimationListener(vtkView, viewId, 'Oblique');
 
 // active tool
 const { currentTool } = storeToRefs(useToolStore());
@@ -1047,7 +1049,7 @@ const outlineColor = computed(
   () =>
     vec3.scale(
       [0, 0, 0],
-      OBLIQUE_OUTLINE_COLORS[viewId.value],
+      OBLIQUE_OUTLINE_COLORS[outlineType.value],
       1 / 255
     ) as RGBColor
 );

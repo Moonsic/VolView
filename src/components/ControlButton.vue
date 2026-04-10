@@ -8,6 +8,7 @@
     :min-width="sizeV"
     :max-width="sizeV"
     :class="classV"
+    :data-testid="`control-button-${name}`"
     v-bind="$attrs"
   >
     <v-icon :size="iconSize">{{ icon }}</v-icon>
@@ -24,7 +25,7 @@
 
 <script>
 export default {
-  name: 'ToolButton',
+  name: 'ControlButton',
   props: {
     icon: { type: String, required: true },
     name: { type: String, required: true },

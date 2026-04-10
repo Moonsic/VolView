@@ -1,5 +1,4 @@
 import type { Vector3 } from '@kitware/vtk.js/types';
-import { LPSAxisDir } from '@/src/types/lps';
 import {
   ColorTransferFunction,
   CVRConfig,
@@ -21,7 +20,6 @@ export interface SliceConfig {
   slice: number;
   min: number;
   max: number;
-  axisDirection: LPSAxisDir;
   syncState: boolean;
 }
 
@@ -36,16 +34,11 @@ export interface VolumeColorConfig {
 }
 
 export interface WindowLevelConfig {
-  width: number;
-  level: number;
-  min: number; // data range min
-  max: number; // data range max
+  width?: number;
+  level?: number;
   auto: keyof typeof WLAutoRanges; // User-selected percentile range
-  preset: {
-    // User-selected preset value, if any
-    width: number;
-    level: number;
-  };
+  useAuto?: boolean; // Whether to use the percentage histogram range
+  userTriggered?: boolean; // Whether the user has changed the window/level
 }
 
 export interface LayersConfig {

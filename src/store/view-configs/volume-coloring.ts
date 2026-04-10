@@ -17,11 +17,11 @@ import {
 import { DeepPartial, Maybe } from '@/src/types';
 import { identity } from '@/src/utils';
 import { isDicomImage } from '@/src/utils/dataSelection';
+import { useImageCacheStore } from '@/src/store/image-cache';
 import { createViewConfigSerializer } from './common';
 import { ViewConfig } from '../../io/state-file/schema';
 import { VolumeColorConfig } from './types';
 import { useDICOMStore } from '../datasets-dicom';
-import { useImageStore } from '../datasets-images';
 
 export const DEFAULT_AMBIENT = 0.2;
 export const DEFAULT_DIFFUSE = 0.7;
@@ -139,18 +139,22 @@ export const useVolumeColoringStore = defineStore('volumeColoring', () => {
   const updateCVRParameters = createUpdateFunc('cvr');
 
   const setColorPreset = (viewID: string, imageID: string, preset: string) => {
-    const imageStore = useImageStore();
-    const image = imageStore.dataIndex[imageID];
+    const imageCacheStore = useImageCacheStore();
+    const image = imageCacheStore.getVtkImageData(imageID);
     if (!image) throw new Error('Invalid imageID');
 
     const imageDataRange = image.getPointData().getScalars().getRange();
     const { colorFunc, opacityFunc } =
       getColorAndOpacityFuncsFromPreset(preset);
     colorFunc.mappingRange ||= imageDataRange;
-    opacityFunc.mappingRange = imageDataRange;
+
+    const completeOpacityFunc = {
+      ...opacityFunc,
+      mappingRange: imageDataRange,
+    };
 
     updateColorTransferFunction(viewID, imageID, colorFunc);
-    updateOpacityFunction(viewID, imageID, opacityFunc);
+    updateOpacityFunction(viewID, imageID, completeOpacityFunc);
   };
 
   const resetToDefaultColoring = (

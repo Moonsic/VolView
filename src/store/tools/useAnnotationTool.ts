@@ -1,7 +1,6 @@
-import { Ref, UnwrapNestedRefs, computed, ref, watch } from 'vue';
-import { StoreActions, StoreGetters, StoreState } from 'pinia';
+import { Ref, computed, ref, watch } from 'vue';
 import type { Vector3 } from '@kitware/vtk.js/types';
-import type { Maybe, PartialWithRequired } from '@/src/types';
+import type { Maybe, PartialWithRequired, UnwrapAll } from '@/src/types';
 import {
   STROKE_WIDTH_ANNOTATION_TOOL_DEFAULT,
   TOOL_COLORS,
@@ -10,14 +9,12 @@ import { removeFromArray } from '@/src/utils';
 import { useCurrentImage } from '@/src/composables/useCurrentImage';
 import { frameOfReferenceToImageSliceAndAxis } from '@/src/utils/frameOfReference';
 import { useViewStore } from '@/src/store/views';
-import { getLPSAxisFromDir } from '@/src/utils/lps';
-import { LPSAxisDir } from '@/src/types/lps';
 import { AnnotationTool, ToolID } from '@/src/types/annotation-tool';
 import { useIdStore } from '@/src/store/id';
 import { useToolSelectionStore } from '@/src/store/tools/toolSelection';
 import type { IToolStore } from '@/src/store/tools/types';
 import useViewSliceStore from '../view-configs/slicing';
-import { useLabels, Labels } from './useLabels';
+import { useLabels, type Labels } from './useLabels';
 
 const annotationToolLabelDefault = Object.freeze({
   strokeWidth: STROKE_WIDTH_ANNOTATION_TOOL_DEFAULT as number,
@@ -39,7 +36,7 @@ const makeAnnotationToolDefaults = () => ({
 // Must return addTool in consuming Pinia store.
 export const useAnnotationTool = <
   MakeToolDefaults extends (...args: any) => any,
-  LabelProps
+  LabelProps,
 >({
   toolDefaults,
   initialLabels,
@@ -118,12 +115,6 @@ export const useAnnotationTool = <
     if (!(id in toolByID.value)) return;
 
     toolByID.value[id] = { ...toolByID.value[id], ...patch, id };
-
-    // de-select whenever hiding a tool
-    if (patch.hidden) {
-      const selectionStore = useToolSelectionStore();
-      selectionStore.removeSelection(id);
-    }
   }
 
   // updates props controlled by labels
@@ -135,7 +126,7 @@ export const useAnnotationTool = <
     });
   });
 
-  const { currentImageID, currentImageMetadata } = useCurrentImage();
+  const { currentImageID, currentImageMetadata } = useCurrentImage('global');
 
   function jumpToTool(toolID: ToolID) {
     const tool = toolByID.value[toolID];
@@ -151,15 +142,15 @@ export const useAnnotationTool = <
     if (!toolImageFrame) return;
 
     const viewStore = useViewStore();
-    const relevantViewIDs = viewStore.viewIDs.filter((viewID) => {
-      const viewSpec = viewStore.viewSpecs[viewID];
-      const viewDir = viewSpec.props.viewDirection as LPSAxisDir | undefined;
-      return viewDir && getLPSAxisFromDir(viewDir) === toolImageFrame.axis;
+    const relevantViews = viewStore.getAllViews().filter((view) => {
+      if (view.type !== '2D') return false;
+      const axis = view.options.orientation;
+      return axis === toolImageFrame.axis;
     });
 
     const viewSliceStore = useViewSliceStore();
-    relevantViewIDs.forEach((viewID) => {
-      viewSliceStore.updateConfig(viewID, imageID, {
+    relevantViews.forEach((view) => {
+      viewSliceStore.updateConfig(view.id, imageID, {
         slice: tool.slice!,
       });
     });
@@ -205,7 +196,7 @@ export const useAnnotationTool = <
             ...rest,
             imageID: dataIDMap[imageID],
             label: (label && labelIDMap[label]) || '',
-          } as ToolPatch)
+          }) as ToolPatch
       )
       .forEach((tool) => addTool(tool));
   }
@@ -233,12 +224,5 @@ export type AnnotationToolAPI<T extends AnnotationTool> = ReturnType<
   getPoints(id: ToolID): Vector3[];
 };
 
-type UseAnnotationToolBasedStore<T extends AnnotationTool> = StoreState<
-  AnnotationToolAPI<T>
-> &
-  StoreActions<AnnotationToolAPI<T>> &
-  UnwrapNestedRefs<StoreGetters<AnnotationToolAPI<T>>>;
-
 export interface AnnotationToolStore<T extends AnnotationTool = AnnotationTool>
-  extends UseAnnotationToolBasedStore<T>,
-    IToolStore {}
+  extends UnwrapAll<AnnotationToolAPI<T>>, IToolStore {}

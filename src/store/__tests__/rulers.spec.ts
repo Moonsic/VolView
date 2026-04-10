@@ -1,6 +1,4 @@
-import { describe, it, beforeEach } from 'vitest';
-import chai, { expect } from 'chai';
-import chaiSubset from 'chai-subset';
+import { describe, it, beforeEach, expect } from 'vitest';
 
 import { setActivePinia, createPinia } from 'pinia';
 import { useRulerStore } from '@/src/store/tools/rulers';
@@ -8,11 +6,9 @@ import { Ruler } from '@/src/types/ruler';
 import { RequiredWithPartial } from '@/src/types';
 import { ToolID } from '@/src/types/annotation-tool';
 
-chai.use(chaiSubset);
-
 function createRuler(): RequiredWithPartial<
   Ruler,
-  'id' | 'color' | 'strokeWidth' | 'label' | 'labelName' | 'hidden'
+  'id' | 'color' | 'strokeWidth' | 'label' | 'labelName' | 'hidden' | 'metadata'
 > {
   return {
     firstPoint: [1, 1, 1],

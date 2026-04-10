@@ -1,13 +1,12 @@
-import { StoreDefinition } from 'pinia';
+import type { UnwrapRef } from 'vue';
 
 export type Maybe<T> = T | null | undefined;
+
+export type UnwrapAll<T> = { [K in keyof T]: UnwrapRef<T[K]> };
 
 export type NullableValues<T> = {
   [K in keyof T]: T[K] | null;
 };
-
-export type PiniaStoreState<S extends StoreDefinition> =
-  ReturnType<S>['$state'];
 
 export type SampleDataset = {
   name: string;
@@ -20,10 +19,16 @@ export type SampleDataset = {
   };
 };
 
+/**
+ * Sets certain keys to be required and the rest to optional.
+ */
 export type RequiredWithPartial<T, K extends keyof T> = Required<Omit<T, K>> &
   Partial<Pick<T, K>>;
 
-export type PartialWithRequired<T, K extends keyof T> = Pick<T, K> &
+/**
+ * Sets certain keys to be optional and the rest to required.
+ */
+export type PartialWithRequired<T, K extends keyof T> = Required<Pick<T, K>> &
   Partial<Omit<T, K>>;
 
 export type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;

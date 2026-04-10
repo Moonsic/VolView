@@ -1,18 +1,25 @@
 <template>
   <div class="vtk-container-wrapper volume-viewer-container" tabindex="0">
     <div class="vtk-container" data-testid="two-view-container">
+      <v-progress-linear
+        v-if="isImageLoading"
+        indeterminate
+        class="loading-indicator"
+        height="2"
+        color="grey"
+      />
       <div class="vtk-sub-container">
         <vtk-volume-view
           class="vtk-view"
           ref="vtkView"
-          data-testid="vtk-view vtk-two-view"
-          :view-id="id"
+          data-testid="vtk-view vtk-volume-view"
+          :view-id="viewId"
           :image-id="currentImageID"
           :view-direction="viewDirection"
           :view-up="viewUp"
         >
           <vtk-base-volume-representation
-            :view-id="id"
+            :view-id="viewId"
             :image-id="currentImageID"
           ></vtk-base-volume-representation>
           <vtk-orientation-marker></vtk-orientation-marker>
@@ -42,19 +49,20 @@
                 Reset Camera
               </v-tooltip>
             </v-btn>
-            <span class="ml-3">{{ presetName }}</span>
+            <span class="ml-3">{{ currentImageMetadata.name }}</span>
+          </div>
+        </template>
+        <template #top-right>
+          <div class="annotation-cell">
+            <span>{{ presetName }}</span>
+          </div>
+        </template>
+        <template #bottom-right>
+          <div class="annotation-cell" @click.stop>
+            <ViewTypeSwitcher :view-id="viewId" :image-id="currentImageID" />
           </div>
         </template>
       </view-overlay-grid>
-
-      <transition name="loading">
-        <div v-if="isImageLoading" class="overlay-no-events loading">
-          <div>Loading the image</div>
-          <div>
-            <v-progress-circular indeterminate color="blue" />
-          </div>
-        </div>
-      </transition>
     </div>
   </div>
 </template>
@@ -65,7 +73,6 @@ import { useCurrentImage } from '@/src/composables/useCurrentImage';
 import { LPSAxisDir } from '@/src/types/lps';
 import VtkVolumeView from '@/src/components/vtk/VtkVolumeView.vue';
 import { VtkViewApi } from '@/src/types/vtk-types';
-import { LayoutViewProps } from '@/src/types';
 import VtkBaseVolumeRepresentation from '@/src/components/vtk/VtkBaseVolumeRepresentation.vue';
 import { useViewAnimationListener } from '@/src/composables/useViewAnimationListener';
 import CropTool from '@/src/components/tools/crop/CropTool.vue';
@@ -74,9 +81,15 @@ import VtkOrientationMarker from '@/src/components/vtk/VtkOrientationMarker.vue'
 import ViewOverlayGrid from '@/src/components/ViewOverlayGrid.vue';
 import useVolumeColoringStore from '@/src/store/view-configs/volume-coloring';
 import { useResetViewsEvents } from '@/src/components/tools/ResetViews.vue';
-import { whenever } from '@vueuse/core';
+import { onVTKEvent } from '@/src/composables/onVTKEvent';
+import { useViewStore } from '@/src/store/views';
+import ViewTypeSwitcher from '@/src/components/ViewTypeSwitcher.vue';
 
-interface Props extends LayoutViewProps {
+interface Props {
+  viewId: string;
+}
+
+interface VolumeViewerOptions {
   viewDirection: LPSAxisDir;
   viewUp: LPSAxisDir;
 }
@@ -85,7 +98,16 @@ const vtkView = ref<VtkViewApi>();
 
 const props = defineProps<Props>();
 
-const { id: viewId, type: viewType, viewDirection, viewUp } = toRefs(props);
+const { viewId } = toRefs(props);
+
+const viewStore = useViewStore();
+const viewInfo = computed(() => viewStore.getView(viewId.value)!);
+const viewType = computed(() => viewInfo.value.type);
+const viewOptions = computed(
+  () => viewInfo.value.options as VolumeViewerOptions
+);
+const viewDirection = computed(() => viewOptions.value.viewDirection);
+const viewUp = computed(() => viewOptions.value.viewUp);
 
 function resetCamera() {
   if (!vtkView.value) return;
@@ -99,14 +121,16 @@ useWebGLWatchdog(vtkView);
 useViewAnimationListener(vtkView, viewId, viewType);
 
 // base image
-const { currentImageID, isImageLoading } = useCurrentImage();
+const {
+  currentImageID,
+  currentImageData,
+  currentImageMetadata,
+  isImageLoading,
+} = useCurrentImage();
 
-whenever(
-  computed(() => !isImageLoading.value),
-  () => {
-    resetCamera();
-  }
-);
+onVTKEvent(currentImageData, 'onModified', () => {
+  vtkView.value?.requestRender();
+});
 
 // color preset
 const coloringStore = useVolumeColoringStore();

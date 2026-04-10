@@ -25,7 +25,9 @@
           <div class="fill-height d-flex flex-row flex-grow-1">
             <controls-strip :has-data="hasData"></controls-strip>
             <div class="d-flex flex-column flex-grow-1">
-              <layout-grid v-show="hasData" :layout="layout" />
+              <VtkRenderWindowParent>
+                <layout-grid v-show="hasData" :layout="layout" />
+              </VtkRenderWindowParent>
               <welcome-page
                 v-if="!hasData"
                 :loading="showLoading"
@@ -59,7 +61,7 @@
 
 <script lang="ts">
 import type { Vector3 } from '@kitware/vtk.js/types';
-import { computed, defineComponent, nextTick, onMounted, ref } from 'vue';
+import { computed, defineComponent, nextTick,onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { UrlParams, createEventHook } from '@vueuse/core';
 import vtkURLExtract from '@kitware/vtk.js/Common/Core/URLExtract';
@@ -85,10 +87,16 @@ import { useImageStore } from '@/src/store/datasets-images';
 import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
+import { useCurrentImage } from '@/src/composables/useCurrentImage';
 import {
   populateAuthorizationToken,
   stripTokenFromUrl,
 } from '@/src/utils/token';
+
+import { defaultImageMetadata } from '@/src/core/progressiveImage';
+import VtkRenderWindowParent from '@/src/components/vtk/VtkRenderWindowParent.vue';
+import { useSyncWindowing } from '@/src/composables/useSyncWindowing';
+import { normalizeUrlParams } from '@/src/utils/urlParams';
 import { useDatasetStore } from '@/src/store/datasets';
 import { useToolStore } from '@/src/store/tools';
 import { Tools } from '@/src/store/tools/types';
@@ -396,6 +404,7 @@ export default defineComponent({
     ControlsModal,
     WelcomePage,
     // AppBar,
+    VtkRenderWindowParent,
   },
 
   setup() {
@@ -404,6 +413,10 @@ export default defineComponent({
 
     useGlobalErrorHook();
     useKeyboardShortcuts();
+
+    // --- sync handling --- //
+
+    useSyncWindowing();
 
     // --- file handling --- //
 
@@ -420,45 +433,58 @@ export default defineComponent({
       () => loadDataStore.isLoading || hasData.value
     );
 
+    const { currentImageMetadata, isImageLoading } = useCurrentImage();
+    const defaultImageMetadataName = defaultImageMetadata().name;
+    watch(currentImageMetadata, (newMetadata) => {
+      let prefix = '';
+      if (
+        newMetadata?.name &&
+        // wait until we get a real name, but if we never do, show default name
+        (newMetadata.name !== defaultImageMetadataName || !isImageLoading)
+      ) {
+        prefix = `${newMetadata.name} -`;
+      }
+      document.title = `${prefix}VolView`;
+    });
+
     // --- parse URL -- //
 
     populateAuthorizationToken();
     stripTokenFromUrl();
 
-    const urlParams = vtkURLExtract.extractURLParameters() as UrlParams;
+    let urlParams: ReturnType<typeof normalizeUrlParams>;
+    try {
+      urlParams = normalizeUrlParams(
+        vtkURLExtract.extractURLParameters() as UrlParams
+      );
+    } catch (error) {
+      console.error('Failed to parse URL parameters:', error);
+      urlParams = {};
+    }
 
     onMounted(() => {
-      // console.log('B onMounted')
-      if (!urlParams.urls) {
-        return;
-      }
-
       loadUrls(urlParams);
     });
+
+    // --- remote save state URL --- //
+
+    if (import.meta.env.VITE_ENABLE_REMOTE_SAVE && urlParams.save) {
+      const url = Array.isArray(urlParams.save)
+        ? urlParams.save[0]
+        : urlParams.save;
+      useRemoteSaveStateStore().setSaveUrl(url);
+    }
 
     // --- remote server --- //
 
     const serverStore = useServerStore();
-
     onMounted(() => {
       serverStore.connect();
     });
 
-    // --- save state --- //
-
-    if (import.meta.env.VITE_ENABLE_REMOTE_SAVE && urlParams.save) {
-      // Avoid dropping JSON or array query param arguments on the "save" query parameter
-      // by parsing query params without casting to native types in vtkURLExtract.
-      const queryParams = new URLSearchParams(window.location.search);
-      const saveUrl = queryParams.get('save');
-      if (saveUrl) {
-        useRemoteSaveStateStore().setSaveUrl(saveUrl);
-      }
-    }
-
     // --- layout --- //
 
-    const { layout } = storeToRefs(useViewStore());
+    const { visibleLayout } = storeToRefs(useViewStore());
 
     // --- //
 
@@ -470,7 +496,7 @@ export default defineComponent({
       loadFiles,
       hasData,
       showLoading,
-      layout,
+      layout: visibleLayout,
     };
   },
 });

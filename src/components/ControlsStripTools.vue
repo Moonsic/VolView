@@ -11,7 +11,7 @@
     >
       <menu-control-button
         icon="mdi-circle-half-full"
-        name="Window & Level"
+        :name="`Window & Level [${nameToShortcut['Window & Level']}]`"
         :active="active"
         :disabled="noCurrentImage"
         @click="toggle"
@@ -22,7 +22,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Pan">
       <control-button
         icon="mdi-cursor-move"
-        name="Pan"
+        :name="`Pan [${nameToShortcut['Pan']}]`"
         :buttonClass="['tool-btn', active ? 'tool-btn-selected' : '']"
         :disabled="noCurrentImage"
         @click="toggle"
@@ -31,7 +31,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Zoom">
       <control-button
         icon="mdi-magnify-plus-outline"
-        name="Zoom"
+        :name="`Zoom [${nameToShortcut['Zoom']}]`"
         :buttonClass="['tool-btn', active ? 'tool-btn-selected' : '']"
         :disabled="noCurrentImage"
         @click="toggle"
@@ -43,7 +43,7 @@
     >
       <control-button
         icon="mdi-crosshairs"
-        name="Crosshairs"
+        :name="`Crosshairs [${nameToShortcut['Crosshairs']}]`"
         :buttonClass="['tool-btn', active ? 'tool-btn-selected' : '']"
         :disabled="noCurrentImage || isObliqueLayout"
         @click="toggle"
@@ -53,7 +53,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Select">
       <control-button
         icon="mdi-cursor-default"
-        name="Select"
+        :name="`Select [${nameToShortcut['Select']}]`"
         :buttonClass="['tool-btn', active ? 'tool-btn-selected' : '']"
         :disabled="noCurrentImage"
         @click="toggle"
@@ -62,7 +62,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Paint">
       <control-button
         icon="mdi-brush"
-        name="Paint"
+        :name="`Paint [${nameToShortcut['Paint']}]`"
         :buttonClass="['tool-btn', active ? 'tool-btn-selected' : '']"
         :disabled="noCurrentImage || isObliqueLayout"
         @click="toggle"
@@ -74,7 +74,7 @@
     >
       <menu-control-button
         icon="mdi-vector-square"
-        name="Rectangle"
+        :name="`Rectangle [${nameToShortcut['Rectangle']}]`"
         :mobileOnlyMenu="true"
         :active="active"
         :disabled="noCurrentImage || isObliqueLayout"
@@ -86,7 +86,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Polygon">
       <menu-control-button
         icon="mdi-pentagon-outline"
-        name="Polygon"
+        :name="`Polygon [${nameToShortcut['Polygon']}]`"
         :mobileOnlyMenu="true"
         :active="active"
         :disabled="noCurrentImage || isObliqueLayout"
@@ -98,7 +98,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Ruler">
       <menu-control-button
         icon="mdi-ruler"
-        name="Ruler"
+        :name="`Ruler [${nameToShortcut['Ruler']}]`"
         :mobileOnlyMenu="true"
         :active="active"
         :disabled="noCurrentImage || isObliqueLayout"
@@ -112,7 +112,7 @@
     <groupable-item v-slot:default="{ active, toggle }" :value="Tools.Crop">
       <menu-control-button
         icon="mdi-crop"
-        name="Crop"
+        :name="`Crop [${nameToShortcut['Crop']}]`"
         :active="active"
         :disabled="noCurrentImage || isObliqueLayout"
         @click="toggle"
@@ -126,16 +126,13 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from 'vue';
-import { storeToRefs } from 'pinia';
-import { onKeyDown } from '@vueuse/core';
+import { computed, defineComponent, ref, watch } from 'vue';
+import { onKeyDown, useMagicKeys } from '@vueuse/core';
 import { Tools } from '@/src/store/tools/types';
 import ControlButton from '@/src/components/ControlButton.vue';
 import ItemGroup from '@/src/components/ItemGroup.vue';
 import GroupableItem from '@/src/components/GroupableItem.vue';
-import { useDatasetStore } from '@/src/store/datasets';
 import { useToolStore } from '@/src/store/tools';
-import { useViewStore } from '@/src/store/views';
 import MenuControlButton from '@/src/components/MenuControlButton.vue';
 import CropControls from '@/src/components/tools/crop/CropControls.vue';
 import ResetViews from '@/src/components/tools/ResetViews.vue';
@@ -143,6 +140,9 @@ import RulerControls from '@/src/components/RulerControls.vue';
 import RectangleControls from '@/src/components/RectangleControls.vue';
 import PolygonControls from '@/src/components/PolygonControls.vue';
 import WindowLevelControls from '@/src/components/tools/windowing/WindowLevelControls.vue';
+import { actionToKey } from '@/src/composables/useKeyboardShortcuts';
+import { useCurrentImage } from '@/src/composables/useCurrentImage';
+import { useViewStore } from '@/src/store/views';
 
 export default defineComponent({
   components: {
@@ -158,16 +158,17 @@ export default defineComponent({
     WindowLevelControls,
   },
   setup() {
-    const dataStore = useDatasetStore();
     const toolStore = useToolStore();
     const viewStore = useViewStore();
 
-    const noCurrentImage = computed(() => !dataStore.primaryDataset);
+    const { currentImageID } = useCurrentImage();
+    const noCurrentImage = computed(() => !currentImageID.value);
     const currentTool = computed(() => toolStore.currentTool);
-    const { layout: currentLayout } = storeToRefs(viewStore);
-    const isObliqueLayout = computed(
-      () => currentLayout.value?.name === 'Oblique View'
-    );
+    const isObliqueLayout = computed(() => {
+      if (!viewStore.activeView) return false;
+      const view = viewStore.viewByID[viewStore.activeView];
+      return view.type === 'Oblique';
+    });
 
     const paintMenu = ref(false);
     const cropMenu = ref(false);
@@ -179,6 +180,32 @@ export default defineComponent({
       windowingMenu.value = false;
     });
 
+    const keys = useMagicKeys();
+    const enableTempCrosshairs = computed(
+      () => keys[actionToKey.value.temporaryCrosshairs].value
+    );
+    watch(enableTempCrosshairs, (enable) => {
+      if (enable) toolStore.activateTemporaryCrosshairs();
+      else toolStore.deactivateTemporaryCrosshairs();
+    });
+
+    // Rename the computed property to map tool names to their keyboard shortcuts
+    const nameToShortcut = computed(() => {
+      const keyMap = actionToKey.value;
+      return {
+        'Window & Level': keyMap.windowLevel,
+        Pan: keyMap.pan,
+        Zoom: keyMap.zoom,
+        Crosshairs: keyMap.crosshairs,
+        Select: keyMap.select,
+        Paint: keyMap.paint,
+        Rectangle: keyMap.rectangle,
+        Polygon: keyMap.polygon,
+        Ruler: keyMap.ruler,
+        Crop: keyMap.crop,
+      };
+    });
+
     return {
       currentTool,
       setCurrentTool: toolStore.setCurrentTool,
@@ -188,6 +215,7 @@ export default defineComponent({
       paintMenu,
       cropMenu,
       windowingMenu,
+      nameToShortcut,
     };
   },
 });

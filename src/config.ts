@@ -1,11 +1,11 @@
-// import MRICardiacThumbnail from '@/src/assets/samples/MRI-Cardiac.jpg';
-// import MRIPROSTATExThumbnail from '@/src/assets/samples/MRI-PROSTATEx.jpg';
-// import MRAHeadThumbnail from '@/src/assets/samples/MRA-Head_and_Neck.jpg';
-// import CTAHeadThumbnail from '@/src/assets/samples/CTA-Head_and_Neck.jpg';
-// import USFetusThumbnail from '@/src/assets/samples/3DUS-Fetus.jpg';
+import MRICardiacThumbnail from '@/src/assets/samples/MRI-Cardiac.jpg';
+import MRIPROSTATExThumbnail from '@/src/assets/samples/MRI-PROSTATEx.jpg';
+import MRAHeadThumbnail from '@/src/assets/samples/MRA-Head_and_Neck.jpg';
+import CTAHeadThumbnail from '@/src/assets/samples/CTA-Head_and_Neck.jpg';
+import USFetusThumbnail from '@/src/assets/samples/3DUS-Fetus.jpg';
 import { SegmentMask } from '@/src/types/segment';
-import { Layout, LayoutDirection } from './types/layout';
-import { ViewSpec } from './types/views';
+import type { LayoutConfig } from './utils/layoutParsing';
+import type { ViewInfoInit } from './types/views';
 import { SampleDataset } from './types';
 import { Action } from './constants';
 
@@ -25,178 +25,86 @@ export const InitViewIDs: Record<string, string> = {
   ObliqueThree: 'Oblique3D',
 };
 
-/**
- * View spec for the initial view IDs.
- */
-export const InitViewSpecs: Record<string, ViewSpec> = {
-  [InitViewIDs.Coronal]: {
-    viewType: '2D',
-    props: {
-      viewDirection: 'Posterior',
-      viewUp: 'Superior',
+export const getAvailableViews = () => {
+  const list: ViewInfoInit[] = [
+    {
+      name: 'Oblique',
+      type: 'Oblique',
+      dataID: null,
+      options: {},
     },
-  },
-  [InitViewIDs.Sagittal]: {
-    viewType: '2D',
-    props: {
-      viewDirection: 'Right',
-      viewUp: 'Superior',
+    {
+      name: 'Volume',
+      type: '3D',
+      dataID: null,
+      options: {
+        viewDirection: 'Posterior',
+        viewUp: 'Superior',
+      },
     },
-  },
-  [InitViewIDs.Axial]: {
-    viewType: '2D',
-    props: {
-      viewDirection: 'Superior',
-      viewUp: 'Anterior',
+    {
+      name: 'Coronal',
+      type: '2D',
+      dataID: null,
+      options: {
+        orientation: 'Coronal',
+      },
     },
-  },
+    {
+      name: 'Sagittal',
+      type: '2D',
+      dataID: null,
+      options: {
+        orientation: 'Sagittal',
+      },
+    },
+    {
+      name: 'Axial',
+      type: '2D',
+      dataID: null,
+      options: {
+        orientation: 'Axial',
+      },
+    },
+  ];
 
+  const byName = list.reduce(
+    (acc, view) => ({ ...acc, [view.name]: view }),
+    {} as Record<string, ViewInfoInit>
+  );
 
-
-  [InitViewIDs.ObliqueCoronal]: {
-    viewType: 'Oblique',
-    props: {
-      viewDirection: 'Posterior',
-      viewUp: 'Superior',
-    },
-  },
-  [InitViewIDs.ObliqueSagittal]: {
-    viewType: 'Oblique',
-    props: {
-      viewDirection: 'Right', // 默认Right
-      viewUp: 'Superior',
-    },
-  },
-  [InitViewIDs.ObliqueAxial]: {
-    viewType: 'Oblique',
-    props: {
-      viewDirection: 'Superior',
-      viewUp: 'Anterior',
-    },
-  },
-
-
-
-
-  [InitViewIDs.Three]: {
-    viewType: '3D',
-    props: {
-      viewDirection: 'Posterior',
-      viewUp: 'Superior',
-    },
-  },
-  [InitViewIDs.ObliqueThree]: {
-    viewType: 'Oblique3D',
-    props: {
-      viewDirection: 'Posterior',
-      viewUp: 'Superior',
-      slices: [
-        {
-          viewID: InitViewIDs.ObliqueSagittal,
-          axis: 'Sagittal',
-        },
-        {
-          viewID: InitViewIDs.ObliqueCoronal,
-          axis: 'Coronal',
-        },
-        {
-          viewID: InitViewIDs.ObliqueAxial,
-          axis: 'Axial',
-        },
-      ],
-    },
-  },
+  return { list, byName };
 };
 
-/**
- * The default view spec.
- */
-export const DefaultViewSpec = InitViewSpecs[InitViewIDs.Axial];
-// export const DefaultViewSpec = InitViewSpecs[InitViewIDs.ObliqueAxial];
-
-/**
- * The default layout.
- */
-export const DefaultLayoutName = 'Quad View';
-// export const DefaultLayoutName = 'Oblique View';
-
-/**
- * Defines the default layouts.
- */
-export const Layouts: Record<string, Layout> = [
-  {
-    name: 'Axial Only',
-    direction: LayoutDirection.H,
-    items: [InitViewIDs.Axial],
-  },
-  {
-    name: 'Axial Primary',
-    direction: LayoutDirection.V,
+export const DefaultNamedLayouts: Record<string, LayoutConfig> = {
+  Oblique: [['oblique']],
+  'Four Up': [
+    ['axial', 'coronal'],
+    ['sagittal', 'volume'],
+  ],
+  'Axial Coronal Sagittal': {
+    direction: 'row',
     items: [
-      InitViewIDs.Axial,
+      'axial',
       {
-        direction: LayoutDirection.H,
-        items: [InitViewIDs.Three, InitViewIDs.Coronal, InitViewIDs.Sagittal],
+        direction: 'column',
+        items: ['coronal', 'sagittal'],
       },
     ],
   },
-  {
-    name: '3D Primary',
-    direction: LayoutDirection.V,
+  'Axial Only': [['axial']],
+  '3D Only': [['volume']],
+  '3D Primary': {
+    direction: 'row',
     items: [
-      InitViewIDs.Three,
+      'volume',
       {
-        direction: LayoutDirection.H,
-        items: [InitViewIDs.Coronal, InitViewIDs.Sagittal, InitViewIDs.Axial],
+        direction: 'column',
+        items: ['axial', 'coronal', 'sagittal'],
       },
     ],
   },
-  // Coronal  冠状面：任何垂直于人体，将身体分为前后（腹部和背部）两个部分的平面。
-  // Sagittal 矢状面：解剖学中与中线平行的想象平面。
-  // Axial    轴面：一种想象中的平面，它将褶皱中背斜或褶皱中褶皱的两个肢体之间的角度一分为二。
-  // Three    3D效果
-
-  // items 表示位置
-  // 新的位置，3D在右下角
-
-  // GGG: 我觉得3D很占内存，一开始默认的时候应该可以全部清空，之前没想到。GGG
-  // 去掉之后DefaultLayoutName改成 'Oblique View'，也没报错。
-  {
-    name: 'Quad View',
-    direction: LayoutDirection.H,
-    items: [
-      // {
-      //   direction: LayoutDirection.V,
-      //   items: [InitViewIDs.Coronal, InitViewIDs.Sagittal],
-      // },
-      // {
-      //   direction: LayoutDirection.V,
-      //   items: [InitViewIDs.Axial, InitViewIDs.Three],
-      // },
-    ],
-  },
-  {
-    name: 'Oblique View',
-    direction: LayoutDirection.H,
-    items: [
-      {
-        direction: LayoutDirection.V,
-        items: [InitViewIDs.ObliqueCoronal, InitViewIDs.ObliqueSagittal],
-      },
-      {
-        direction: LayoutDirection.V,
-        items: [InitViewIDs.ObliqueAxial, InitViewIDs.ObliqueThree],
-      },
-    ],
-  },
-  {
-    name: '3D Only',
-    direction: LayoutDirection.H,
-    items: [InitViewIDs.Three],
-  },
-].reduce((layouts, layout) => {
-  return { ...layouts, [layout.name]: layout };
-}, {}); // 这3行代码将数组转成对象{}
+};
 
 export const SAMPLE_DATA: SampleDataset[] = [
   // {
@@ -256,21 +164,15 @@ export const TOOL_COLORS = [
 export const STROKE_WIDTH_ANNOTATION_TOOL_DEFAULT = 1;
 
 export const RULER_LABEL_DEFAULTS = {
-  red: { color: 'red' },
-  green: { color: '#00ff00' },
-  white: { color: '#ffffff' },
+  'Label 1': { color: 'red' },
 };
 
 export const RECTANGLE_LABEL_DEFAULTS = {
-  artifact: { color: '#888888' },
-  innocuous: { color: '#00ff00' },
-  lesion: { color: 'red' },
+  'Label 1': { color: 'red' },
 };
 
 export const POLYGON_LABEL_DEFAULTS = {
-  red: { color: 'red' },
-  green: { color: '#00ff00' },
-  white: { color: '#ffffff' },
+  'Label 1': { color: 'red' },
 };
 
 export const DEFAULT_PRESET_BY_MODALITY: Record<string, string> = {
@@ -278,14 +180,16 @@ export const DEFAULT_PRESET_BY_MODALITY: Record<string, string> = {
   MR: 'CT-Coronary-Arteries-2',
   US: 'US-Fetal',
 };
+
 // export const DEFAULT_PRESET = 'CT-AAA';
 export const DEFAULT_PRESET = 'MR-MIP'; // GGG 默认MR-MIP 灰色的3D效果
+
 
 export const LAYER_PRESET_BY_MODALITY: Record<string, string> = {
   ...DEFAULT_PRESET_BY_MODALITY,
   PT: '2hot-opaque',
 };
-export const LAYER_PRESET_DEFAULT = 'Blue to Red Rainbow';
+export const LAYER_PRESET_DEFAULT = '2hot-opaque';
 
 // Keyboard shortcuts/hotkeys. Can add modifiers: 'Shift+Ctrl+a'
 export const ACTION_TO_KEY = {
@@ -294,8 +198,13 @@ export const ACTION_TO_KEY = {
   zoom: 'z',
   ruler: 'm',
   paint: 'p',
+  paintEraser: 'e',
+  brushSizeModifier: 'ctrl',
+  decreaseBrushSize: '[',
+  increaseBrushSize: ']',
   rectangle: 'r',
   crosshairs: 'c',
+  temporaryCrosshairs: 'shift-c',
   crop: 'b',
   polygon: 'g',
   mergeNewPolygon: 'Shift',
@@ -303,9 +212,13 @@ export const ACTION_TO_KEY = {
 
   nextSlice: 'arrowdown',
   previousSlice: 'arrowup',
+  grabSlice: 'Alt',
 
   decrementLabel: 'q',
   incrementLabel: 'w',
+
+  deleteCurrentImage: 'ctrl+.',
+  clearScene: 'ctrl+/',
 
   showKeyboardShortcuts: '?',
 } satisfies Record<Action, string>;
@@ -313,20 +226,8 @@ export const ACTION_TO_KEY = {
 export const DEFAULT_SEGMENT_MASKS: SegmentMask[] = [
   {
     value: 1,
-    name: 'Tissue',
-    color: [255, 0, 0, 255],
-    visible: true,
-  },
-  {
-    value: 2,
-    name: 'Liver',
-    color: [0, 255, 0, 255],
-    visible: true,
-  },
-  {
-    value: 3,
-    name: 'Heart',
-    color: [0, 0, 255, 255],
+    name: 'Segment 1',
+    color: [255, 255, 0, 255],
     visible: true,
   },
 ];
@@ -525,4 +426,4 @@ export const CATEGORICAL_COLORS = [
   [228, 114, 126],
   [89, 38, 119],
   [105, 47, 61],
-];
+] as const;

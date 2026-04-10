@@ -10,29 +10,6 @@ import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
 import vtkVolumeMapper from '@kitware/vtk.js/Rendering/Core/VolumeMapper';
 import vtkVolumeProperty from '@kitware/vtk.js/Rendering/Core/VolumeProperty';
 import { Vector3 } from '@kitware/vtk.js/types';
-import { vec3 } from 'gl-matrix';
-
-/**
- * Sets the volume sampling distance.
- * @param mapper
- * @param distance A value betweeen 0 and 1.
- * @param imageData
- */
-export function setSamplingDistance(
-  mapper: vtkVolumeMapper,
-  distance: number,
-  imageData: vtkImageData
-) {
-  const sampleDistance =
-    0.7 *
-    Math.sqrt(
-      imageData
-        .getSpacing()
-        .map((v) => v * v)
-        .reduce((a, b) => a + b, 0)
-    );
-  mapper.setSampleDistance(sampleDistance * 2 ** (distance * 3.0 - 1.5));
-}
 
 /**
  * Sets the edge gradient.
@@ -49,7 +26,7 @@ export function setEdgeGradient(
   for (let component = 0; component < numberOfComponents; component++) {
     if (edgeGradient === 0) {
       property.setUseGradientOpacity(component, false);
-      // eslint-disable-next-line no-continue
+
       continue;
     }
 
@@ -106,7 +83,6 @@ export interface SetCinematicVolumeSamplingParameters {
   enabled: boolean;
   mapper: vtkVolumeMapper;
   quality: number;
-  isAnimating: boolean;
   image: vtkImageData;
 }
 
@@ -114,36 +90,21 @@ export function setCinematicVolumeSampling({
   enabled,
   mapper,
   quality,
-  isAnimating,
   image,
 }: SetCinematicVolumeSamplingParameters) {
-  if (isAnimating) {
-    mapper.setSampleDistance(0.75);
-    mapper.setMaximumSamplesPerRay(1000);
-    mapper.setGlobalIlluminationReach(0);
-    mapper.setComputeNormalFromOpacity(false);
-  } else {
-    const dims = image.getDimensions();
-    const spacing = image.getSpacing();
-    const spatialDiagonal = vec3.length(
-      vec3.fromValues(
-        dims[0] * spacing[0],
-        dims[1] * spacing[1],
-        dims[2] * spacing[2]
-      )
-    );
+  const spacing = image.getSpacing();
+  const spatialDiagonal = getDiagonalLength(image.getBounds()) ?? 0;
 
-    // Use the average spacing for sampling by default
-    let sampleDistance = spacing.reduce((a, b) => a + b) / 3.0;
-    // Adjust the volume sampling by the quality slider value
-    sampleDistance /= quality > 1 ? 0.5 * quality ** 2 : 1.0;
-    const samplesPerRay = spatialDiagonal / sampleDistance + 1;
-    mapper.setMaximumSamplesPerRay(samplesPerRay);
-    mapper.setSampleDistance(sampleDistance);
-    // Adjust the global illumination reach by volume quality slider
-    mapper.setGlobalIlluminationReach(enabled ? 0.25 * quality : 0);
-    mapper.setComputeNormalFromOpacity(!enabled && quality > 2);
-  }
+  // Use the average spacing for sampling by default
+  let sampleDistance = spacing.reduce((a, b) => a + b) / 3.0;
+  // Adjust the volume sampling by the quality slider value
+  sampleDistance /= quality > 1 ? 0.5 * quality ** 2 : 1.0;
+  const samplesPerRay = spatialDiagonal / sampleDistance + 1;
+  mapper.setMaximumSamplesPerRay(samplesPerRay);
+  mapper.setSampleDistance(sampleDistance);
+  // Adjust the global illumination reach by volume quality slider
+  mapper.setGlobalIlluminationReach(enabled ? 0.25 * quality : 0);
+  mapper.setComputeNormalFromOpacity(!enabled && quality > 2);
 }
 
 export interface SetCinematicVolumeShadingParameters {
@@ -165,10 +126,10 @@ export function setCinematicVolumeShading({
   specular,
   component = 0,
 }: SetCinematicVolumeShadingParameters) {
+  const diagonalLength = getDiagonalLength(image.getBounds()) ?? 1;
   property.setScalarOpacityUnitDistance(
     0,
-    (0.5 * getDiagonalLength(image.getBounds())) /
-      Math.max(...image.getDimensions())
+    (0.5 * diagonalLength) / Math.max(...image.getDimensions())
   );
 
   property.setShade(true);
@@ -199,7 +160,6 @@ export function setCinematicVolumeScatter({
   mapper,
   blending,
 }: SetCinematicVolumeScatterParameters) {
-  (window as any).am = mapper;
   mapper.setVolumetricScatteringBlending(enabled ? blending : 0);
 }
 

@@ -10,13 +10,18 @@ import {
   type DataSelection,
   selectionEquals,
 } from '@/src/utils/dataSelection';
-import { useImageStore } from '../store/datasets-images';
-import { useDatasetStore } from '../store/datasets';
+import { useImageCacheStore } from '@/src/store/image-cache';
+import { defaultImageMetadata } from '@/src/core/progressiveImage';
+import { useImageStore } from '@/src/store/datasets-images';
+import { useDatasetStore } from '@/src/store/datasets';
 
-import { useMultiSelection } from '../composables/useMultiSelection';
-import { useLayersStore } from '../store/datasets-layers';
-import { useViewSliceStore } from '../store/view-configs/slicing';
-import { useViewCameraStore } from '../store/view-configs/camera';
+import { useMultiSelection } from '@/src/composables/useMultiSelection';
+import { useLayersStore } from '@/src/store/datasets-layers';
+import { useViewSliceStore } from '@/src/store/view-configs/slicing';
+import { useViewCameraStore } from '@/src/store/view-configs/camera';
+import { useCurrentImage } from '@/src/composables/useCurrentImage';
+import { useViewStore } from '@/src/store/views';
+import { IMAGE_DRAG_MEDIA_TYPE } from '@/src/constants';
 
 function imageCacheKey(dataID: string) {
   return `image-${dataID}`;
@@ -35,26 +40,24 @@ export default defineComponent({
     const segmentGroupStore = useSegmentGroupStore();
     const viewSliceStore = useViewSliceStore();
     const viewCameraStore = useViewCameraStore();
+    const imageCacheStore = useImageCacheStore();
+    const viewStore = useViewStore();
 
-    const primarySelection = computed(() => dataStore.primarySelection);
+    const { currentImageID } = useCurrentImage();
 
-    const nonDICOMImages = computed(() =>
-      imageStore.idList.filter((id) => isRegularImage(id))
-    );
+    const nonDICOMImages = computed(() => imageStore.idList);
 
     const images = computed(() => {
-      const { metadata } = imageStore;
-
       const layerImages = layersStore
-        .getLayers(primarySelection.value)
+        .getLayers(currentImageID.value)
         .filter(({ selection }) => isRegularImage(selection));
       const layerImageIDs = layerImages.map(({ selection }) => selection);
       const loadedLayerImageIDs = layerImages
-        .filter(({ id }) => id in layersStore.layerImages)
+        .filter(({ id }) => imageCacheStore.imageById[id]?.isLoaded())
         .map(({ selection }) => selection);
 
       const selectedImageID =
-        isRegularImage(primarySelection.value) && primarySelection.value;
+        isRegularImage(currentImageID.value) && currentImageID.value;
 
       return nonDICOMImages.value.map((id) => {
         const selectionKey = id as DataSelection;
@@ -62,15 +65,17 @@ export default defineComponent({
         const layerLoaded = loadedLayerImageIDs.includes(id);
         const layerLoading = isLayer && !layerLoaded;
         const layerable =
-          id !== selectedImageID && primarySelection.value != null;
+          id !== selectedImageID && currentImageID.value != null;
+        const metadata =
+          imageCacheStore.getImageMetadata(id) ?? defaultImageMetadata();
         return {
           id,
           cacheKey: imageCacheKey(id),
           // for UI selection
           selectionKey,
-          name: metadata[id].name,
-          dimensions: metadata[id].dimensions,
-          spacing: [...metadata[id].spacing].map((s) => s.toFixed(2)),
+          name: metadata.name,
+          dimensions: metadata.dimensions,
+          spacing: [...metadata.spacing].map((s) => s.toFixed(2)),
           layerable,
           layerLoading,
           isLayer,
@@ -84,8 +89,8 @@ export default defineComponent({
               console.log('primarySelection.value :>> ', primarySelection.value);
               console.log('selectionKey :>> ', selectionKey);
               if (isLayer)
-                layersStore.deleteLayer(primarySelection.value, selectionKey);
-              else layersStore.addLayer(primarySelection.value, selectionKey);
+                layersStore.deleteLayer(currentImageID.value, selectionKey);
+              else layersStore.addLayer(currentImageID.value, selectionKey);
             }
           },
         };
@@ -117,7 +122,8 @@ export default defineComponent({
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);
           if (!(cacheKey in thumbnails)) {
-            const imageData = imageStore.dataIndex[id];
+            const imageData = imageCacheStore.getVtkImageData(id);
+            if (!imageData) return;
             const canvasIM = thumbnailer.generate(imageData);
             const imageURI = thumbnailer.imageDataToDataURI(canvasIM, 100, 100);
             const dims = imageData.getDimensions();
@@ -165,13 +171,25 @@ export default defineComponent({
     }
 
     function convertToLabelMap(key: string) {
-      if (primarySelection.value) {
-        segmentGroupStore.convertImageToLabelmap(key, primarySelection.value);
+      if (currentImageID.value) {
+        segmentGroupStore.convertImageToLabelmap(key, currentImageID.value);
       }
     }
 
     function removeData(id: string) {
       dataStore.remove(id);
+    }
+
+    function setViewImage(imageID: string) {
+      viewStore.setDataForActiveView(imageID);
+    }
+
+    function showInAllViews(imageID: string) {
+      viewStore.setDataForAllViews(imageID);
+    }
+
+    function onDragStart(imageID: string, event: DragEvent) {
+      event.dataTransfer?.setData(IMAGE_DRAG_MEDIA_TYPE, imageID);
     }
 
     return {
@@ -184,14 +202,14 @@ export default defineComponent({
       convertToLabelMap,
       images,
       thumbnails,
-      primarySelection,
+      currentImageID,
       selectionEquals,
-      setPrimarySelection: (sel: DataSelection) => {
-        dataStore.setPrimarySelection(sel);
-      },
       sameSpaceImages,
       toggleSyncImages,
       isSync,
+      setViewImage,
+      showInAllViews,
+      onDragStart,
     };
   },
 });
@@ -249,9 +267,9 @@ export default defineComponent({
       </v-row>
     </v-container>
     <item-group
-      :model-value="primarySelection"
+      :model-value="currentImageID"
       :equals-test="selectionEquals"
-      @update:model-value="setPrimarySelection"
+      @update:model-value="setViewImage"
     >
       <groupable-item
         v-for="image in images"
@@ -269,7 +287,9 @@ export default defineComponent({
           :image-url="(thumbnails[image.cacheKey] || {}).imageURI || ''"
           :image-size="100"
           :id="image.id"
+          draggable="true"
           @click="select"
+          @dragstart="onDragStart(image.id, $event)"
         >
           <div class="d-flex flex-row justify-space-between">
             <div class="allow-trunc-text-flex-child">
@@ -311,7 +331,7 @@ export default defineComponent({
                     <v-icon v-if="!image.layerable" class="mr-1">
                       mdi-alert
                     </v-icon>
-                    Convert to Segment Group
+                    Add as Segment Group
                     <v-tooltip
                       activator="parent"
                       location="end"
@@ -320,6 +340,9 @@ export default defineComponent({
                     >
                       Must load a background image before converting
                     </v-tooltip>
+                  </v-list-item>
+                  <v-list-item @click="showInAllViews(image.id)">
+                    Show in all views
                   </v-list-item>
                   <v-list-item @click="removeData(image.id)">
                     Delete

@@ -1,17 +1,20 @@
 <script lang="ts">
 import { computed, defineComponent, reactive, toRefs, watch } from 'vue';
-import { Image } from 'itk-wasm';
 import type { PropType } from 'vue';
 import GroupableItem from '@/src/components/GroupableItem.vue';
 import { DataSelection, isDicomImage } from '@/src/utils/dataSelection';
-import { getDisplayName, useDICOMStore } from '../store/datasets-dicom';
-import { useDatasetStore } from '../store/datasets';
-import { useMultiSelection } from '../composables/useMultiSelection';
-import { useMessageStore } from '../store/messages';
-import { useLayersStore } from '../store/datasets-layers';
-import PersistentOverlay from './PersistentOverlay.vue';
-
-const canvas = document.createElement('canvas');
+import { ThumbnailStrategy } from '@/src/core/streaming/chunkImage';
+import { useImageCacheStore } from '@/src/store/image-cache';
+import DicomChunkImage from '@/src/core/streaming/dicomChunkImage';
+import { getDisplayName, useDICOMStore } from '@/src/store/datasets-dicom';
+import { useDatasetStore } from '@/src/store/datasets';
+import { useMultiSelection } from '@/src/composables/useMultiSelection';
+import { useMessageStore } from '@/src/store/messages';
+import { useLayersStore } from '@/src/store/datasets-layers';
+import PersistentOverlay from '@/src/components//PersistentOverlay.vue';
+import { useCurrentImage } from '@/src/composables/useCurrentImage';
+import { IMAGE_DRAG_MEDIA_TYPE } from '@/src/constants';
+import { useViewStore } from '@/src/store/views';
 
 function dicomCacheKey(volKey: string) {
   return `dicom-${volKey}`;
@@ -20,43 +23,6 @@ function dicomCacheKey(volKey: string) {
 type Thumbnail =
   | { kind: 'image'; value: string }
   | { kind: 'text'; value: string };
-
-// Assume itkImage type is Uint8Array
-function itkImageToURI(itkImage: Image) {
-  const [width, height] = itkImage.size;
-  const im = new ImageData(width, height);
-  const arr32 = new Uint32Array(im.data.buffer);
-  const itkBuf = itkImage.data;
-  if (!itkBuf) {
-    return '';
-  }
-
-  for (let i = 0; i < itkBuf.length; i += 1) {
-    const byte = itkBuf[i] as number;
-    // ABGR order
-    // eslint-disable-next-line no-bitwise
-    arr32[i] = (255 << 24) | (byte << 16) | (byte << 8) | byte;
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.putImageData(im, 0, 0);
-    return canvas.toDataURL('image/png');
-  }
-  return '';
-}
-
-async function generateDICOMThumbnail(
-  dicomStore: ReturnType<typeof useDICOMStore>,
-  volumeKey: string
-) {
-  if (volumeKey in dicomStore.volumeInfo) {
-    return (await dicomStore.getVolumeThumbnail(volumeKey)) as Image;
-  }
-  throw new Error('No matching volume key in dicomStore');
-}
 
 export default defineComponent({
   name: 'PatientStudyVolumeBrowser',
@@ -75,17 +41,19 @@ export default defineComponent({
     const dicomStore = useDICOMStore();
     const datasetStore = useDatasetStore();
     const layersStore = useLayersStore();
+    const imageCacheStore = useImageCacheStore();
+    const viewStore = useViewStore();
 
-    const primarySelectionRef = computed(() => datasetStore.primarySelection);
+    const { currentImageID } = useCurrentImage();
     const volumes = computed(() => {
       const volumeInfo = dicomStore.volumeInfo;
-      const primarySelection = primarySelectionRef.value;
+      const primarySelection = currentImageID.value;
       const layerVolumes = layersStore
         .getLayers(primarySelection)
         .filter(({ selection }) => isDicomImage(selection));
       const layerVolumeKeys = layerVolumes.map(({ selection }) => selection);
       const loadedLayerVolumeKeys = layerVolumes
-        .filter(({ id }) => id in layersStore.layerImages)
+        .filter(({ id }) => imageCacheStore.imageById[id]?.isLoaded())
         .map(({ selection }) => selection);
       const selectedVolumeKey =
         isDicomImage(primarySelection) && primarySelection;
@@ -131,11 +99,15 @@ export default defineComponent({
             return;
           }
 
+          const image = imageCacheStore.imageById[key];
+          if (!image || !(image instanceof DicomChunkImage)) return;
+
           try {
-            const thumb = await generateDICOMThumbnail(dicomStore, key);
+            const thumb = await image.getThumbnail(
+              ThumbnailStrategy.MiddleSlice
+            );
             if (thumb !== null) {
-              const encodedImage = itkImageToURI(thumb);
-              thumbnailCache[cacheKey] = { kind: 'image', value: encodedImage };
+              thumbnailCache[cacheKey] = { kind: 'image', value: thumb };
             } else {
               thumbnailCache[cacheKey] = {
                 kind: 'text',
@@ -183,6 +155,16 @@ export default defineComponent({
       selected.value = [];
     };
 
+    // dragging
+
+    function onDragStart(imageID: string, event: DragEvent) {
+      event.dataTransfer?.setData(IMAGE_DRAG_MEDIA_TYPE, imageID);
+    }
+
+    function showInAllViews(volumeKey: string) {
+      viewStore.setDataForAllViews(volumeKey);
+    }
+
     return {
       selected,
       selectedAll,
@@ -192,6 +174,8 @@ export default defineComponent({
       volumes,
       removeData,
       removeSelectedDICOMVolumes,
+      onDragStart,
+      showInAllViews,
     };
   },
 });
@@ -245,7 +229,9 @@ export default defineComponent({
               min-height="180px"
               min-width="180px"
               :html-title="volume.info.SeriesDescription"
+              draggable="true"
               @click="select"
+              @dragstart="onDragStart(volume.info.VolumeID, $event)"
             >
               <v-row no-gutters class="pa-0" justify="center">
                 <div class="thumbnail-container">
@@ -328,6 +314,9 @@ export default defineComponent({
                           <span v-if="volume.isLayer">Remove as layer</span>
                           <span v-else>Add as layer</span>
                         </template>
+                      </v-list-item>
+                      <v-list-item @click="showInAllViews(volume.key)">
+                        Show in all views
                       </v-list-item>
                       <v-list-item @click="removeData(volume.key)">
                         Delete

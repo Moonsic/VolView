@@ -2,6 +2,7 @@ import { Manifest, StateFile } from '@/src/io/state-file/schema';
 import { Maybe } from '@/src/types';
 import type { AnnotationToolStore } from '@/src/store/tools/useAnnotationTool';
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { useCropStore } from './crop';
 import { useCrosshairsToolStore } from './crosshairs';
 import { usePaintToolStore } from './paint';
@@ -9,10 +10,6 @@ import { useRulerStore } from './rulers';
 import { useRectangleStore } from './rectangles';
 import { AnnotationToolType, IToolStore, Tools } from './types';
 import { usePolygonStore } from './polygons';
-
-interface State {
-  currentTool: Tools;
-}
 
 // TODO move these types out
 export const AnnotationToolStoreMap: Record<
@@ -64,56 +61,76 @@ function teardownTool(tool: Tools) {
   }
 }
 
-export const useToolStore = defineStore('tool', {
-  state: (): State => ({
-    currentTool: Tools.Close,
+export const useToolStore = defineStore('tool', () => {
+  const currentTool = ref(Tools.Close);
+    // currentTool: Tools.Close,
     // currentTool: Tools.WindowLevel,
     // currentTool: Tools.Pan,
-  }),
-  actions: {
-    setCurrentTool(tool: Tools) {
-      // GGG console.log('tool',tool)
-      if (!setupTool(tool)) {
-        return;
-      }
-      // console.log('this.currentTool 旧->新',this.currentTool,tool)
+  const toolBeforeTemporaryCrosshairs = ref<Tools>(currentTool.value);
 
-      teardownTool(this.currentTool);
-      this.currentTool = tool;
-      // console.log('this.currentTool 2',this.currentTool)
+  function setCurrentTool(tool: Tools) {
+    if (currentTool.value === tool) {
+      return;
+    }
+    if (!setupTool(tool)) {
+      return;
+    }
+    teardownTool(currentTool.value);
+    currentTool.value = tool;
+  }
 
-    },
-    serialize(state: StateFile) {
-      const { tools } = state.manifest;
+  function activateTemporaryCrosshairs() {
+    toolBeforeTemporaryCrosshairs.value = currentTool.value;
+    setCurrentTool(Tools.Crosshairs);
+    useCrosshairsToolStore().setDragging(true);
+  }
 
-      Object.values(ToolStoreMap)
-        .map((useStore) => useStore?.())
-        .filter((store): store is IToolStore => !!store)
-        .forEach((store) => {
-          store.serialize?.(state);
-        });
+  function deactivateTemporaryCrosshairs() {
+    useCrosshairsToolStore().setDragging(false);
+    setCurrentTool(toolBeforeTemporaryCrosshairs.value);
+  }
 
-      tools.current = this.currentTool;
-    },
-    deserialize(
-      manifest: Manifest,
-      segmentGroupIDMap: Record<string, string>,
-      dataIDMap: Record<string, string>
-    ) {
-      const { tools } = manifest;
+  function serialize(state: StateFile) {
+    const { tools } = state.manifest;
+    if (!tools) return;
 
-      usePaintToolStore().deserialize(manifest, segmentGroupIDMap);
+    Object.values(ToolStoreMap)
+      .map((useStore) => useStore?.())
+      .filter((store): store is IToolStore => !!store)
+      .forEach((store) => {
+        store.serialize?.(state);
+      });
 
-      Object.values(ToolStoreMap)
-        // paint store uses segmentGroupIDMap
-        .filter((useStore) => useStore !== usePaintToolStore)
-        .map((useStore) => useStore?.())
-        .filter((store): store is IToolStore => !!store)
-        .forEach((store) => {
-          store.deserialize?.(manifest, dataIDMap);
-        });
+    tools.current = currentTool.value;
+  }
 
-      this.currentTool = tools.current;
-    },
-  },
+  function deserialize(
+    manifest: Manifest,
+    segmentGroupIDMap: Record<string, string>,
+    dataIDMap: Record<string, string>
+  ) {
+    usePaintToolStore().deserialize(manifest, segmentGroupIDMap);
+
+    Object.values(ToolStoreMap)
+      // paint store uses segmentGroupIDMap
+      .filter((useStore) => useStore !== usePaintToolStore)
+      .map((useStore) => useStore?.())
+      .filter((store): store is IToolStore => !!store)
+      .forEach((store) => {
+        store.deserialize?.(manifest, dataIDMap);
+      });
+
+    if (manifest.tools?.current) {
+      currentTool.value = manifest.tools.current;
+    }
+  }
+
+  return {
+    currentTool,
+    setCurrentTool,
+    serialize,
+    deserialize,
+    activateTemporaryCrosshairs,
+    deactivateTemporaryCrosshairs,
+  };
 });

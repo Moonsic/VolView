@@ -2,8 +2,6 @@ import { Maybe } from '../types';
 
 export type DoubleKeyRecord<V> = Record<string, Record<string, V>>;
 
-/* eslint-disable no-param-reassign */
-
 export function patchDoubleKeyRecord<V>(
   record: DoubleKeyRecord<V>,
   k1: string,
@@ -27,7 +25,19 @@ export function deleteSecondKey<V>(record: DoubleKeyRecord<V>, k2: string) {
   });
 }
 
-/* eslint-enable no-param-reassign */
+export function deleteFirstKey<V>(record: DoubleKeyRecord<V>, k1: string) {
+  delete record[k1];
+}
+
+export function deleteEntry<V>(
+  record: DoubleKeyRecord<V>,
+  k1: string,
+  k2: string
+) {
+  if (record[k1]) {
+    delete record[k1][k2];
+  }
+}
 
 export function getDoubleKeyRecord<V>(
   record: DoubleKeyRecord<V>,
@@ -36,4 +46,15 @@ export function getDoubleKeyRecord<V>(
 ): Maybe<V> {
   if (k1 == null || k2 == null) return null;
   return record[k1]?.[k2];
+}
+
+export function forEachEntry<V>(
+  record: DoubleKeyRecord<V>,
+  cb: (k1: string, k2: string, value: V) => void
+) {
+  Object.entries(record).forEach(([k1, inner]) => {
+    Object.entries(inner).forEach(([k2, value]) => {
+      cb(k1, k2, value);
+    });
+  });
 }
