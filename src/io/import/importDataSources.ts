@@ -127,7 +127,7 @@ const importDicomFiles = async (
 };
 
 export async function importDataSources(dataSources: DataSource[]) {
-  // console.log('2 :>> ', new Date().getTime());
+  // GZC console.log('2 :>> ', new Date().getTime());
 
   const importContext = {
     fetchFileCache: new Map<string, File>(),

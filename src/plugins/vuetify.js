@@ -41,7 +41,7 @@ const vuetify = createVuetify({
   display: {
     mobileBreakpoint: 'lg',
     thresholds: {
-      lg: 10240, // 原来是1024，目的是让左侧列表永远出不来
+      lg: 10240, // GZC 原来是1024，目的是让左侧列表永远出不来
     },
   },
 });

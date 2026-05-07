@@ -92,6 +92,7 @@ import {
 import { useDatasetStore } from '@/src/store/datasets';
 import { useToolStore } from '@/src/store/tools';
 import { Tools } from '@/src/store/tools/types';
+import { Layouts } from '@/src/config';
 
 const clickEventSetPosition = createEventHook<[Vector3]>();
 export function useSetPositionEvents() {
@@ -154,8 +155,9 @@ window.addEventListener('message', (event) => {
   if (event.data.type === 'file') {
     let fileUrl = ''
     const filePath = event.data.filePath
+    const pageType = event.data.pageType // GZC
+    window.pageType = pageType
     console.log('get file');
-    // console.log('getting file');
     // console.log('0 :>> ', new Date().getTime());
 
     // 大数据平台不加t，否则会报错
@@ -187,6 +189,41 @@ window.addEventListener('message', (event) => {
         loadFiles([file])
       })
       .catch(error => console.error('Failed to load blob:', error))
+  }
+
+  // GZC
+  if (event.data.type === 'addLayer') {
+    let fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
+    const filePath = event.data.filePath
+    console.log('add as layer');
+    fetch(fileUrl).then(response => response.blob())
+      .then(blob => {
+        const file = new File([blob], filePath, { type: '' });
+        console.log('load add-layer file');
+        loadFiles([file])
+      })
+      .catch(error => console.error('Failed to load blob:', error))
+  }
+
+  if (event.data.type === 'deleteLayer') {
+    const filePath = event.data.filePath
+    console.log('remove as layer');
+    const dataStore = useDatasetStore();
+    const imageStore = useImageStore();
+
+    // 根据filePath找到对应的id，删除掉对应的layer
+    const targetId = Object.keys(imageStore.metadata).find(k => imageStore.metadata[k].name === filePath);
+
+    // console.log('targetId', targetId);
+    // console.log('dataStore', dataStore);
+    // console.log('imageStore', imageStore);
+    if(targetId) {
+      dataStore.remove(targetId)
+      const viewStore = useViewStore();
+      setTimeout(() => {
+          viewStore.setLayout(Layouts['Oblique View'])
+      },50)
+    }
   }
 
 

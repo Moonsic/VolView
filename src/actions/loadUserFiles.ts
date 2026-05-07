@@ -231,6 +231,8 @@ function loadSegmentations(
 }
 
 function loadDataSources(sources: DataSource[]) {
+  // console.log('6 :>> ', sources);
+
   const load = async () => {
     const loadDataStore = useLoadDataStore();
     const dataStore = useDatasetStore();
@@ -242,7 +244,7 @@ function loadDataSources(sources: DataSource[]) {
       loadDataStore.setError(error as Error);
       return;
     }
-    // console.log('6 :>> ', new Date().getTime(),results);
+    // console.log('6.1:>> ',results);
     const [succeeded, errored] = partitionResults(results);
     // console.log('7 :>> ', dataStore.primarySelection,succeeded,errored);
     // console.log('7 1:>> ', !dataStore.primarySelection && succeeded.length);

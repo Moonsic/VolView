@@ -50,7 +50,8 @@ export const useImageStore = defineStore('images', {
 
       const id = useId || useIdStore().nextId();
 
-      // console.log('useImageStore addVTKImageData :>> ', name, imageData);
+      // GZC
+      //  console.log('useImageStore addVTKImageData :>> ', name, imageData);
 
       // 原来的，push进数组
       // const id = useIdStore().nextId();

@@ -176,6 +176,20 @@ export const Layouts: Record<string, Layout> = [
     ],
   },
   {
+    name: 'Quad View gzc',
+    direction: LayoutDirection.H,
+    items: [
+      {
+        direction: LayoutDirection.V,
+        items: [InitViewIDs.Coronal, InitViewIDs.Sagittal],
+      },
+      {
+        direction: LayoutDirection.V,
+        items: [InitViewIDs.Axial, InitViewIDs.Three],
+      },
+    ],
+  },
+  {
     name: 'Oblique View',
     direction: LayoutDirection.H,
     items: [
@@ -197,6 +211,7 @@ export const Layouts: Record<string, Layout> = [
 ].reduce((layouts, layout) => {
   return { ...layouts, [layout.name]: layout };
 }, {}); // 这3行代码将数组转成对象{}
+// console.log('Layouts :>> ', Layouts);
 
 export const SAMPLE_DATA: SampleDataset[] = [
   // {

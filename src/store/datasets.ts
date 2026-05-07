@@ -49,6 +49,7 @@ export const useDatasetStore = defineStore('dataset', () => {
   // --- actions --- //
 
   function setPrimarySelection(sel: DataSelection | null) {
+    // console.log('setPrimarySelection', sel,isDicomImage(sel));
     primarySelection.value = sel;
     if (!sel) return;
 

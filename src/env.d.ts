@@ -20,6 +20,7 @@ interface Window {
   worldToIndex: mat4
   nearValue: number
   spacing: vec3
+  pageType: string // gzc或者空
 }
 
 declare const __VERSIONS__: Record<string, string>;

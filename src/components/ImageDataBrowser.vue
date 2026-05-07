@@ -12,6 +12,8 @@ import {
 } from '@/src/utils/dataSelection';
 import { useImageStore } from '../store/datasets-images';
 import { useDatasetStore } from '../store/datasets';
+import { useViewStore } from '@/src/store/views';
+import { Layouts } from '@/src/config';
 
 import { useMultiSelection } from '../composables/useMultiSelection';
 import { useLayersStore } from '../store/datasets-layers';
@@ -83,9 +85,23 @@ export default defineComponent({
               console.log('isLayer :>> ', isLayer);
               console.log('primarySelection.value :>> ', primarySelection.value);
               console.log('selectionKey :>> ', selectionKey);
-              if (isLayer)
+              // 原来的代码很简单
+              // if (isLayer)
+              //   layersStore.deleteLayer(primarySelection.value, selectionKey);
+              // else layersStore.addLayer(primarySelection.value, selectionKey);
+
+              // GZC
+              console.log('打印92 :>> ',primarySelection.value, selectionKey);
+              if (isLayer) {
                 layersStore.deleteLayer(primarySelection.value, selectionKey);
-              else layersStore.addLayer(primarySelection.value, selectionKey);
+              } else {
+                layersStore.addLayer(primarySelection.value, selectionKey);
+                const viewStore = useViewStore();
+                setTimeout(() => {
+                  viewStore.setLayout(Layouts['Quad View gzc'])
+                },50)
+              }
+
             }
           },
         };
@@ -104,15 +120,44 @@ export default defineComponent({
     watch(
       nonDICOMImages,
       (imageIDs) => {
+
+
         // console.log('imageIDs :>> ', imageIDs);
-        // GGG 改变的时候，加载最后一个，也是最新一个;现在setPrimarySelection只接收一个id，而不是以前一个对象了
-        dataStore.setPrimarySelection(imageIDs[imageIDs.length - 1]);
-        // GGG 然后把前面的都删掉，只留下一个。
-        imageIDs.forEach((id,index) => {
-          if(index < imageIDs.length - 1) {
-            imageStore.deleteData(id);
+        // console.log('pageType :>> ', window.pageType);
+        // GZC +++
+        if (window.pageType !== 'gzc') {
+          // GGG 改变的时候，加载最后一个，也是最新一个;现在setPrimarySelection只接收一个id，而不是以前一个对象了
+          dataStore.setPrimarySelection(imageIDs[imageIDs.length - 1])
+          // GZC 然后把前面的都删掉，只留下一个。
+          imageIDs.forEach((id,index) => {
+            if(index < imageIDs.length - 1) {
+              imageStore.deleteData(id)
+            }
+          })
+        } else {
+          // 如果现在加载第3个，就把中间的删掉，保留第一个和最后一个
+          if(imageIDs.length === 3) {
+            imageIDs.forEach((id,index) => {
+              if(index === 1) {
+                if(primarySelection.value) {
+                  layersStore.deleteLayer(primarySelection.value, id)
+                }
+                imageStore.deleteData(id)
+              }
+            })
           }
-        });
+          // console.log('138 primarySelection :>> ', primarySelection.value,imageIDs[1]);
+          if(primarySelection.value && imageIDs.length === 2) {
+            layersStore.addLayer(primarySelection.value, imageIDs[1]);
+            const viewStore = useViewStore();
+            setTimeout(() => {
+                viewStore.setLayout(Layouts['Quad View gzc'])
+            },50)
+          }
+        }
+        // GZC---
+
+
 
         imageIDs.forEach(async (id) => {
           const cacheKey = imageCacheKey(id);
