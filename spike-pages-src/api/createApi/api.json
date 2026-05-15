@@ -1,0 +1,214 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "癫痫大数据平台",
+    "description": "癫痫大数据平台",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://springdoc.org"
+    },
+    "version": "v1.0.0"
+  },
+  "externalDocs": {
+    "description": "癫痫大数据平台",
+    "url": "http://127.0.0.1：8081"
+  },
+  "servers": [
+    {
+      "url": "http://10.100.158.70:8081/patient",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "Authentication": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "RoleController",
+      "description": "角色管理相关接口"
+    },
+    {
+      "name": "UserController",
+      "description": "用户管理相关接口"
+    },
+    {
+      "name": "FileController",
+      "description": "文件操作相关接口"
+    },
+    {
+      "name": "SubjectController",
+      "description": "患者管理相关接口"
+    },
+    {
+      "name": "PermissionController",
+      "description": "权限操作相关接口"
+    },
+    {
+      "name": "PythonUseController",
+      "description": "Python端文件下载相关接口"
+    }
+  ],
+  "paths": {
+    "/role/add": {
+      "post": {
+        "tags": [
+          "RoleController"
+        ],
+        "summary": "添加角色",
+        "operationId": "addRole",
+        "parameters": [
+          {
+            "description": "角色VO类",
+            "schema": {
+              "$ref": "#/components/schemas/RoleVO"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleVO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/list": {
+      "post": {
+        "tags": [
+          "UserController"
+        ],
+        "summary": "查询用户列表",
+        "operationId": "getUserByList",
+        "parameters": [
+          {
+            "description": "该类封装了查询用户列表的条件信息",
+            "schema": {
+              "$ref": "#/components/schemas/UserListDTO"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVOIPageUserListVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "RoleVO": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "角色id"
+            },
+            "roleName": {
+              "type": "string",
+              "description": "角色名称"
+            },
+            "createTime": {
+              "type": "string",
+              "description": "角色创建时间",
+              "format": "date-time"
+            },
+            "permissionCodes": {
+              "type": "string",
+              "description": "角色权限码"
+            },
+            "createTimeStr": {
+              "type": "string",
+              "description": "role创建时间"
+            }
+          },
+          "description": "角色VO类"
+        },
+        "SubjectVO": {
+          "type": "object",
+          "properties": {
+            "subjectId": {
+              "type": "string"
+            },
+            "megId": {
+              "type": "string"
+            },
+            "gender": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "birthDate": {
+              "type": "string"
+            },
+            "scanDate": {
+              "type": "string"
+            },
+            "seegCt": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "postOperativeMri": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "postOperativeFollowUp": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "surgicalTreatment": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "createTime": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "securitySchemes": {
+        "Authentication": {
+          "type": "apiKey",
+          "name": "Authentication",
+          "in": "header"
+        }
+      }
+    }
+  }
+}

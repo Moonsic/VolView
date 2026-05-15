@@ -96,10 +96,10 @@ export default defineComponent({
                 layersStore.deleteLayer(primarySelection.value, selectionKey);
               } else {
                 layersStore.addLayer(primarySelection.value, selectionKey);
-                const viewStore = useViewStore();
-                setTimeout(() => {
-                  viewStore.setLayout(Layouts['Quad View gzc'])
-                },50)
+                // const viewStore = useViewStore();
+                // setTimeout(() => {
+                //   viewStore.setLayout(Layouts['Oblique View'])
+                // },50)
               }
 
             }
@@ -149,10 +149,10 @@ export default defineComponent({
           // console.log('138 primarySelection :>> ', primarySelection.value,imageIDs[1]);
           if(primarySelection.value && imageIDs.length === 2) {
             layersStore.addLayer(primarySelection.value, imageIDs[1]);
-            const viewStore = useViewStore();
-            setTimeout(() => {
-                viewStore.setLayout(Layouts['Quad View gzc'])
-            },50)
+            // const viewStore = useViewStore();
+            // setTimeout(() => {
+            //     viewStore.setLayout(Layouts['Oblique View'])
+            // },50)
           }
         }
         // GZC---

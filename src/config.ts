@@ -175,20 +175,20 @@ export const Layouts: Record<string, Layout> = [
       // },
     ],
   },
-  {
-    name: 'Quad View gzc',
-    direction: LayoutDirection.H,
-    items: [
-      {
-        direction: LayoutDirection.V,
-        items: [InitViewIDs.Coronal, InitViewIDs.Sagittal],
-      },
-      {
-        direction: LayoutDirection.V,
-        items: [InitViewIDs.Axial, InitViewIDs.Three],
-      },
-    ],
-  },
+  // {
+  //   name: 'Quad View gzc',
+  //   direction: LayoutDirection.H,
+  //   items: [
+  //     {
+  //       direction: LayoutDirection.V,
+  //       items: [InitViewIDs.Coronal, InitViewIDs.Sagittal],
+  //     },
+  //     {
+  //       direction: LayoutDirection.V,
+  //       items: [InitViewIDs.Axial, InitViewIDs.Three],
+  //     },
+  //   ],
+  // },
   {
     name: 'Oblique View',
     direction: LayoutDirection.H,

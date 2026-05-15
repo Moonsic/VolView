@@ -93,6 +93,17 @@ import { useDatasetStore } from '@/src/store/datasets';
 import { useToolStore } from '@/src/store/tools';
 import { Tools } from '@/src/store/tools/types';
 import { Layouts } from '@/src/config';
+import {
+  applyCustomVolumeColormap,
+  applyVolumeColormapPreset,
+  getAvailableVolumeColormapPresets,
+} from '@/src/utils/volumeColormap';
+import {
+  applyLayerColormapPreset,
+  applyLayerCustomColormap,
+  applyLayerOpacity,
+  getLayerColormapPresetOptions,
+} from '@/src/utils/layerColormap';
 
 const clickEventSetPosition = createEventHook<[Vector3]>();
 export function useSetPositionEvents() {
@@ -135,9 +146,116 @@ window.parent.postMessage({ type: 'volviewReady' }, '*');
 
 const DEFAULT_RADIUS = 2.6; // 默认半径是2.6
 
+function postMessageToParent(message: Record<string, unknown>) {
+  window.parent.postMessage(message, '*');
+}
+
+function handleVolumeColormapMessage(handler: () => unknown, source: string) {
+  try {
+    const result = handler();
+    postMessageToParent({
+      type: 'volviewVolumeColormapChanged',
+      source,
+      success: true,
+      result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '颜色映射设置失败';
+    console.error(source, error);
+    postMessageToParent({
+      type: 'volviewVolumeColormapChanged',
+      source,
+      success: false,
+      message,
+    });
+  }
+}
+
+function handleLayerMessage(handler: () => unknown, source: string) {
+  try {
+    const result = handler();
+    postMessageToParent({
+      type: 'volviewLayerAppearanceChanged',
+      source,
+      success: true,
+      result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '叠加层设置失败';
+    console.error(source, error);
+    postMessageToParent({
+      type: 'volviewLayerAppearanceChanged',
+      source,
+      success: false,
+      message,
+    });
+  }
+}
+
 // B项目接收
 window.addEventListener('message', (event) => {
-  // console.log('message :>> ', event)
+  // console.log('b message :>> ', event)
+
+  if (event.data.type === 'getVolumeColormapPresets') {
+    postMessageToParent({
+      type: 'volviewVolumeColormapPresets',
+      presets: getAvailableVolumeColormapPresets(),
+    });
+  }
+
+  if (event.data.type === 'getLayerColormapPresets') {
+    postMessageToParent({
+      type: 'volviewLayerColormapPresets',
+      presets: getLayerColormapPresetOptions(),
+    });
+  }
+
+  if (event.data.type === 'setVolumeColormap') {
+    console.log('setVolumeColormap :>> ', event.data)
+    handleVolumeColormapMessage(() => {
+      // 直接切换已有预设色图，适合业务侧做下拉选择。
+      return applyVolumeColormapPreset(
+        event.data.preset,
+        event.data.mappingRange
+      );
+    }, 'setVolumeColormap');
+  }
+
+  if (event.data.type === 'setVolumeCustomColormap') {
+    handleVolumeColormapMessage(() => {
+      // 支持外部传入自定义颜色点，方便与 Python / matplotlib 色表对齐。
+      return applyCustomVolumeColormap({
+        name: event.data.name,
+        colorPoints: event.data.colorPoints,
+        positionsNormalized: event.data.positionsNormalized,
+        mappingRange: event.data.mappingRange,
+      });
+    }, 'setVolumeCustomColormap');
+  }
+
+  if (event.data.type === 'setLayerColormap') {
+    handleLayerMessage(() => {
+      // 设置叠加层颜色映射；如果当前还没加载 layer，则先记为默认值，后续新 layer 会继承。
+      return applyLayerColormapPreset(event.data.preset, event.data.mappingRange);
+    }, 'setLayerColormap');
+  }
+
+  if (event.data.type === 'setLayerCustomColormap') {
+    handleLayerMessage(() => {
+      return applyLayerCustomColormap({
+        name: event.data.name,
+        colorPoints: event.data.colorPoints,
+        positionsNormalized: event.data.positionsNormalized,
+        mappingRange: event.data.mappingRange,
+      });
+    }, 'setLayerCustomColormap');
+  }
+
+  if (event.data.type === 'setLayerOpacity') {
+    handleLayerMessage(() => {
+      return applyLayerOpacity(event.data.opacity);
+    }, 'setLayerOpacity');
+  }
 
   if (event.data.type === 'setNearValue') {
     window.nearValue = event.data.nearValue || 2.6

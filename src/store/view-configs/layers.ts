@@ -22,6 +22,12 @@ import { LayersConfig } from './types';
 import { useLayersStore } from '../datasets-layers';
 import { useDICOMStore } from '../datasets-dicom';
 
+type RuntimeLayerDefaults = {
+  preset: string;
+  mappingRange: [number, number] | null;
+  opacity: number;
+};
+
 function getPreset(id: string) {
   const layersStore = useLayersStore();
   const layer = layersStore.getLayer(id);
@@ -60,6 +66,11 @@ export const defaultLayersConfig = (): LayersConfig => ({
 
 export const useLayerColoringStore = defineStore('layerColoring', () => {
   const configs = reactive<DoubleKeyRecord<LayersConfig>>({});
+  const runtimeDefaults = reactive<RuntimeLayerDefaults>({
+    preset: '',
+    mappingRange: null,
+    opacity: 0.6,
+  });
 
   const getConfig = (viewID: Maybe<string>, dataID: Maybe<string>) =>
     getDoubleKeyRecord(configs, viewID, dataID);
@@ -101,7 +112,24 @@ export const useLayerColoringStore = defineStore('layerColoring', () => {
   const updateOpacityFunction = createUpdateFunc('opacityFunction');
   const updateBlendConfig = createUpdateFunc('blendConfig');
 
-  const setColorPreset = (viewID: string, layerID: string, preset: string) => {
+  const setRuntimeDefaults = (patch: Partial<RuntimeLayerDefaults>) => {
+    if (patch.preset !== undefined) {
+      runtimeDefaults.preset = patch.preset;
+    }
+    if (patch.mappingRange !== undefined) {
+      runtimeDefaults.mappingRange = patch.mappingRange;
+    }
+    if (patch.opacity !== undefined) {
+      runtimeDefaults.opacity = patch.opacity;
+    }
+  };
+
+  const setColorPreset = (
+    viewID: string,
+    layerID: string,
+    preset: string,
+    mappingRange?: [number, number]
+  ) => {
     const layersStore = useLayersStore();
     const image = layersStore.layerImages[layerID];
     if (!image) return;
@@ -110,12 +138,12 @@ export const useLayerColoringStore = defineStore('layerColoring', () => {
     const ctRange = getColorFunctionRangeFromPreset(preset);
     const ctFunc: Partial<ColorTransferFunction> = {
       preset,
-      mappingRange: ctRange || imageDataRange,
+      mappingRange: mappingRange || ctRange || imageDataRange,
     };
     updateColorTransferFunction(viewID, layerID, ctFunc);
 
     const opFunc = getOpacityFunctionFromPreset(preset);
-    opFunc.mappingRange = imageDataRange;
+    opFunc.mappingRange = mappingRange || imageDataRange;
     updateOpacityFunction(viewID, layerID, opFunc);
   };
 
@@ -123,11 +151,22 @@ export const useLayerColoringStore = defineStore('layerColoring', () => {
     updateConfig(viewID, dataID, defaultLayersConfig());
 
   const resetColorPreset = (viewID: string, layerID: string) => {
-    setColorPreset(viewID, layerID, getPreset(layerID));
+    const preset = runtimeDefaults.preset || getPreset(layerID);
+    setColorPreset(viewID, layerID, preset, runtimeDefaults.mappingRange || undefined);
+    updateBlendConfig(viewID, layerID, {
+      opacity: runtimeDefaults.opacity,
+      visibility: runtimeDefaults.opacity > 0,
+    });
   };
 
   const removeView = (viewID: string) => {
     delete configs[viewID];
+  };
+
+  const resetRuntimeDefaults = () => {
+    runtimeDefaults.preset = '';
+    runtimeDefaults.mappingRange = null;
+    runtimeDefaults.opacity = 0.6;
   };
 
   const removeData = (dataID: string, viewID?: string) => {
@@ -157,6 +196,9 @@ export const useLayerColoringStore = defineStore('layerColoring', () => {
     updateColorTransferFunction,
     updateOpacityFunction,
     updateBlendConfig,
+    runtimeDefaults,
+    setRuntimeDefaults,
+    resetRuntimeDefaults,
     setColorPreset,
     resetColorPreset,
     removeView,

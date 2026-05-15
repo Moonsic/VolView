@@ -104,6 +104,11 @@ export const useLayersStore = defineStore('layer', () => {
     return parentToLayers.value[key] ?? [];
   }
 
+  function clearAll() {
+    parentToLayers.value = {};
+    layerImages.value = {};
+  }
+
   const getLayer = (layerID: string) =>
     Object.values(parentToLayers.value)
       .flat()
@@ -160,6 +165,7 @@ export const useLayersStore = defineStore('layer', () => {
     deleteLayer,
     remove,
     getLayers,
+    clearAll,
     getLayer,
     serialize,
     deserialize,

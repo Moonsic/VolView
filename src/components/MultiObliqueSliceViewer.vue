@@ -171,6 +171,11 @@ window.addEventListener('message', (event: any) => {
     resetCamera()
   }
 
+  if (event.data.type === 'refreshLayerAppearance') {
+    vtkView.value?.requestRender()
+    vtkView.value?.renderWindow.render()
+  }
+
 })
 
 

@@ -1,0 +1,395 @@
+// 详情的card样式
+.global-detail-box {
+  .ant-card-head {
+    position: relative;
+    border-bottom: none;
+
+    &:after {
+      position: absolute;
+      display: block;
+      content: "";
+      left: 24px;
+      right: 24px;
+      border-top: 1px solid #e8e8e8;
+    }
+
+  }
+
+  .ant-descriptions-row:last-child>td {
+    padding-bottom: 0;
+  }
+
+}
+
+.global-col-list {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+
+  >button,
+  >.anticon {
+    margin-left: 8px;
+  }
+
+  .ant-form-item {
+    margin-bottom: 0 !important;
+  }
+}
+
+
+// 小表格
+.global-small-table {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+
+  .ant-table-thead {
+    background: #ecf0f1;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .ant-form-item {
+    margin-bottom: 0 !important;
+  }
+
+  .ant-empty {
+    margin: 10px;
+  }
+}
+
+
+// 详情页面的表单都加上了disabled，让它们的样式像正常文本的样式
+.global-is-detail {
+  .ant-input-disabled {
+    color: #55585C;
+    background: #fff;
+    border: none;
+    cursor: default;
+  }
+
+  .ant-input-number-disabled {
+    color: #55585C;
+    background: #fff;
+    border: none;
+    cursor: default;
+
+    .ant-input-number-input {
+      cursor: default;
+    }
+  }
+
+  .ant-select-disabled {
+    .ant-select-selection {
+      color: #55585C;
+      background: #fff;
+      border: none;
+      cursor: default;
+
+      .ant-select-arrow {
+        display: none;
+      }
+    }
+  }
+
+  .ant-checkbox-wrapper-disabled {
+    .ant-checkbox-inner {
+      background-color: #4B78FF !important;
+      border-color: #4B78FF !important;
+
+      &:after {
+        border-color: #fff;
+      }
+    }
+  }
+}
+
+.global-disabled {
+  color: var(--color-t5);
+  cursor: not-allowed;
+}
+
+
+// 提示框
+.tooltip,
+.tooltip-center,
+.tooltip-before {
+  position: relative;
+}
+
+.tooltip::before,
+.tooltip-center::before,
+.tooltip-before::before {
+  content: attr(data-title);
+  position: absolute;
+  display: none;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 13px;
+  background-color: rgba(17, 17, 17, 0.9);
+  color: #fff;
+  white-space: nowrap;
+  z-index: 9999;
+  border-radius: 4px;
+  border: var(--border-transparent);
+}
+
+
+.tooltip::before {
+  left: -20%;
+  top: 120%;
+}
+
+.tooltip-center::before {
+  left: 50%;
+  top: 120%;
+  transform: translateX(-50%);
+}
+
+.tooltip-before::before {
+  right: -20%;
+  top: 120%;
+  // transform: translateX(-50%);
+}
+
+.tooltip:hover::before,
+.tooltip-center:hover::before,
+.tooltip-before:hover::before {
+  display: flex;
+}
+
+
+// 刷新图标
+.reload-icon {
+  font-size: 13px;
+  // color: rgba(0, 4, 10, .38);
+  color: #fff;
+  cursor: pointer;
+
+  // &:hover {
+  //   // color: var(--color-primary);
+  // }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+// 折叠箭头图标，不要加字体大小，font-size默认16px。多处使用
+.down-icon {
+  color: var(--color-gray);
+  color: #fff;
+  transition: all 0.3s;
+  cursor: pointer;
+
+  // &:hover {
+  //   // color: var(--color-primary);
+  // }
+
+}
+
+// // 检测/预处理图标，用到3处
+// .check-icon {
+//   width: 22px;
+//   height: 22px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   border-radius: 30%;
+//   background: #f1f3f5;
+//   border: 1px solid #e1e3e5;
+//   background: #fff;
+
+//   &:hover {
+//     border: 1px solid #c4def7;
+//     background: #deecf9;
+//     .anticon {
+//       color: #4096ff !important;
+//     }
+//   }
+
+//   &.active {
+//     border: 2px solid #c4def7;
+//     background: #deecf9;
+//     .anticon {
+//       color: #4096ff !important;
+//     }
+//   }
+// }
+
+// 检测/预处理图标，用到3处
+.check-icon {
+  font-size: 20px;
+
+  &:hover {
+    color: var(--color-primary) !important;
+  }
+}
+
+.check-icon-active {
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+// 小列表的标题
+.list-page {
+  background: var(--color-bg);
+
+  >.list-title {
+    height: 46px;
+    margin: 0;
+    padding: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--color-t3);
+    border-radius: 8px 8px 0px 0px;
+    letter-spacing: 0.2px;
+  }
+}
+
+.title-before {
+  &:before {
+    content: '';
+    display: inline;
+    border-left: 4px solid var(--color-modal-title-before);
+    border-right: 4px solid var(--color-modal-title-before);
+    border-radius: 2px;
+    margin-right: 12px;
+  }
+}
+
+@sm-height: 32px; // 表单高度
+
+.page-top {
+  width: 100%;
+  height: 58px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  border-radius: 8px;
+  background: var(--color-bg);
+  border: var(--border-card); // 暗黑模式有边框
+  overflow: hidden;
+
+  // 按钮
+  .ant-btn-sm {
+    height: @sm-height; //正常是24
+  }
+
+  // 数字框
+  .ant-input-number-sm input {
+    height: @sm-height - 2; //正常是22
+  }
+}
+
+.page-top-tab {
+  width: 100%;
+  height: 58px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+
+  // 按钮
+  .ant-btn-sm {
+    height: @sm-height; //正常是24
+  }
+
+  // 数字框
+  .ant-input-number-sm input {
+    height: @sm-height - 2; //正常是22
+  }
+
+  // 第一个是导航栏
+  >div:nth-child(1) {
+    // width: 566px; // TODO: 去掉脑电图是478px
+    // min-width: 566px;
+    margin-right: 12px;
+  }
+
+  // 第二个是右侧按钮们
+  >div:nth-child(2) {
+    flex: 1;
+    height: 58px;
+    padding: 0 8px;
+    background: var(--color-bg);
+    border: var(--border-card); // 暗黑模式有边框
+    border-radius: 8px;
+    // display: flex;
+    // justify-content: space-between;
+    // align-items: center;
+    position: relative;
+    overflow: hidden;
+    // 脑磁图顶部右侧小屏时可左右滑动
+    overflow-x: auto;
+    white-space: nowrap;
+
+    &::-webkit-scrollbar {
+      height: 2px;
+    }
+
+  }
+}
+
+
+// 顶部按钮变成浅蓝色，但要排除禁用状态的
+.ant-btn-primary.light-primary-btn:not(:disabled) {
+  color: var(--color-primary);
+  background: var(--color-primary-01);
+  border: var(--border-transparent);
+
+  &:hover {
+    color: var(--color-primary);
+    background: var(--color-primary-01);
+    border: 1px solid var(--color-primary);
+  }
+}
+
+// 浅红色背景、红字的按钮，hover时边框变红
+.light-red-btn:not(:disabled) {
+  color: var(--color-red);
+  background: var(--color-red-01);
+  border: var(--border-transparent);
+
+  &:hover {
+    color: var(--color-red);
+    background: var(--color-red-01);
+    border: 1px solid var(--color-red);
+  }
+}
+
+// 放大图片的样式覆盖，原来是0.3s感觉有点慢（v-viewer）
+.viewer-transition {
+  transition: all 0.2s;
+}
+
+
+// 长文字按钮，为了适配英文，高度不变但换行
+.long-text-button {
+  display: flex;
+  align-items: center;
+  white-space: normal;
+  line-height: 1;
+}
+
+// 左侧列表的tooltip/确认弹窗的z-index要很高，否则可能会被meg窗口遮挡
+.very-big-z-index {
+  z-index: 100000;
+}
+
+// 公共下拉框选项内容换行
+.golbal-text-wrap-dropdown.ant-select-dropdown {
+  .ant-select-item-option {
+
+    .ant-select-item-option-content {
+      white-space: normal;
+      word-break: break-all;
+    }
+  }
+
+}

@@ -102,16 +102,16 @@
           ></vtk-segmentation-slice-representation> -->
 
 
-          <!-- <template v-if="currentImageID">
-            <vtk-layer-slice-representation
+          <template v-if="currentImageID">
+            <vtk-layer-oblique-slice-representation
               v-for="layer in currentLayers"
               :key="`layer-${layer.id}`"
               :view-id="id"
               :layer-id="layer.id"
-              :parent-id="currentImageID"
-              :axis="viewAxis"
-            ></vtk-layer-slice-representation>
-          </template> -->
+              :plane-normal="planeNormal"
+              :plane-origin="planeOrigin"
+            ></vtk-layer-oblique-slice-representation>
+          </template>
 
           <!-- VtkImageOutlineRepresentation 线框 thickness：4 就是线宽的意思 -->
            <!-- 添加了透明度为0，意味着边框不显示了 -->
@@ -152,6 +152,7 @@ import { useSetPositionEvents } from '@/src/components/App.vue'; // 从App.vue�
 import ResliceCursorTool from '@/src/components/tools/ResliceCursorTool.vue';
 // import VtkBaseSliceRepresentation from '@/src/components/vtk/VtkBaseSliceRepresentation.vue';
 import VtkBaseObliqueSliceRepresentation from '@/src/components/vtk/VtkBaseObliqueSliceRepresentation.vue';
+import VtkLayerObliqueSliceRepresentation from '@/src/components/vtk/VtkLayerObliqueSliceRepresentation.vue';
 import VtkImageOutlineRepresentation from '@/src/components/vtk/VtkImageOutlineRepresentation.vue';
 
 import MySpheresRepresentation from '@/src/components/vtk/MySpheresRepresentation.vue';
@@ -1114,6 +1115,11 @@ window.addEventListener('message', (event: any) => {
     showResliceCursor.value = event.data.value
     resliceCursor.setHandleVisibility(event.data.value)
     resetCamera(planeOrigin.value)
+  }
+
+  if (event.data.type === 'refreshLayerAppearance') {
+    vtkView.value?.requestRender()
+    vtkView.value?.renderWindow.render()
   }
 
   // 获得中心位置

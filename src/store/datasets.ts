@@ -13,6 +13,7 @@ import { useFileStore } from './datasets-files';
 import { StateFile } from '../io/state-file/schema';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { useLayersStore } from './datasets-layers';
+import useLayerColoringStore from './view-configs/layers';
 
 export const DataType = {
   Image: 'Image',
@@ -24,6 +25,7 @@ export const useDatasetStore = defineStore('dataset', () => {
   const dicomStore = useDICOMStore();
   const fileStore = useFileStore();
   const layersStore = useLayersStore();
+  const layerColoringStore = useLayerColoringStore();
 
   // --- state --- //
 
@@ -88,18 +90,20 @@ export const useDatasetStore = defineStore('dataset', () => {
 
   // 清除当前结构像
   const removeAll = () => {
-    // 当前没有结构像就return
-    if (!primarySelection.value) {
-      return
-    }
-    const id: string = primarySelection.value as string;
+    const id = primarySelection.value as string | null;
     primarySelection.value = null;
-    if (isDicomImage(id)) {
+    if (id && isDicomImage(id)) {
       dicomStore.deleteVolume(id);
     }
-    imageStore.deleteData(id);
-    fileStore.remove(id);
-    layersStore.remove(id);
+    if (id) {
+      imageStore.deleteData(id);
+      fileStore.remove(id);
+      layersStore.remove(id);
+    }
+
+    // 共注册页面清空时要把所有 layer 关联和运行时默认外观一起清掉，避免新结构像复用旧 layer。
+    layersStore.clearAll();
+    layerColoringStore.resetRuntimeDefaults();
   };
 
 

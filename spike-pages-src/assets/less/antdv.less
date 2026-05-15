@@ -1,0 +1,767 @@
+// @import 'ant-design-vue/dist/antd.variable.less';
+
+/* ==================
+         按钮
+ ==================== */
+
+// 白色按钮禁用
+.ant-btn-default:disabled {
+  color: var(--color-t5);
+  background-color: var(--color-bg);
+  border: 0.75px solid var(--color-border-card);
+}
+
+// 蓝色按钮禁用
+.ant-btn-primary:disabled {
+  color: rgba(255, 255, 255, 0.89);
+  background-color: #D3DEEE;
+  border-color: #D3DEEE;
+}
+
+.dark {
+
+  .ant-btn-default:disabled {
+    border-color: #424242;
+    color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .ant-btn-primary:disabled {
+    border-color: #424242;
+    color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+
+// 只有图标的按钮，不知道为什么不设置flex-center，还有分页的按钮
+.ant-btn.ant-btn-icon-only>span,
+.ant-pagination-item-link>span {
+  display: flex;
+  justify-content: center;
+}
+
+// 小图标按钮 图标应该14px大小，而不是16px
+.ant-btn.ant-btn-sm.ant-btn-icon-only>span {
+  transform: scale(1);
+}
+
+// 去掉按钮的阴影
+.ant-btn-default,
+.ant-btn-primary {
+  box-shadow: none;
+}
+
+// 所有的正常按钮都圆角
+.ant-btn {
+  border-radius: 20px;
+  height: 40px;
+  padding: 4px 16px;
+}
+
+// 小按钮
+.ant-btn.ant-btn-sm {
+  height: 32px;
+}
+
+// 只有图标的按钮
+.ant-btn.ant-btn-sm.ant-btn-icon-only {
+  width: 32px; //正常是24
+}
+
+.ant-btn-default.ant-btn-sm {
+  background: var(--color-bg-btn);
+}
+
+// 当鼠标悬停在按钮上时，改变图标的颜色，用于自定义svg图标
+.ant-btn:hover .anticon polyline {
+  stroke: var(--color-primary);
+}
+
+
+// 确认删除弹窗的红色删除按钮在focus-visible下的浅红色outline
+.ant-btn.ant-btn-dangerous:not(:disabled):focus-visible {
+  outline: 2px solid var(--color-red-02);
+}
+
+/* ==================
+         卡片
+ ==================== */
+
+// 卡片加上阴影
+.ant-card {
+  border: none;
+  box-shadow: var(--box-shadow);
+  border: var(--border-card); // 暗黑模式有边框
+  background-color: var(--color-bg);
+  border-radius: 18px;
+
+  // 卡片标题加粗
+  .ant-card-head-title {
+    font-weight: 600;
+  }
+
+  &.ant-card-small>.ant-card-body {
+    padding: 16px;
+  }
+
+}
+
+
+
+
+/* ==================
+         表格
+ ==================== */
+
+
+// 表格头部标题颜色和背景色、粗度
+.ant-table-wrapper .ant-table-thead>tr>th,
+.ant-table-wrapper .ant-table-thead>tr>td {
+  font-weight: 400;
+  border-bottom: none;
+  word-break: keep-all;
+  white-space: normal; // 遇符号换行
+  color: var(--color-t5);
+  background-color: var(--color-bg-gray);
+}
+
+// 表格斑马纹，偶数行加背景颜色，这样写的目的是排除掉 ant-table-measure-row，加:scroll="{ x: true }"会出现
+// TODO: 暂时去不掉，所以每个表格都加上 :scroll="{ x: true }"
+// ant-table-tbody>tr:not(.ant-table-measure-row):nth-of-type(2n) {
+.ant-table-tbody>tr:nth-of-type(2n+1) {
+  background: var(--color-primary-005);
+}
+
+// 表格hover改变背景色，要加!important
+.ant-table-tbody>tr:hover {
+  td {
+    background: var(--color-primary-005) !important;
+  }
+}
+
+
+.ant-table-wrapper .ant-table:not(.ant-table-bordered) .ant-table-tbody>tr>td {
+  border-top: none;
+  border-bottom: none;
+}
+
+// 表格最左侧的单选复选区域
+.ant-table-wrapper .ant-table-selection-column {
+  width: 60px;
+}
+
+// 表格页脚
+.ant-table-footer {
+  padding: 4px !important;
+
+  .ant-btn {
+    border: none;
+    box-shadow: none;
+  }
+}
+
+// 让表头变圆角，除了小表格
+// 最左的tr变圆角
+.ant-table-wrapper .ant-table .ant-table-container table>thead>tr:first-child>*:first-child {
+  border-start-start-radius: 30px;
+  border-end-start-radius: 30px;
+}
+
+// 最右的tr变圆角
+.ant-table-wrapper .ant-table .ant-table-container table>thead>tr:first-child>*:last-child {
+  border-start-end-radius: 30px;
+  border-end-end-radius: 30px;
+}
+
+// 让表头变圆角，除了小表格
+// 最左的tr变圆角
+.ant-table-wrapper .ant-table .ant-table-container table>tbody>tr>*:first-child {
+  border-start-start-radius: 30px;
+  border-end-start-radius: 30px;
+}
+
+// 最右的tr变圆角
+.ant-table-wrapper .ant-table .ant-table-container table>tbody>tr>*:last-child {
+  border-start-end-radius: 30px;
+  border-end-end-radius: 30px;
+}
+
+// 最底部的一行下边框去掉
+.ant-table-wrapper .ant-table:not(.ant-table-bordered) .ant-table-tbody>tr:last-child>td {
+  border-bottom: none;
+}
+
+// 小表格的表头变小圆角
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-container table>thead>tr:first-child>*:first-child {
+  border-start-start-radius: 8px;
+  border-end-start-radius: 8px;
+}
+
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-container table>thead>tr:first-child>*:last-child {
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+}
+
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-container table>tbody>tr>*:first-child {
+  border-start-start-radius: 8px;
+  border-end-start-radius: 8px;
+}
+
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-container table>tbody>tr>*:last-child {
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+}
+
+// 表格点击排序后列变成灰色真的丑死了，改成透明
+.ant-table-wrapper td.ant-table-column-sort {
+  background: transparent;
+}
+
+// 表格空数据时的提示图片和文字的高度减小
+.ant-table-wrapper .ant-empty {
+  margin-block: 8px; // 原来是32px，太空旷了
+}
+
+/* ==================
+         分页
+ ==================== */
+// 分页靠右
+.ant-pagination {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.ant-pagination-mini {
+  margin-top: 8px;
+}
+
+// 有线框的小分页 挤在一起，没margin
+.ant-pagination.ant-pagination-mini .ant-pagination-prev,
+.ant-pagination.ant-pagination-mini .ant-pagination-item {
+  margin-inline-end: 1px;
+}
+
+// 去掉小按钮移入的灰色背景
+.ant-pagination.ant-pagination-mini .ant-pagination-prev:hover .ant-pagination-item-link,
+.ant-pagination.ant-pagination-mini .ant-pagination-next:hover .ant-pagination-item-link,
+.ant-pagination.ant-pagination-mini .ant-pagination-item:not(.ant-pagination-item-active):hover {
+  background-color: transparent;
+}
+
+
+/* ==================
+         表单
+ ==================== */
+.ant-form {
+
+  // 选择框表单需要宽度100%
+  .ant-select {
+    width: 100%;
+  }
+
+  // 数字框框表单需要宽度100%
+  .ant-input-number {
+    width: 100%;
+  }
+
+  // 日期表单需要宽度100%
+  .ant-picker {
+    width: 100%;
+  }
+}
+
+.ant-form-inline .ant-form-item {
+  margin-bottom: 8px;
+}
+
+
+.ant-input[disabled] {
+  color: #55585C;
+  cursor: default;
+}
+
+.ant-select-disabled .ant-select-selection {
+  color: #55585C;
+  cursor: default;
+}
+
+// 组件的上传文件的文件名称
+.ant-upload-list-item {
+  height: auto;
+
+  .ant-upload-list-item-name {
+    word-break: break-all;
+    width: calc(100% - 15px);
+    white-space: normal;
+  }
+}
+
+
+
+// 输入框，去掉边框，去掉阴影，加上背景色
+// 如果没有 allowClear，输入框就是一个简单的ant-input，没有ant-input-affix-wrapper
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input:focus,
+.ant-input-focused {
+  box-shadow: none;
+}
+
+.ant-input-lg,
+.ant-input-affix-wrapper-lg {
+  background-color: var(--color-bg-gray);
+  border: var(--border-transparent);
+}
+
+
+
+// 数字框，去掉边框，加上背景色
+.ant-input-number {
+  background-color: var(--color-bg-btn);
+  box-shadow: none;
+
+  // 数字框的上下箭头去掉边框
+  .ant-input-number-handler {
+    border: none;
+  }
+
+  // 一直显示input-number的增减按钮
+  .ant-input-number-handler-wrap {
+    opacity: 1;
+  }
+
+}
+
+.ant-input-number-lg {
+  background-color: var(--color-bg-gray);
+  border: var(--border-transparent);
+
+  .ant-input-number-handler-wrap {
+    opacity: 0;
+  }
+
+}
+
+// 数字框的单位背景色
+.ant-input-number-group .ant-input-number-group-addon {
+  padding: 0 8px;
+  background: var(--color-bg-btn);
+}
+
+
+
+// input-number的增减按钮也要改成圆角，否则聚焦时包不住
+.ant-input-number .ant-input-number-handler-wrap {
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+  background: transparent;
+}
+
+.ant-input-number.ant-input-number-sm .ant-input-number-handler-wrap {
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+
+// 最新，数字框有边框且有后缀的情况下，就不能是圆角了
+// 小数字框聚焦时右侧改成小圆角，原来是0
+// .ant-input-number-group>.ant-input-number:first-child,
+// .ant-input-number-group .ant-input-number-group-addon:first-child {
+//   // border-start-end-radius: 4px;
+//   // border-end-end-radius: 4px;
+// }
+
+// 只有护眼模式需要额外设置，因为默认的是白色
+.eyecare {
+
+  // 下拉单选框的背景色
+  .ant-select-dropdown {
+    background-color: var(--color-bg);
+  }
+
+  // 开关的白色圈
+  .ant-switch .ant-switch-handle::before {
+    background-color: var(--color-bg);
+  }
+
+  // 下拉dropdown框的背景色
+  .ant-dropdown .ant-dropdown-menu,
+  .ant-dropdown-menu-submenu .ant-dropdown-menu {
+    background-color: var(--color-bg);
+  }
+
+  // 段落选择器 单独在下面设置了
+}
+
+
+// 选择框，去掉阴影
+.ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-options-size-changer) .ant-select-selector {
+  background-color: var(--color-bg-btn);
+  box-shadow: none;
+}
+
+// 大选择框，去掉边框，加上背景色
+.ant-select.ant-select-lg:not(.ant-select-customize-input):not(.ant-pagination-options-size-changer) .ant-select-selector {
+  background-color: var(--color-bg-gray);
+  border: var(--border-transparent);
+}
+
+// 聚焦时 去掉阴影
+.ant-select-focused.ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer) .ant-select-selector {
+  box-shadow: none;
+}
+
+
+// 日期框，去掉边框，加上背景色，去掉阴影
+.ant-picker {
+  background-color: var(--color-bg-btn);
+  box-shadow: none;
+}
+
+// 大日期框
+.ant-picker-large {
+  background-color: var(--color-bg-gray);
+  border: var(--border-transparent);
+}
+
+
+// 单选框的内圈变大点
+.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
+  transform: scale(0.7);
+}
+
+.dark {
+  .ant-radio-wrapper .ant-radio-inner {
+    border-color: var(--color-t5);
+  }
+}
+
+// 按钮单选框，去掉边框，加上背景色，去掉阴影，加圆角
+.ant-radio-group-solid {
+  background-color: var(--color-bg-gray);
+  border-radius: 8px;
+
+  .ant-radio-button-wrapper {
+    background-color: var(--color-bg-gray);
+    border: none;
+    transition: none;
+
+    &:first-child {
+      border-inline-start: none;
+    }
+
+    // 中间的竖线去掉
+    &:not(:first-child)::before {
+      width: 0;
+    }
+
+    &.ant-radio-button-wrapper-checked {
+      border-radius: 8px;
+    }
+  }
+
+  &.ant-radio-group-large {
+    border: var(--border-transparent);
+  }
+}
+
+
+
+// 多选框
+.ant-checkbox-disabled+span {
+  color: var(--color-t2);
+}
+
+.dark {
+  .ant-checkbox .ant-checkbox-inner {
+    border-color: var(--color-t5);
+  }
+}
+
+// 自动完成的input，输入框内容默认的字体大小只有13.33px
+.ant-select-auto-complete.ant-select-lg input {
+  font-size: 16px;
+}
+
+/* ==================
+       圆角表单
+ ==================== */
+// 只有form-round下的表单才是圆角
+.form-round {
+
+  .ant-input,
+  .ant-input-affix-wrapper {
+    border-radius: 20px;
+  }
+
+  .ant-input-number {
+    border-radius: 20px;
+  }
+
+  .ant-input-number .ant-input-number-handler-wrap {
+    border-start-end-radius: 20px;
+    border-end-end-radius: 20px;
+  }
+
+  .ant-select-selector,
+  .ant-select-lg .ant-select-selector {
+    border-radius: 20px;
+  }
+}
+
+
+
+/* ==================
+        弹窗
+ ==================== */
+.ant-modal {
+
+  .ant-modal-content {
+    border: var(--border-transparent); // 浅色模式不加边框，边框丑，暗黑模式加上边框
+    background-color: var(--color-bg);
+    border-radius: 16px;
+  }
+
+  // 弹窗位置居中再上一点，这个不好办，不加!important的话会闪，加了!important后没有动画效果了，针对长弹窗效果也不好，先不做了
+  // top: 50% !important;
+  // transform: translateY(-60%) !important;
+  .ant-modal-header {
+    margin: 0 24px;
+    padding: 20px 0px;
+    background-color: var(--color-bg);
+
+    // 弹窗标题前加一个粗竖线
+    .ant-modal-title {
+      font-size: 18px;
+      font-weight: 500;
+
+      &:before {
+        content: '';
+        display: inline;
+        border-left: 4px solid var(--color-modal-title-before);
+        border-right: 4px solid var(--color-modal-title-before);
+        border-radius: 2px;
+        margin-right: 16px;
+      }
+    }
+  }
+
+  .ant-modal-close {
+    top: 22px;
+  }
+
+  // 底部按钮区域高一点
+  .ant-modal-footer {
+    margin: 0 24px;
+    padding: 16px 0px;
+
+    // 弹窗底部按钮间距大一点
+    .ant-btn+.ant-btn:not(.ant-dropdown-trigger) {
+      margin-inline-start: 16px;
+    }
+  }
+
+}
+
+
+// 确认弹窗的确认和取消按钮间距大点
+.ant-modal-confirm .ant-modal-confirm-btns .ant-btn+.ant-btn {
+  margin-inline-start: 16px;
+}
+
+
+
+/* ==================
+         其他
+ ==================== */
+
+// tabs 字体
+.ant-tabs {
+  .ant-tabs-bar {
+    .ant-tabs-tab {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-t2);
+    }
+  }
+}
+
+
+// list
+.ant-list {
+  overflow: hidden;
+}
+
+
+// 详情列表左侧label最小值
+.ant-descriptions-item-label {
+  min-width: 150px;
+}
+
+.ant-descriptions-item-content {
+  word-break: break-all;
+}
+
+
+// 轮播图的高度需要手动去设置height:100%
+.ant-carousel {
+  height: 100%;
+
+  .slick-slider {
+    height: 100%;
+
+    .slick-list {
+      height: 100%;
+
+      .slick-track {
+        height: 100%;
+
+        .slick-slide {
+          height: 100%;
+
+          >div {
+            height: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 面包屑
+.ant-breadcrumb a {
+  color: var(--color-t2);
+  padding: 0 6px;
+  height: auto;
+  font-size: 16px;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--color-primary);
+    background-color: var(--color-primary-005);
+  }
+}
+
+
+// 把所有的下拉框选项的高度改成4px，之前是5px
+.ant-select-dropdown .ant-select-item&.ant-select-item-option {
+  // padding-top: 4px;
+  // padding-bottom: 4px;
+  min-height: 28px;
+}
+
+// 全局通知框
+.ant-notification {
+  top: 78px !important; // 24px，78px是有头部时 70+8
+  margin-inline-end: 8px; // 24px
+
+  .ant-notification-notice {
+    padding: 14px 16px; // 20px 24px
+    margin-bottom: 8px; // 16px
+    width: 350px; // 384px
+
+
+    .ant-notification-notice-close {
+      top: 12px; //20px
+      inset-inline-end: 12px; // 24px
+    }
+
+    .ant-notification-notice-message {
+      margin-bottom: 6px; // 8px
+    }
+  }
+}
+
+// 弹窗
+.ant-popover {
+
+  .ant-popover-content {
+    border-radius: 16px;
+  }
+
+  .ant-popover-inner {
+    border-radius: 16px;
+    border: var(--border-transparent);
+    background-color: var(--color-bg);
+  }
+}
+
+// 右下角的三角箭头，因为大圆角，所以要往左偏一点，原来是6px
+.ant-popover-placement-topRight .ant-popover-arrow {
+  right: 12px;
+}
+
+// 针对popover弹窗的小三角形，不设置的话就是白色。
+.eyecare .ant-popover {
+  --antd-arrow-background-color: var(--color-bg);
+}
+
+.dark .ant-popover {
+  --antd-arrow-background-color: var(--color-t6);
+}
+
+
+.ant-segmented:not(.ant-segmented-sm),
+.ant-segmented.ant-segmented-lg {
+  padding: 6px;
+  border-radius: 14px;
+  color: var(--color-t2);
+  background: var(--color-bg-gray);
+
+  .ant-segmented-item {
+    padding: 1px 8px;
+    border-radius: 12px;
+
+    &.ant-segmented-item-selected {
+      color: var(--color-primary);
+    }
+  }
+
+  .ant-segmented-thumb {
+    border-radius: 12px;
+  }
+}
+
+.dark {
+
+  .ant-segmented:not(.ant-segmented-sm),
+  .ant-segmented.ant-segmented-lg {
+    .ant-segmented-item-selected {
+      color: var(--color-t2);
+      background: var(--color-primary-04);
+    }
+
+    .ant-segmented-thumb {
+      background: var(--color-primary-04);
+    }
+  }
+}
+
+.eyecare {
+
+  .ant-segmented:not(.ant-segmented-sm),
+  .ant-segmented.ant-segmented-lg {
+    .ant-segmented-item-selected {
+      background: var(--color-bg);
+    }
+
+    .ant-segmented-thumb {
+      background: var(--color-bg);
+    }
+  }
+}
+
+
+
+// 返回顶部按钮的位置在右下角
+.back-top-btn {
+  inset-inline-end: 16px;
+  inset-block-end: 180px;
+  z-index: 1000;
+}
+
+// 右下角按钮都是主题色
+.ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon {
+  color: var(--color-primary);
+}
