@@ -82,6 +82,7 @@ import DragAndDrop from '@/src/components/DragAndDrop.vue';
 import PersistentOverlay from '@/src/components/PersistentOverlay.vue';
 import ControlsModal from '@/src/components/ControlsModal.vue';
 import { useImageStore } from '@/src/store/datasets-images';
+import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import { useServerStore } from '@/src/store/server';
 import { useGlobalErrorHook } from '@/src/composables/useGlobalErrorHook';
 import { useKeyboardShortcuts } from '@/src/composables/useKeyboardShortcuts';
@@ -145,6 +146,8 @@ window.nearValue = 2.6
 window.parent.postMessage({ type: 'volviewReady' }, '*');
 
 const DEFAULT_RADIUS = 2.6; // 默认半径是2.6
+const layerSourceCache: Record<string, { imageID: string; imageData: vtkImageData }> =
+  Object.create(null);
 
 function postMessageToParent(message: Record<string, unknown>) {
   window.parent.postMessage(message, '*');
@@ -190,6 +193,29 @@ function handleLayerMessage(handler: () => unknown, source: string) {
       message,
     });
   }
+}
+
+function cacheLayerSourceImage(imageID: string, imageName: string) {
+  const imageStore = useImageStore();
+  const imageData = imageStore.dataIndex[imageID];
+  if (!imageData) return;
+  layerSourceCache[imageName] = { imageID, imageData };
+}
+
+function restoreCachedLayer(filePath: string) {
+  const imageStore = useImageStore();
+  const cached = layerSourceCache[filePath];
+  if (!cached) return null;
+
+  const existingID = Object.keys(imageStore.metadata).find(
+    (id) => imageStore.metadata[id].name === filePath
+  );
+  if (existingID) {
+    cacheLayerSourceImage(existingID, filePath);
+    return existingID;
+  }
+
+  return imageStore.addVTKImageData(filePath, cached.imageData);
 }
 
 // B项目接收
@@ -266,6 +292,7 @@ window.addEventListener('message', (event) => {
     console.log('clear file');
     const dataStore = useDatasetStore();
     dataStore.removeAll(); // 把结构像清除
+    Object.keys(layerSourceCache).forEach((key) => delete layerSourceCache[key]);
     clickEventClearPoints.trigger(); // 把点清除
     // clickEventSetPoints.trigger([[[1000, 1000, 1000]], DEFAULT_RADIUS]); // 把点清除
   }
@@ -311,14 +338,30 @@ window.addEventListener('message', (event) => {
 
   // GZC
   if (event.data.type === 'addLayer') {
-    let fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
     const filePath = event.data.filePath
+    const restoredID = restoreCachedLayer(filePath)
+    if (restoredID) {
+      console.log('reuse cached add-layer file');
+      return;
+    }
+
+    let fileUrl = `${event.data.fileUrl}?t=${Date.now()}`
     console.log('add as layer');
     fetch(fileUrl).then(response => response.blob())
       .then(blob => {
         const file = new File([blob], filePath, { type: '' });
         console.log('load add-layer file');
-        loadFiles([file])
+        return loadFiles([file])
+      })
+      .then((result) => {
+        const imageStore = useImageStore();
+        const imageID = [...imageStore.idList]
+          .reverse()
+          .find((id) => imageStore.metadata[id]?.name === filePath);
+        if (imageID) {
+          cacheLayerSourceImage(imageID, filePath);
+        }
+        return result;
       })
       .catch(error => console.error('Failed to load blob:', error))
   }

@@ -5,6 +5,7 @@ import { defineStore } from 'pinia';
 import { type DataSelection, getImage } from '@/src/utils/dataSelection';
 import { Maybe } from '@/src/types';
 import { ensureSameSpace } from '@/src/io/resample/resample';
+import { useImageStore } from './datasets-images';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { Manifest, StateFile } from '../io/state-file/schema';
 
@@ -18,6 +19,14 @@ export const useLayersStore = defineStore('layer', () => {
 
   const parentToLayers = ref<Record<string, Layer[]>>({});
   const layerImages = ref<Record<string, vtkImageData>>({});
+  const resampledLayerCache = ref<Record<string, vtkImageData>>({});
+
+  function getResampledCacheKey(parent: DataSelection, source: DataSelection) {
+    const imageStore = useImageStore();
+    const parentName = imageStore.metadata[parent]?.name ?? parent;
+    const sourceName = imageStore.metadata[source]?.name ?? source;
+    return `${parentName}::${sourceName}`;
+  }
 
   // GZC
   async function _addLayer(
@@ -54,10 +63,18 @@ export const useLayersStore = defineStore('layer', () => {
       );
     }
 
+    const cacheKey = getResampledCacheKey(parent, source);
+    const cachedImage = this.resampledLayerCache[cacheKey];
+    if (cachedImage) {
+      this.layerImages[id] = cachedImage;
+      return;
+    }
+
     const image = await ensureSameSpace(parentImage, sourceImage);
     console.log('image :>> ', image);
 
     this.layerImages[id] = image;
+    this.resampledLayerCache[cacheKey] = image;
   }
 
   async function addLayer(
@@ -107,6 +124,7 @@ export const useLayersStore = defineStore('layer', () => {
   function clearAll() {
     parentToLayers.value = {};
     layerImages.value = {};
+    resampledLayerCache.value = {};
   }
 
   const getLayer = (layerID: string) =>
@@ -160,6 +178,7 @@ export const useLayersStore = defineStore('layer', () => {
   return {
     parentToLayers,
     layerImages,
+    resampledLayerCache,
     _addLayer,
     addLayer,
     deleteLayer,
